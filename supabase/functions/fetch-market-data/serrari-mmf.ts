@@ -206,10 +206,10 @@ export async function fetchSerrariMmfData(): Promise<{
   const notes: string[] = [];
   const [kesRes, usdRes] = await Promise.all([
     fetch("https://r.jina.ai/https://serrarigroup.com/ke/mmf", {
-      headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0" },
+      headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0", "X-No-Cache": "true", "X-Cache-Tolerance": "0", "Cache-Control": "no-cache" },
     }),
     fetch("https://r.jina.ai/https://serrarigroup.com/ke/mmf-usd", {
-      headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0" },
+      headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0", "X-No-Cache": "true", "X-Cache-Tolerance": "0", "Cache-Control": "no-cache" },
     }),
   ]);
 

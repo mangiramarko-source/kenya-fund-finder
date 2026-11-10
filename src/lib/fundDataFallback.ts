@@ -834,7 +834,7 @@ const RAW_FALLBACK_KENYAN_FUNDS: FundFromDB[] = [
     "website": "https://gcib.africa",
     "fact_sheet_date": "2026-03-03",
     "yield_unit": "%",
-    "is_published": true,
+    "is_published": false,
     "logo_url": "https://caawgzuofnujrznwbuxk.supabase.co/storage/v1/object/public/market-logos/fund-managers/gulfcap-provided-v3.webp",
     "updated_at": "2026-09-02T11:23:09.852566+00:00"
   },
@@ -1362,7 +1362,7 @@ const RAW_FALLBACK_KENYAN_FUNDS: FundFromDB[] = [
     "website": "https://www.safaricom.co.ke/main-mpesa/m-pesa-services/wealth/mali",
     "fact_sheet_date": "2023-12-31",
     "yield_unit": "%",
-    "is_published": true,
+    "is_published": false,
     "logo_url": "https://caawgzuofnujrznwbuxk.supabase.co/storage/v1/object/public/market-logos/fund-managers/genghis-provided-v3.webp",
     "updated_at": "2026-09-02T11:23:09.852566+00:00"
   },
@@ -1538,7 +1538,7 @@ const RAW_FALLBACK_KENYAN_FUNDS: FundFromDB[] = [
     "website": "https://ke.cicinsurancegroup.com/",
     "fact_sheet_date": "2026-03-03",
     "yield_unit": "%",
-    "is_published": true,
+    "is_published": false,
     "logo_url": "https://caawgzuofnujrznwbuxk.supabase.co/storage/v1/object/public/market-logos/fund-managers/cic.webp",
     "updated_at": "2026-09-02T11:05:45.252342+00:00"
   },

@@ -200,6 +200,49 @@ export const SERRARI_UT_MAP: Record<string, SerrariCanonicalMeta> = {
   "cic equity fund": { slug: "cic-equity-sh", name: "CIC", manager: "CIC Asset Management Ltd", fund_type: "equity", currency: "KES", yield_unit: "KES", website: "https://cic.co.ke", withdrawal_time: "3-5 days" },
 };
 
+export function hasFundMetricsChanged(
+  existing: {
+    annual_yield: number;
+    daily_yield?: number | null;
+    management_fee?: number | null;
+    minimum_investment?: number | null;
+    yield_unit?: string | null;
+  },
+  incoming: {
+    annual_yield: number;
+    daily_yield?: number | null;
+    management_fee?: number | null;
+    minimum_investment?: number | null;
+    yield_unit?: string | null;
+  },
+): boolean {
+  const numDiff = (a: number | null | undefined, b: number | null | undefined) =>
+    Math.abs(Number(a ?? 0) - Number(b ?? 0)) > 0.0001;
+
+  return (
+    numDiff(existing.annual_yield, incoming.annual_yield) ||
+    numDiff(existing.daily_yield, incoming.daily_yield) ||
+    (existing.management_fee != null && incoming.management_fee != null && numDiff(existing.management_fee, incoming.management_fee)) ||
+    (existing.minimum_investment != null && incoming.minimum_investment != null && numDiff(existing.minimum_investment, incoming.minimum_investment)) ||
+    (existing.yield_unit != null && incoming.yield_unit != null && existing.yield_unit !== incoming.yield_unit)
+  );
+}
+
+export function hasFundDateChanged(
+  existing: {
+    fact_sheet_date?: string | null;
+  },
+  incoming: {
+    asOfDate?: string | null;
+  },
+): boolean {
+  const incomingDate = String(incoming.asOfDate ?? "").trim();
+  if (!incomingDate) return false;
+  const existingDate = String(existing.fact_sheet_date ?? "").trim();
+  if (!existingDate) return true;
+  return existingDate !== incomingDate;
+}
+
 export function hasFundChanged(
   existing: {
     annual_yield: number;
@@ -218,22 +261,79 @@ export function hasFundChanged(
     asOfDate?: string | null;
   },
 ): boolean {
-  const numDiff = (a: number | null | undefined, b: number | null | undefined) =>
-    Math.abs(Number(a ?? 0) - Number(b ?? 0)) > 0.0001;
+  return hasFundDateChanged(existing, incoming) || hasFundMetricsChanged(existing, incoming);
+}
 
-  const dateDiff = Boolean(
-    incoming.asOfDate &&
-    (!existing.fact_sheet_date || String(existing.fact_sheet_date).trim() !== String(incoming.asOfDate).trim())
-  );
+export function getSourceGroupKey(row: {
+  sourceUrl?: string | null;
+  fund_type?: string | null;
+  currency?: string | null;
+}): string {
+  if (row.sourceUrl) return row.sourceUrl;
+  if (row.fund_type === "money_market") {
+    return row.currency === "USD" ? "https://serrarigroup.com/ke/mmf-usd" : "https://serrarigroup.com/ke/mmf";
+  }
+  return "https://serrarigroup.com/ke/ut";
+}
 
-  return (
-    dateDiff ||
-    numDiff(existing.annual_yield, incoming.annual_yield) ||
-    numDiff(existing.daily_yield, incoming.daily_yield) ||
-    (existing.management_fee != null && numDiff(existing.management_fee, incoming.management_fee)) ||
-    (existing.minimum_investment != null && numDiff(existing.minimum_investment, incoming.minimum_investment)) ||
-    (existing.yield_unit != null && existing.yield_unit !== incoming.yield_unit)
-  );
+/**
+ * Evaluates the midnight date-rollover guard per Serrari source group
+ * (`/ke/mmf`, `/ke/mmf-usd`, `/ke/ut`). A source group is considered to have
+ * published its daily batch if at least one fund in that group is newly created
+ * or has a real metric change (`hasFundMetricsChanged === true`).
+ */
+export function getVerifiedSourceGroups(
+  rows: Array<{
+    slug: string;
+    annual_yield: number;
+    daily_yield?: number | null;
+    management_fee?: number | null;
+    minimum_investment?: number | null;
+    yield_unit?: string | null;
+    sourceUrl?: string | null;
+    fund_type?: string | null;
+    currency?: string | null;
+  }>,
+  bySlug: Map<
+    string,
+    {
+      annual_yield: number;
+      daily_yield?: number | null;
+      management_fee?: number | null;
+      minimum_investment?: number | null;
+      yield_unit?: string | null;
+      fact_sheet_date?: string | null;
+    }
+  >,
+): Set<string> {
+  const verified = new Set<string>();
+  for (const row of rows) {
+    const existing = bySlug.get(row.slug.toLowerCase());
+    if (!existing || hasFundMetricsChanged(existing, row)) {
+      verified.add(getSourceGroupKey(row));
+    }
+  }
+  return verified;
+}
+
+export function shouldAdvanceFlatFundDate(
+  existing: {
+    fact_sheet_date?: string | null;
+  },
+  incoming: {
+    asOfDate?: string | null;
+    sourceUrl?: string | null;
+    fund_type?: string | null;
+    currency?: string | null;
+  },
+  verifiedGroups: Set<string>,
+): boolean {
+  const incomingDate = String(incoming.asOfDate ?? "").trim();
+  if (!incomingDate) return false;
+  const existingDate = String(existing.fact_sheet_date ?? "").trim();
+  if (!existingDate) return true;
+  if (existingDate === incomingDate) return false;
+  return verifiedGroups.has(getSourceGroupKey(incoming));
 }
 
 /**
@@ -410,6 +510,9 @@ export function parseSerrariUtMarkdown(
 async function fetchJinaWithRetry(url: string, retries = 3, delayMs = 1500): Promise<Response> {
   const headers: Record<string, string> = {
     Accept: "text/plain",
+    "X-No-Cache": "true",
+    "X-Cache-Tolerance": "0",
+    "Cache-Control": "no-cache",
   };
 
   let lastRes: Response | null = null;

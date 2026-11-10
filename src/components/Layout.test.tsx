@@ -33,4 +33,29 @@ describe("Layout ticker placement", () => {
       expect(screen.getAllByTestId("currency-ticker")).toHaveLength(1);
     }
   );
+
+  it("renders ticker in natural flow on mobile /news and hides the mobile spacer", () => {
+    renderLayout("/news");
+    const ticker = screen.getByTestId("currency-ticker");
+    const tickerContainer = ticker.parentElement;
+    expect(tickerContainer).toHaveClass("relative");
+    expect(tickerContainer).toHaveClass("md:fixed");
+
+    // The h-9 spacer should be hidden on mobile for /news
+    const spacer = tickerContainer?.nextElementSibling;
+    expect(spacer).toHaveClass("hidden");
+    expect(spacer).toHaveClass("md:block");
+  });
+
+  it("renders fixed ticker on other routes like /stocks", () => {
+    renderLayout("/stocks");
+    const ticker = screen.getByTestId("currency-ticker");
+    const tickerContainer = ticker.parentElement;
+    expect(tickerContainer).toHaveClass("fixed");
+    expect(tickerContainer).toHaveClass("top-safe-nav");
+
+    const spacer = tickerContainer?.nextElementSibling;
+    expect(spacer).not.toHaveClass("hidden");
+    expect(spacer).toHaveClass("h-9");
+  });
 });

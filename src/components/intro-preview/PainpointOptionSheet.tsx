@@ -8,7 +8,6 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface PainpointOptionSheetProps {
@@ -89,12 +88,9 @@ export default function PainpointOptionSheet({ onComplete, onDismiss }: Painpoin
         <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-2.5 md:hidden" />
 
         <div className="flex items-center justify-between gap-2 relative z-10">
-          <Badge
-            variant="outline"
-            className={`text-xs font-bold py-0.5 px-2.5 ${currentStep.badgeClass}`}
-          >
+          <span className="text-xs font-bold uppercase tracking-wider text-foreground">
             {currentStep.badge}
-          </Badge>
+          </span>
 
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground font-medium">
@@ -143,18 +139,13 @@ export default function PainpointOptionSheet({ onComplete, onDismiss }: Painpoin
 
         {/* Question & Narrative Body — 14px heading and 13px desc for mobile */}
         <div className="flex flex-col justify-center py-0.5 relative z-10 space-y-2">
-          <div className="flex items-start gap-2.5">
-            <div className={`p-2 rounded-xl shrink-0 mt-0.5 border border-border/50 ${currentStep.iconClass}`}>
-              <currentStep.icon className="h-4 w-4" />
-            </div>
-            <div className="space-y-1 flex-1">
-              <h3 className="font-heading text-[14px] sm:text-lg md:text-xl font-black tracking-tight text-foreground leading-snug">
-                {currentStep.question}
-              </h3>
-              <p className="text-[13px] sm:text-base text-muted-foreground leading-relaxed">
-                {currentStep.desc}
-              </p>
-            </div>
+          <div className="space-y-1">
+            <h3 className="font-heading text-[14px] sm:text-lg md:text-xl font-black tracking-tight text-foreground leading-snug">
+              {currentStep.question}
+            </h3>
+            <p className="text-[13px] sm:text-base text-muted-foreground leading-relaxed">
+              {currentStep.desc}
+            </p>
           </div>
 
           {/* Metric Callout */}
@@ -195,7 +186,7 @@ export default function PainpointOptionSheet({ onComplete, onDismiss }: Painpoin
               onClick={() => setCurrentStepIndex(idx)}
               className={`h-1.5 rounded-full transition-all ${
                 currentStepIndex === idx
-                  ? "w-7 bg-emerald-500"
+                  ? "w-7 bg-foreground"
                   : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
               }`}
               aria-label={`Go to step ${s.step}`}
@@ -210,7 +201,7 @@ export default function PainpointOptionSheet({ onComplete, onDismiss }: Painpoin
               <Button
                 onClick={handleNext}
                 size="sm"
-                className="flex-1 h-10 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1"
+                className="flex-1 h-10 rounded-xl bg-foreground hover:bg-foreground/90 text-background font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1"
               >
                 <span>Next: {STEPS[currentStepIndex + 1].badge.split(". ")[1]}</span>
                 <ChevronRight className="h-4 w-4" />
@@ -230,7 +221,7 @@ export default function PainpointOptionSheet({ onComplete, onDismiss }: Painpoin
             <Link
               to="/overview"
               onClick={onComplete}
-              className="w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
+              className="w-full h-10 rounded-xl bg-foreground hover:bg-foreground/90 text-background font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
             >
               <span>Explore All Kenyan Markets Now</span>
               <ArrowRight className="h-4 w-4" />

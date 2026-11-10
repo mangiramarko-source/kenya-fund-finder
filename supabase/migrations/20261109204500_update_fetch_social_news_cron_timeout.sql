@@ -2,6 +2,8 @@
 -- Apify social media scraping requires 20-50s to complete.
 
 do $$
+declare
+  target record;
 begin
   for target in
     select jobid

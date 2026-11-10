@@ -232,6 +232,58 @@ const Navbar = () => {
     };
   }, []);
 
+  const isNewsPage = location.pathname === "/news" || location.pathname === "/news/";
+  const [newsScrolledPast, setNewsScrolledPast] = useState(false);
+
+  useEffect(() => {
+    if (!isNewsPage) {
+      setNewsScrolledPast(false);
+      return;
+    }
+
+    if (typeof window === "undefined") return;
+
+    let observer: IntersectionObserver | null = null;
+
+    const checkHeaderPosition = () => {
+      const target = document.getElementById("market-news-header");
+      if (target) {
+        const rect = target.getBoundingClientRect();
+        const isPast = rect.bottom <= 56;
+        setNewsScrolledPast((prev) => (prev !== isPast ? isPast : prev));
+      }
+    };
+
+    // Passive scroll listener: 100% reliable in all browser engines and inside iframes
+    window.addEventListener("scroll", checkHeaderPosition, { passive: true });
+    checkHeaderPosition();
+
+    // Also observe with IntersectionObserver if supported
+    const target = document.getElementById("market-news-header");
+    if (target && typeof IntersectionObserver !== "undefined") {
+      try {
+        observer = new IntersectionObserver(
+          ([entry]) => {
+            const isPast = !entry.isIntersecting && entry.boundingClientRect.bottom <= 56;
+            setNewsScrolledPast((prev) => (prev !== isPast ? isPast : prev));
+          },
+          {
+            rootMargin: "-56px 0px 0px 0px",
+            threshold: 0,
+          }
+        );
+        observer.observe(target);
+      } catch {
+        // Fallback already active via scroll listener
+      }
+    }
+
+    return () => {
+      window.removeEventListener("scroll", checkHeaderPosition);
+      observer?.disconnect();
+    };
+  }, [isNewsPage, location.pathname]);
+
   const hasCustomDetailHeader =
     /^\/stocks\/[^/]+/.test(location.pathname) ||
     /^\/compare\/[^/]+/.test(location.pathname) ||
@@ -246,7 +298,9 @@ const Navbar = () => {
       <div className="md:hidden">
         <header
           ref={headerRef}
-          className="fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50 pt-safe"
+          className={`fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md pt-safe transition-colors ${
+            isNewsPage && newsScrolledPast ? "border-b-0" : "border-b border-border/50"
+          }`}
         >
           <nav className="flex h-14 items-center px-3">
             {navTitle.type === "detail" ? (
@@ -278,22 +332,38 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex h-full w-full items-center justify-between">
-                {/* 1. Far left: Brand mascot logo */}
-                <Link
-                  to="/"
-                  className="flex items-center gap-2 shrink-0 transition-transform active:scale-95"
-                  aria-label="KenyaFundFinder Home"
-                >
-                  <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-emerald-500/30 bg-emerald-950/20 shadow-sm">
-                    <img
-                      src="/apple-touch-icon.png?v=20261110"
-                      alt="KenyaFundFinder logo"
-                      className="h-full w-full object-cover"
-                      width={32}
-                      height={32}
-                    />
-                  </div>
-                </Link>
+                {/* 1. Far left: Brand mascot logo OR Market News title when scrolled on /news */}
+                {isNewsPage && newsScrolledPast ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="flex items-center gap-1.5 shrink-0 transition-opacity active:opacity-75 text-left py-1 pr-2 animate-in fade-in duration-200"
+                    aria-label="Scroll to top of Market News"
+                  >
+                    <span className="text-base font-bold tracking-tight text-foreground">
+                      Market News
+                    </span>
+                  </button>
+                ) : (
+                  <Link
+                    to="/"
+                    className="flex items-center gap-2 shrink-0 transition-transform active:scale-95 animate-in fade-in duration-200"
+                    aria-label="KenyaFundFinder Home"
+                  >
+                    <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-emerald-500/30 bg-emerald-950/20 shadow-sm">
+                      <img
+                        src="/apple-touch-icon.png?v=20261110"
+                        alt="KenyaFundFinder logo"
+                        className="h-full w-full object-cover"
+                        width={32}
+                        height={32}
+                      />
+                    </div>
+                  </Link>
+                )}
 
                 {/* Right side cluster: circular Search, Notifications, Profile */}
                 <div className="flex items-center gap-2 shrink-0 ml-auto">

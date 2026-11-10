@@ -52,6 +52,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isMobilePreview = pathname === "/mobile-preview" || pathname.startsWith("/preview/");
   const isAiLab = pathname === "/ai-lab" || pathname.startsWith("/ai-lab/");
   const isOverview = pathname === "/" || pathname === "/overview";
+  const isNewsPage = pathname === "/news" || pathname === "/news/";
   const showMobileAiLabFab = shouldShowMobileAiLabFab(pathname);
   const showTicker = isMarketPage && !isNewsArticle && !isAiLab && !isAuthPage && !isMobilePreview;
 
@@ -67,11 +68,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className={`flex min-h-screen font-body bg-background overflow-x-hidden${isAiLab ? " h-dvh max-h-dvh overflow-hidden" : ""}`}>
+    <div className={`flex min-h-screen font-body bg-background${isNewsPage ? "" : " overflow-x-clip"}${isAiLab ? " h-dvh max-h-dvh overflow-hidden" : ""}`}>
       <SkipToContent />
 
       {/* Main column */}
-      <div className={`flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden bg-background${isAiLab ? " min-h-0 overflow-hidden" : ""}`}>
+      <div className={`flex-1 flex flex-col min-w-0 max-w-full bg-background${isNewsPage ? "" : " overflow-x-clip"}${isAiLab ? " min-h-0 overflow-hidden" : ""}`}>
         <DesktopTopBar />
         {!isAiLab && <div className="hidden md:block h-14 shrink-0" aria-hidden="true" />}
         
@@ -83,12 +84,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         )}
         {showTicker && (
-          <div className="fixed inset-x-0 z-40 w-full top-safe-nav md:top-14 block">
+          <div
+            className={
+              isNewsPage
+                ? "relative w-full block md:fixed md:inset-x-0 md:z-40 md:top-14"
+                : "fixed inset-x-0 z-40 w-full top-safe-nav md:top-14 block"
+            }
+          >
             <CurrencyTicker />
           </div>
         )}
         {showTicker && (
-          <div className="h-9 shrink-0" aria-hidden="true" />
+          <div
+            className={`h-9 shrink-0 ${isNewsPage ? "hidden md:block" : ""}`}
+            aria-hidden="true"
+          />
         )}
 
         <main

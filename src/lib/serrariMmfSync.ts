@@ -636,10 +636,10 @@ export async function fetchLiveSerrariMmfRows(): Promise<{
 }> {
   const [kesRes, usdRes] = await Promise.all([
     fetch("https://r.jina.ai/https://serrarigroup.com/ke/mmf", {
-      headers: { Accept: "text/plain" },
+      headers: { Accept: "text/plain", "X-No-Cache": "true", "X-Cache-Tolerance": "0", "Cache-Control": "no-cache" },
     }),
     fetch("https://r.jina.ai/https://serrarigroup.com/ke/mmf-usd", {
-      headers: { Accept: "text/plain" },
+      headers: { Accept: "text/plain", "X-No-Cache": "true", "X-Cache-Tolerance": "0", "Cache-Control": "no-cache" },
     }),
   ]);
 

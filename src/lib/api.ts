@@ -266,6 +266,7 @@ export async function fetchFunds(): Promise<FundFromDB[]> {
     const { data, error } = await supabase
       .from("funds")
       .select(FUND_COLUMNS.join(","))
+      .eq("is_published", true)
       .order("annual_yield", { ascending: false })
       .limit(200);
     if (!error && Array.isArray(data) && data.length > 0) {
@@ -276,7 +277,7 @@ export async function fetchFunds(): Promise<FundFromDB[]> {
   }
 
   // 3. Bundled real funds fallback (guarantees UI never breaks)
-  return FALLBACK_KENYAN_FUNDS.map(normalizeFund);
+  return FALLBACK_KENYAN_FUNDS.filter((f) => f.is_published !== false).map(normalizeFund);
 }
 
 export async function fetchFundBySlug(slug: string): Promise<FundFromDB | null> {

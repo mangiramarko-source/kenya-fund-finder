@@ -8,7 +8,12 @@ import {
 import { evaluateStockQuoteDrift, matchRapidApiStocks, parseRapidApiStockResponse, type QuoteSource, type StockQuote } from "./stock-quotes.ts";
 import { persistStockQuote, type StockWriteOperations } from "./stock-writes.ts";
 import { fetchNseSector, parseNseQuoteRows, parseNseSnapshotDate, summarizeNseFallback } from "./nse-fallback.ts";
-import { fetchSerrariAllFundsData, hasFundChanged } from "./serrari-funds.ts";
+import {
+  fetchSerrariAllFundsData,
+  getVerifiedSourceGroups,
+  hasFundMetricsChanged,
+  shouldAdvanceFlatFundDate,
+} from "./serrari-funds.ts";
 
 const allowedOrigins = [
   "https://kenya-fund-finder.lovable.app",
@@ -1049,7 +1054,7 @@ Deno.serve(async (req) => {
 
         const { data: existingFunds, error: fundsReadError } = await supabase
           .from("funds")
-          .select("id, slug, annual_yield, daily_yield, management_fee, minimum_investment, yield_unit, fact_sheet_date, fund_type");
+          .select("id, slug, annual_yield, daily_yield, management_fee, minimum_investment, yield_unit, fact_sheet_date, fund_type, is_published");
 
         if (fundsReadError) {
           throw new Error(`Funds read failed: ${fundsReadError.message}`);
@@ -1081,6 +1086,8 @@ Deno.serve(async (req) => {
           });
         }
 
+        const verifiedGroups = getVerifiedSourceGroups(serrari.rows, bySlug);
+
         if (dryRun) {
           const seen = new Set<string>();
           const rows = serrari.rows.map((row) => {
@@ -1088,25 +1095,30 @@ Deno.serve(async (req) => {
             seen.add(key);
             const existing = bySlug.get(key);
             if (!existing) {
-              return { slug: row.slug, name: row.name, fund_type: row.fund_type, currency: row.currency, status: "would_create", source_annual: row.annual_yield, source_daily: row.daily_yield, db_annual: null, db_daily: null, db_fact_sheet_date: null, drift_pct: null };
+              return { slug: row.slug, name: row.name, fund_type: row.fund_type, currency: row.currency, status: "would_create", source_annual: row.annual_yield, source_daily: row.daily_yield, source_as_of: row.asOfDate, db_annual: null, db_daily: null, db_fact_sheet_date: null, drift_pct: null };
             }
             const prevAnnual = existing.annual_yield;
             const driftPct = prevAnnual > 0 ? Math.abs((row.annual_yield - prevAnnual) / prevAnnual) * 100 : 0;
-            const status = !hasFundChanged(existing, row)
-              ? "unchanged"
-              : !allowHighDrift && prevAnnual > 0 && driftPct > 25
-              ? "drift_blocked"
-              : "would_update";
+            const metricsChanged = hasFundMetricsChanged(existing, row);
+            const dateAdvance = !metricsChanged && shouldAdvanceFlatFundDate(existing, row, verifiedGroups);
+            const status = metricsChanged
+              ? !allowHighDrift && prevAnnual > 0 && driftPct > 25
+                ? "drift_blocked"
+                : "would_update"
+              : dateAdvance
+              ? "date_only"
+              : "unchanged";
             return {
               slug: row.slug, name: row.name, fund_type: row.fund_type, currency: row.currency, status,
               source_annual: row.annual_yield, source_daily: row.daily_yield,
+              source_as_of: row.asOfDate,
               db_annual: existing.annual_yield, db_daily: existing.daily_yield,
               db_fact_sheet_date: existing.fact_sheet_date,
               drift_pct: Math.round(driftPct * 100) / 100,
             };
           });
           const missingFromSource = (existingFunds || [])
-            .filter((f) => f.fund_type === "money_market" && !seen.has(String(f.slug).toLowerCase()))
+            .filter((f) => f.fund_type === "money_market" && f.is_published !== false && !seen.has(String(f.slug).toLowerCase()))
             .map((f) => ({ slug: f.slug, db_annual: Number(f.annual_yield ?? 0), db_fact_sheet_date: f.fact_sheet_date ?? null }));
           fundInspection = { source_as_of: serrari.asOfDate, notes: serrari.notes, rows, missing_from_source: missingFromSource };
           results.push(`Funds dry run: ${rows.length} source rows inspected, nothing written`);
@@ -1114,6 +1126,7 @@ Deno.serve(async (req) => {
         let updatedFundCount = 0;
         let createdFundCount = 0;
         let unchangedFundCount = 0;
+        let dateVerifiedFundCount = 0;
         let skippedDriftCount = 0;
         const changedFunds: Array<{
           fund_id: string;
@@ -1126,11 +1139,29 @@ Deno.serve(async (req) => {
         const nowIso = new Date().toISOString();
 
         for (const row of serrari.rows) {
+          const rowDate = row.asOfDate || serrari.asOfDate;
           const existing = bySlug.get(row.slug.toLowerCase());
           if (existing) {
-            // Strictly skip updating database rows, timestamps, and yield snapshots when nothing changed
-            if (!hasFundChanged(existing, row)) {
+            if (!hasFundMetricsChanged(existing, row)) {
               unchangedFundCount++;
+              if (shouldAdvanceFlatFundDate(existing, row, verifiedGroups)) {
+                const { error: dateUpdErr } = await supabase
+                  .from("funds")
+                  .update({ fact_sheet_date: rowDate })
+                  .eq("id", existing.id);
+                if (!dateUpdErr) {
+                  dateVerifiedFundCount++;
+                  await supabase.from("fund_yield_snapshots").upsert(
+                    {
+                      fund_id: existing.id,
+                      annual_yield: row.annual_yield,
+                      daily_yield: row.daily_yield,
+                      snapshot_date: rowDate,
+                    },
+                    { onConflict: "fund_id,snapshot_date" },
+                  );
+                }
+              }
               continue;
             }
 
@@ -1153,7 +1184,7 @@ Deno.serve(async (req) => {
                 yield_unit: row.yield_unit,
                 minimum_investment: row.minimum_investment,
                 management_fee: row.management_fee,
-                fact_sheet_date: serrari.asOfDate,
+                fact_sheet_date: rowDate,
                 updated_at: nowIso,
               })
               .eq("id", existing.id);
@@ -1173,7 +1204,7 @@ Deno.serve(async (req) => {
                   fund_id: existing.id,
                   annual_yield: row.annual_yield,
                   daily_yield: row.daily_yield,
-                  snapshot_date: serrari.asOfDate,
+                  snapshot_date: rowDate,
                 },
                 { onConflict: "fund_id,snapshot_date" },
               );
@@ -1206,7 +1237,7 @@ Deno.serve(async (req) => {
                 management_fee: row.management_fee,
                 withdrawal_time: row.withdrawal_time,
                 website: row.website,
-                fact_sheet_date: serrari.asOfDate,
+                fact_sheet_date: rowDate,
                 cma_licensed: true,
                 is_published: true,
                 description,
@@ -1230,7 +1261,7 @@ Deno.serve(async (req) => {
                   fund_id: inserted.id,
                   annual_yield: row.annual_yield,
                   daily_yield: row.daily_yield,
-                  snapshot_date: serrari.asOfDate,
+                  snapshot_date: rowDate,
                 },
                 { onConflict: "fund_id,snapshot_date" },
               );
@@ -1289,6 +1320,7 @@ Deno.serve(async (req) => {
               updated_count: updatedFundCount,
               created_count: createdFundCount,
               unchanged_count: unchangedFundCount,
+              date_verified_count: dateVerifiedFundCount,
               changed_funds: changedFunds,
             },
           });
@@ -1298,7 +1330,7 @@ Deno.serve(async (req) => {
         }
 
         results.push(
-          `Funds (Serrari ${serrari.asOfDate}): updated ${updatedFundCount}, created ${createdFundCount}, unchanged ${unchangedFundCount}, drift-skipped ${skippedDriftCount}`,
+          `Funds (Serrari ${serrari.asOfDate}): updated ${updatedFundCount}, created ${createdFundCount}, unchanged ${unchangedFundCount} (${dateVerifiedFundCount} date-verified), drift-skipped ${skippedDriftCount}`,
         );
         } // end !dryRun
       } catch (fundErr) {

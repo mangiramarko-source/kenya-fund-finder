@@ -351,7 +351,7 @@ export default function NewsPage() {
       <OverviewPortfolioWidget />
 
       {/* Header */}
-      <div className="mb-3.5 mt-0">
+      <div className="mb-3.5 mt-0" id="market-news-header">
         <div className="flex items-baseline justify-between">
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Market News</h1>
           <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
@@ -379,7 +379,10 @@ export default function NewsPage() {
       )}
 
       {/* Category Filter Pills (Exact Match to Original Market News on Overview) */}
-      <div className="no-scrollbar mb-4 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1">
+      <div
+        style={{ top: "calc(var(--kf-mobile-header, calc(3.5rem + env(safe-area-inset-top, 0px))) - 3px)" }}
+        className="no-scrollbar mb-4 flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain sticky z-30 -mx-4 px-4 py-2.5 bg-background/95 backdrop-blur-md border-b border-border/40 md:static md:w-full md:max-w-full md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-b-0 md:z-auto pb-1 md:pb-1"
+      >
         {[
           DEFAULT_NEWS_TAB,
           "Top Ranked",
@@ -397,9 +400,14 @@ export default function NewsPage() {
           return (
             <button
               key={f}
-              onClick={() => {
+              onClick={(e) => {
                 setActiveNavTab(f);
                 triggerFillForTab(f, articles, offset, hasMore, stocks);
+                e.currentTarget.scrollIntoView({
+                  behavior: "smooth",
+                  inline: "center",
+                  block: "nearest",
+                });
               }}
               className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
                 isActive

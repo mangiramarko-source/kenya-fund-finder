@@ -49,8 +49,9 @@ interface InspectionRow {
   name: string;
   fund_type: string;
   currency: string;
-  status: "unchanged" | "would_update" | "would_create" | "drift_blocked";
+  status: "unchanged" | "date_only" | "would_update" | "would_create" | "drift_blocked";
   source_annual: number;
+  source_as_of?: string | null;
   db_annual: number | null;
   db_fact_sheet_date: string | null;
   drift_pct: number | null;
@@ -107,6 +108,7 @@ function freshnessBadge(days: number | null) {
 
 const STATUS_STYLES: Record<InspectionRow["status"], string> = {
   unchanged: "bg-muted text-muted-foreground",
+  date_only: "bg-amber-600 text-white",
   would_update: "bg-blue-600 text-white",
   would_create: "bg-violet-600 text-white",
   drift_blocked: "bg-destructive text-destructive-foreground",
@@ -121,6 +123,7 @@ const AdminMmfInspector = () => {
   const [logs, setLogs] = useState<SyncLog[]>([]);
   const [search, setSearch] = useState("");
   const [onlyStale, setOnlyStale] = useState(false);
+  const [showUnpublished, setShowUnpublished] = useState(false);
 
   const [running, setRunning] = useState<null | "dry" | "live">(null);
   const [runResults, setRunResults] = useState<string[] | null>(null);
@@ -201,17 +204,23 @@ const AdminMmfInspector = () => {
     [funds, latestSnapshot],
   );
 
+  const publishedEnriched = useMemo(
+    () => enriched.filter((f) => f.is_published !== false),
+    [enriched],
+  );
+
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return enriched.filter((f) => {
+    const base = showUnpublished ? enriched : publishedEnriched;
+    return base.filter((f) => {
       if (onlyStale && (f.staleDays ?? 99) <= 1) return false;
       if (!q) return true;
       return f.name.toLowerCase().includes(q) || f.slug.toLowerCase().includes(q);
     });
-  }, [enriched, search, onlyStale]);
+  }, [enriched, publishedEnriched, search, onlyStale, showUnpublished]);
 
-  const staleCount = enriched.filter((f) => (f.staleDays ?? 99) > 1).length;
-  const newestFactSheet = enriched.reduce<string | null>(
+  const staleCount = publishedEnriched.filter((f) => (f.staleDays ?? 99) > 1).length;
+  const newestFactSheet = publishedEnriched.reduce<string | null>(
     (max, f) => (f.fact_sheet_date && (!max || f.fact_sheet_date > max) ? f.fact_sheet_date : max),
     null,
   );
@@ -223,13 +232,21 @@ const AdminMmfInspector = () => {
     if (!inspection) return null;
     const mmf = inspection.rows.filter((r) => r.fund_type === "money_market");
     const count = (s: InspectionRow["status"]) => mmf.filter((r) => r.status === s).length;
+    const priority: Record<InspectionRow["status"], number> = {
+      would_update: 0,
+      would_create: 1,
+      drift_blocked: 2,
+      date_only: 3,
+      unchanged: 4,
+    };
     return {
       total: mmf.length,
       unchanged: count("unchanged"),
+      date_only: count("date_only"),
       would_update: count("would_update"),
       would_create: count("would_create"),
       drift_blocked: count("drift_blocked"),
-      rows: mmf.sort((a, b) => (a.status === "unchanged" ? 1 : 0) - (b.status === "unchanged" ? 1 : 0)),
+      rows: [...mmf].sort((a, b) => priority[a.status] - priority[b.status]),
     };
   }, [inspection]);
 
@@ -264,14 +281,14 @@ const AdminMmfInspector = () => {
               {heartbeatHealthy ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <AlertTriangle className="h-5 w-5 text-destructive" />}
               {relative(liveStatus?.last_verified_at)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Last sync attempt that reached the DB · {fmtDateTime(liveStatus?.last_verified_at)}</p>
+            <p className="text-xs text-muted-foreground mt-1">Last time cron checked Serrari · {fmtDateTime(liveStatus?.last_verified_at)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Last data change</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Last yield change</CardTitle></CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-lg font-semibold"><Clock className="h-5 w-5" />{relative(liveStatus?.updated_at)}</div>
-            <p className="text-xs text-muted-foreground mt-1">{fmtDateTime(liveStatus?.updated_at)}</p>
+            <p className="text-xs text-muted-foreground mt-1">Last time any fund rate changed · {fmtDateTime(liveStatus?.updated_at)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -284,8 +301,8 @@ const AdminMmfInspector = () => {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Stale MMFs</CardTitle></CardHeader>
           <CardContent>
-            <div className={`text-lg font-semibold ${staleCount ? "text-destructive" : ""}`}>{staleCount} / {enriched.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">Fact sheet older than 1 business day</p>
+            <div className={`text-lg font-semibold ${staleCount ? "text-destructive" : ""}`}>{staleCount} / {publishedEnriched.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Published MMFs with fact sheet &gt; 1 business day old</p>
           </CardContent>
         </Card>
       </div>
@@ -324,6 +341,9 @@ const AdminMmfInspector = () => {
             <div className="flex flex-wrap gap-2 text-xs">
               <Badge variant="outline">{inspectionSummary.total} MMFs in source</Badge>
               <Badge className={STATUS_STYLES.unchanged}>{inspectionSummary.unchanged} unchanged</Badge>
+              {inspectionSummary.date_only > 0 && (
+                <Badge className={STATUS_STYLES.date_only}>{inspectionSummary.date_only} date-only advance</Badge>
+              )}
               <Badge className={STATUS_STYLES.would_update}>{inspectionSummary.would_update} would update</Badge>
               <Badge className={STATUS_STYLES.would_create}>{inspectionSummary.would_create} would create</Badge>
               <Badge className={STATUS_STYLES.drift_blocked}>{inspectionSummary.drift_blocked} blocked by &gt;25% drift guard</Badge>
@@ -336,19 +356,25 @@ const AdminMmfInspector = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-left text-muted-foreground">
-                  <tr><th className="py-1 pr-3">Fund</th><th className="pr-3">Status</th><th className="pr-3 text-right">Source</th><th className="pr-3 text-right">DB</th><th className="pr-3 text-right">Drift</th><th>DB fact sheet</th></tr>
+                  <tr><th className="py-1 pr-3">Fund</th><th className="pr-3">Status</th><th className="pr-3 text-right">Source</th><th className="pr-3 text-right">DB</th><th className="pr-3 text-right">Delta</th><th className="pr-3">Source date</th><th>DB fact sheet</th></tr>
                 </thead>
                 <tbody>
-                  {inspectionSummary.rows.map((r) => (
-                    <tr key={r.slug} className="border-t">
-                      <td className="py-1 pr-3">{r.name} <span className="text-xs text-muted-foreground">{r.currency}</span></td>
-                      <td className="pr-3"><Badge className={STATUS_STYLES[r.status]}>{r.status.replace("_", " ")}</Badge></td>
-                      <td className="pr-3 text-right tabular-nums">{r.source_annual.toFixed(2)}%</td>
-                      <td className="pr-3 text-right tabular-nums">{r.db_annual != null ? `${r.db_annual.toFixed(2)}%` : "—"}</td>
-                      <td className="pr-3 text-right tabular-nums">{r.drift_pct != null ? `${r.drift_pct}%` : "—"}</td>
-                      <td className="text-xs">{r.db_fact_sheet_date ?? "—"}</td>
-                    </tr>
-                  ))}
+                  {inspectionSummary.rows.map((r) => {
+                    const delta = r.db_annual != null ? r.source_annual - r.db_annual : null;
+                    return (
+                      <tr key={r.slug} className="border-t">
+                        <td className="py-1 pr-3">{r.name} <span className="text-xs text-muted-foreground">{r.currency}</span></td>
+                        <td className="pr-3"><Badge className={STATUS_STYLES[r.status]}>{r.status.replace("_", " ")}</Badge></td>
+                        <td className="pr-3 text-right tabular-nums">{r.source_annual.toFixed(2)}%</td>
+                        <td className="pr-3 text-right tabular-nums">{r.db_annual != null ? `${r.db_annual.toFixed(2)}%` : "—"}</td>
+                        <td className={`pr-3 text-right tabular-nums ${delta && Math.abs(delta) > 0.0001 ? (delta > 0 ? "text-emerald-600 font-medium" : "text-amber-600 font-medium") : "text-muted-foreground"}`}>
+                          {delta != null ? `${delta > 0 ? "+" : ""}${delta.toFixed(2)}%` : "—"}
+                        </td>
+                        <td className="pr-3 text-xs">{r.source_as_of ?? inspection.source_as_of ?? "—"}</td>
+                        <td className="text-xs">{r.db_fact_sheet_date ?? "—"}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -403,6 +429,11 @@ const AdminMmfInspector = () => {
               <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search fund…" className="pl-8 h-9 w-48" />
             </div>
             <Button variant={onlyStale ? "default" : "outline"} size="sm" onClick={() => setOnlyStale((v) => !v)}>Stale only</Button>
+            {enriched.length > publishedEnriched.length && (
+              <Button variant={showUnpublished ? "default" : "outline"} size="sm" onClick={() => setShowUnpublished((v) => !v)}>
+                {showUnpublished ? "Hide unpublished" : `Show unpublished (${enriched.length - publishedEnriched.length})`}
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="overflow-x-auto">

@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   deriveDailyYieldFromEar,
+  getVerifiedSourceGroups,
   hasFundChanged,
+  hasFundDateChanged,
+  hasFundMetricsChanged,
   normalizeToWeekdayIsoDate,
   parseSerrariAsOfDate,
   parseSerrariFee,
   parseSerrariMmfMarkdown,
   parseSerrariMinimum,
   parseSerrariUtMarkdown,
+  shouldAdvanceFlatFundDate,
 } from "./serrariFundSync";
 
 const SAMPLE_KES_MMF = `
@@ -138,5 +142,55 @@ describe("serrariFundSync", () => {
     expect(hasFundChanged({ ...existing, fact_sheet_date: undefined }, { ...existing, asOfDate: "2026-11-06" })).toBe(true);
     expect(hasFundChanged({ ...existing, fact_sheet_date: "  " }, { ...existing, asOfDate: "2026-11-06" })).toBe(true);
     expect(hasFundChanged(dated, { ...existing, asOfDate: null })).toBe(false);
+  });
+
+  it("separates metric changes from date-only changes with epsilon tolerance", () => {
+    const existing = {
+      annual_yield: 10.82,
+      daily_yield: 10.28,
+      management_fee: 2.0,
+      minimum_investment: 1000,
+      yield_unit: "%",
+      fact_sheet_date: "2026-11-09",
+    };
+
+    // Identical yields on a newer date must NOT trigger hasFundMetricsChanged
+    expect(hasFundMetricsChanged(existing, { ...existing, annual_yield: 10.82000001 })).toBe(false);
+    expect(hasFundDateChanged(existing, { asOfDate: "2026-11-10" })).toBe(true);
+    expect(hasFundDateChanged(existing, { asOfDate: "2026-11-09" })).toBe(false);
+
+    // Real rate change triggers hasFundMetricsChanged
+    expect(hasFundMetricsChanged(existing, { ...existing, annual_yield: 10.97 })).toBe(true);
+  });
+
+  it("enforces per-endpoint midnight rollover guard before advancing flat fund dates", () => {
+    const bySlug = new Map([
+      ["faulu-sh-mmf", { annual_yield: 10.98, daily_yield: 10.42, management_fee: 2.0, minimum_investment: 1000, yield_unit: "%", fact_sheet_date: "2026-11-09" }],
+      ["cytonn-sh-mmf", { annual_yield: 11.11, daily_yield: 10.54, management_fee: 2.0, minimum_investment: 1000, yield_unit: "%", fact_sheet_date: "2026-11-09" }],
+      ["mayfair-fixed-income-fund", { annual_yield: 17.07, daily_yield: 15.76, management_fee: 2.0, minimum_investment: 5000, yield_unit: "%", fact_sheet_date: "2026-11-09" }],
+    ]);
+
+    // Case 1: /ke/ut has a rate change (17.07 -> 17.08), but 0 funds in /ke/mmf changed
+    const rolloverBatch = [
+      { slug: "faulu-sh-mmf", annual_yield: 10.98, daily_yield: 10.42, management_fee: 2.0, minimum_investment: 1000, yield_unit: "%", asOfDate: "2026-11-10", sourceUrl: "https://serrarigroup.com/ke/mmf", fund_type: "money_market", currency: "KES" },
+      { slug: "cytonn-sh-mmf", annual_yield: 11.11, daily_yield: 10.54, management_fee: 2.0, minimum_investment: 1000, yield_unit: "%", asOfDate: "2026-11-10", sourceUrl: "https://serrarigroup.com/ke/mmf", fund_type: "money_market", currency: "KES" },
+      { slug: "mayfair-fixed-income-fund", annual_yield: 17.08, daily_yield: 15.77, management_fee: 2.0, minimum_investment: 5000, yield_unit: "%", asOfDate: "2026-11-10", sourceUrl: "https://serrarigroup.com/ke/ut", fund_type: "fixed_income", currency: "KES" },
+    ];
+
+    const verified1 = getVerifiedSourceGroups(rolloverBatch, bySlug);
+    expect(verified1.has("https://serrarigroup.com/ke/ut")).toBe(true);
+    expect(verified1.has("https://serrarigroup.com/ke/mmf")).toBe(false);
+    // Flat KES MMFs must NOT advance fact_sheet_date when 0 KES MMFs changed
+    expect(shouldAdvanceFlatFundDate(bySlug.get("cytonn-sh-mmf")!, rolloverBatch[1], verified1)).toBe(false);
+
+    // Case 2: At least one KES MMF changes (Faulu 10.98 -> 10.97)
+    const publishedBatch = [
+      { ...rolloverBatch[0], annual_yield: 10.97, daily_yield: 10.41 },
+      rolloverBatch[1],
+    ];
+    const verified2 = getVerifiedSourceGroups(publishedBatch, bySlug);
+    expect(verified2.has("https://serrarigroup.com/ke/mmf")).toBe(true);
+    // Flat Cytonn MMF now advances its fact_sheet_date because the /ke/mmf batch is verified
+    expect(shouldAdvanceFlatFundDate(bySlug.get("cytonn-sh-mmf")!, publishedBatch[1], verified2)).toBe(true);
   });
 });
