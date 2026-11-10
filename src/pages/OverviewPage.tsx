@@ -957,43 +957,7 @@ const OverviewPage = () => {
     return matchesNewsTab(tab, a, stocksList);
   };
 
-  const fillCategoryNews = async (
-    category: string,
-    existingArticles: NewsFromDB[],
-    startOffset: number,
-    currentHasMore: boolean,
-    stocksList: any[],
-    target = 15,
-  ): Promise<{ articles: NewsFromDB[]; offset: number; hasMore: boolean }> => {
-    let accumulated = [...existingArticles];
-    let currentOffset = startOffset;
-    let hasMoreRemote = currentHasMore;
-    const MAX_BATCHES = 2; // Fast cap to avoid lag/lockups
-    let batches = 0;
-
-    while (hasMoreRemote && batches < MAX_BATCHES) {
-      const matching = accumulated.filter(a => tabMatchesArticle(category, a, stocksList));
-      if (matching.length >= target) break;
-
-      const nextOffset = currentOffset + 60;
-      const batch = await fetchPublishedNews(60, nextOffset);
-      batches++;
-
-      if (batch.length > 0) {
-        const existingIds = new Set(accumulated.map(a => a.id));
-        const fresh = batch.filter(a => !existingIds.has(a.id));
-        accumulated = dedupeNewsArticles([...accumulated, ...fresh]);
-        currentOffset = nextOffset;
-      } else {
-        hasMoreRemote = false;
-        break;
-      }
-    }
-
-    return { articles: accumulated, offset: currentOffset, hasMore: hasMoreRemote };
-  };
-
-  const fillInProgressRef = useRef(false);
+  const filledCategoriesRef = useRef<Set<string>>(new Set(["All", "Latest", "Oldest"]));
 
   const triggerFillForCategory = async (
     category: string,
@@ -1002,23 +966,27 @@ const OverviewPage = () => {
     currentHasMore: boolean,
     stocksList: any[]
   ) => {
-    if (fillInProgressRef.current) return;
+    // Only attempt background fill once per category, and only if sparse (< 8 articles)
+    if (filledCategoriesRef.current.has(category) || !currentHasMore) return;
     const matching = currentArticles.filter(a => tabMatchesArticle(category, a, stocksList));
-    if (matching.length >= 15 || !currentHasMore) return;
-    fillInProgressRef.current = true;
-    if (matching.length === 0) {
-      setNewsCategoryLoading(true);
+    if (matching.length >= 8) {
+      filledCategoriesRef.current.add(category);
+      return;
     }
+    filledCategoriesRef.current.add(category);
+
+    // Silent background fetch: NEVER block tab switches, NEVER show full-screen skeletons
     try {
-      const result = await fillCategoryNews(category, currentArticles, currentOffset, currentHasMore, stocksList);
-      setNews(result.articles);
-      setNewsOffset(result.offset);
-      setNewsHasMore(result.hasMore);
+      const nextOffset = currentOffset + 60;
+      const batch = await fetchPublishedNews(60, nextOffset);
+      if (batch.length > 0) {
+        setNews(prev => dedupeNewsArticles([...prev, ...batch]));
+        setNewsOffset(nextOffset);
+      } else {
+        setNewsHasMore(false);
+      }
     } catch (err) {
       console.error("fillCategoryNews error:", err);
-    } finally {
-      fillInProgressRef.current = false;
-      setNewsCategoryLoading(false);
     }
   };
 
@@ -1394,12 +1362,12 @@ const OverviewPage = () => {
       list = list.filter(item => isInternationalFeedItem(item));
     } else if (activeUpdateCategory === FUNDS_AND_FIXED_INCOME_TAB || activeUpdateCategory === "MMFs") {
       list = list.filter(item => isFundsAndFixedIncomeArticle(item.rawItem || item));
-    } else if (activeUpdateCategory === "FX Rates") {
-      const fxPattern = /\b(shilling|kes|usd\/kes|gbp\/kes|eur\/kes|forex|foreign exchange|currency|exchange rate)\b/i;
-      list = list.filter(item => item.rawItem?.category === "FX & Currency" || fxPattern.test(`${item.title} ${item.content}`));
-    } else if (activeUpdateCategory === "Commodities") {
-      const commodityPattern = /\b(oil|crude( oil)?|brent|gold|coffee|tea|fuel|agriculture|agricultural|commodity|commodities)\b/i;
-      list = list.filter(item => commodityPattern.test(`${item.title} ${item.content}`));
+    } else if (["FX Rates", "Commodities"].includes(activeUpdateCategory)) {
+      list = list.filter(item =>
+        matchesNewsTab(activeUpdateCategory, item.rawItem || item, stocks) ||
+        (activeUpdateCategory === "Commodities" && Boolean((item as any).relatedCommodity)) ||
+        (activeUpdateCategory === "FX Rates" && Boolean((item as any).relatedFx))
+      );
     } else if (activeUpdateCategory === "Latest") {
       list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     } else if (activeUpdateCategory === "Oldest") {
@@ -1496,10 +1464,13 @@ const OverviewPage = () => {
                   onClick={(e) => {
                     setActiveUpdateCategory(f);
                     scrollToFeedTop();
-                    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-                    setTimeout(() => {
-                      triggerFillForCategory(f, news, newsOffset, newsHasMore, stocks);
-                    }, 0);
+                    const pill = e.currentTarget;
+                    const container = pill.parentElement;
+                    if (container) {
+                      const targetLeft = pill.offsetLeft - (container.clientWidth - pill.clientWidth) / 2;
+                      container.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
+                    }
+                    triggerFillForCategory(f, news, newsOffset, newsHasMore, stocks);
                   }}
                   className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors shrink-0 ${
                     isActive
@@ -1516,7 +1487,7 @@ const OverviewPage = () => {
           <div className="space-y-0 md:space-y-4 md:pt-4">
             {activeUpdateCategory === "Stocks" ? (
               filteredFeedItems.length === 0 ? (
-                newsLoading || newsCategoryLoading ? (
+                newsLoading ? (
                   <SocialFeed items={[]} loading />
                 ) : (
                   <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
@@ -1552,7 +1523,7 @@ const OverviewPage = () => {
               )
             ) : activeUpdateCategory === "All" ? (
               displayFeedItems.length === 0 ? (
-                newsLoading || newsCategoryLoading ? (
+                newsLoading ? (
                   <SocialFeed items={[]} loading />
                 ) : (
                   <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
@@ -1587,7 +1558,7 @@ const OverviewPage = () => {
                 ))
               )
             ) : (
-              <SocialFeed items={displayFeedItems} loading={newsLoading || newsCategoryLoading} />
+              <SocialFeed items={displayFeedItems} loading={newsLoading} />
             )}
 
             {isGated && filteredFeedItems.length > 3 && (

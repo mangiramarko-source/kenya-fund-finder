@@ -136,6 +136,8 @@ export default function NewsPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  const filledTabsRef = useRef<Set<string>>(new Set(["All", "Latest", "Oldest"]));
+
   // Imperative fill — called with fresh state values, no closure staleness
   const triggerFillForTab = async (
     tab: string,
@@ -144,22 +146,27 @@ export default function NewsPage() {
     currentHasMore: boolean,
     currentStocks: any[]
   ) => {
+    if (filledTabsRef.current.has(tab) || !currentHasMore) return;
     const matching = currentArticles.filter(a =>
       tab === "Stocks" ? Boolean(findMentionedStock(a, currentStocks)) : matchesNewsTab(tab, a, currentStocks)
     );
-    if (matching.length >= 15 || !currentHasMore) return;
-    if (matching.length === 0) {
-      setLoadingMore(true);
+    if (matching.length >= 8) {
+      filledTabsRef.current.add(tab);
+      return;
     }
+    filledTabsRef.current.add(tab);
+
     try {
-      const result = await fillTab(tab, currentArticles, currentOffset, currentHasMore, currentStocks);
-      setArticles(result.articles);
-      setOffset(result.offset);
-      setHasMore(result.hasMore);
+      const nextOffset = currentOffset + 60;
+      const batch = await fetchPublishedNews(60, nextOffset);
+      if (batch.length > 0) {
+        setArticles(prev => dedupeNewsArticles([...prev, ...batch]));
+        setOffset(nextOffset);
+      } else {
+        setHasMore(false);
+      }
     } catch (err) {
       console.error('fillTab error:', err);
-    } finally {
-      setLoadingMore(false);
     }
   };
 
@@ -497,14 +504,13 @@ export default function NewsPage() {
               onClick={(e) => {
                 setActiveNavTab(f);
                 scrollToFeedTop();
-                e.currentTarget.scrollIntoView({
-                  behavior: "smooth",
-                  inline: "center",
-                  block: "nearest",
-                });
-                setTimeout(() => {
-                  triggerFillForTab(f, articles, offset, hasMore, stocks);
-                }, 0);
+                const pill = e.currentTarget;
+                const container = pill.parentElement;
+                if (container) {
+                  const targetLeft = pill.offsetLeft - (container.clientWidth - pill.clientWidth) / 2;
+                  container.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
+                }
+                triggerFillForTab(f, articles, offset, hasMore, stocks);
               }}
               className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
                 isActive
