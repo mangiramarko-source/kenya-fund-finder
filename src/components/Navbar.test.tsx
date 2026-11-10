@@ -181,7 +181,8 @@ describe("Mobile & Desktop Navigation Verification", () => {
       expect(screen.queryByRole("button", { name: "Scroll to top of Market News" })).not.toBeInTheDocument();
       unmount();
 
-      // 2. When scrolled past Market News (bottom <= 56)
+      // 2. When scrolled past Market News (bottom <= 56) with new count
+      headerEl.setAttribute("data-new-count", "38");
       headerEl.getBoundingClientRect = vi.fn(() => ({
         top: -20,
         bottom: 30, // <= 56, header has scrolled past mobile navbar
@@ -202,10 +203,13 @@ describe("Mobile & Desktop Navigation Verification", () => {
         </MemoryRouter>
       );
 
-      // Should now show Market News button instead of logo
+      // Should now show Market News button instead of logo, with "38 new today"
       const newsButton = screen.getByRole("button", { name: "Scroll to top of Market News" });
       expect(newsButton).toBeInTheDocument();
       expect(within(newsButton).getByText("Market News")).toBeInTheDocument();
+      const countLabel = within(newsButton).getByText("38 new today");
+      expect(countLabel).toBeInTheDocument();
+      expect(countLabel).toHaveClass("text-[9px]");
       expect(screen.queryByRole("link", { name: /KenyaFundFinder Home|KFF/i })).not.toBeInTheDocument();
 
       // Tapping Market News scrolls to top

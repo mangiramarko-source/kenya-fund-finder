@@ -1327,6 +1327,12 @@ const OverviewPage = () => {
     }).length;
   }, [news]);
 
+  useEffect(() => {
+    if (newTodayCount > 0 && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("kff:market-news-count", { detail: newTodayCount }));
+    }
+  }, [newTodayCount]);
+
   return (
     <>
       <main className="w-full min-w-0 max-w-7xl mx-auto px-4 py-6 md:grid md:h-[calc(100dvh-5.75rem)] md:grid-cols-[260px_minmax(0,1fr)] md:gap-6 md:overflow-hidden md:px-6 lg:grid-cols-[240px_minmax(0,1fr)_260px] lg:gap-6 xl:grid-cols-[280px_600px_320px] xl:justify-center">
@@ -1343,7 +1349,7 @@ const OverviewPage = () => {
           <OverviewPortfolioWidget />
 
           {/* Header */}
-          <div className="mb-3.5 mt-0 px-4 md:px-0" id="market-news-header">
+          <div className="mb-3.5 mt-0 px-4 md:px-0" id="market-news-header" data-new-count={newTodayCount}>
             <div className="flex items-baseline justify-between">
               <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Market News</h2>
               <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">

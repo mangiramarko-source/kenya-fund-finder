@@ -345,13 +345,19 @@ export default function NewsPage() {
     }).length;
   }, [articles]);
 
+  useEffect(() => {
+    if (newTodayCount > 0 && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("kff:market-news-count", { detail: newTodayCount }));
+    }
+  }, [newTodayCount]);
+
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-6 min-h-screen">
       {/* User Portfolio Cards */}
       <OverviewPortfolioWidget />
 
       {/* Header */}
-      <div className="mb-3.5 mt-0" id="market-news-header">
+      <div className="mb-3.5 mt-0" id="market-news-header" data-new-count={newTodayCount}>
         <div className="flex items-baseline justify-between">
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Market News</h1>
           <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">

@@ -235,6 +235,36 @@ const Navbar = () => {
   const cleanPath = location.pathname.length > 1 && location.pathname.endsWith("/") ? location.pathname.slice(0, -1) : location.pathname;
   const isFeedPage = cleanPath === "" || cleanPath === "/" || cleanPath === "/overview" || cleanPath === "/news";
   const [newsScrolledPast, setNewsScrolledPast] = useState(false);
+  const [marketNewsCount, setMarketNewsCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!isFeedPage) {
+      setMarketNewsCount(0);
+      return;
+    }
+
+    const handleCount = (e: Event) => {
+      const customEvent = e as CustomEvent<number>;
+      if (typeof customEvent.detail === "number" && customEvent.detail > 0) {
+        setMarketNewsCount(customEvent.detail);
+      }
+    };
+
+    window.addEventListener("kff:market-news-count", handleCount);
+
+    const el = document.getElementById("market-news-header");
+    const countAttr = el?.getAttribute("data-new-count");
+    if (countAttr) {
+      const val = parseInt(countAttr, 10);
+      if (!isNaN(val) && val > 0) {
+        setMarketNewsCount(val);
+      }
+    }
+
+    return () => {
+      window.removeEventListener("kff:market-news-count", handleCount);
+    };
+  }, [isFeedPage]);
 
   useEffect(() => {
     if (!isFeedPage) {
@@ -254,6 +284,14 @@ const Navbar = () => {
         const threshold = headerBottom > 0 ? headerBottom : 56;
         const isPast = rect.bottom <= threshold;
         setNewsScrolledPast((prev) => (prev !== isPast ? isPast : prev));
+
+        const countAttr = target.getAttribute("data-new-count");
+        if (countAttr) {
+          const val = parseInt(countAttr, 10);
+          if (!isNaN(val) && val > 0) {
+            setMarketNewsCount((prev) => (prev !== val ? val : prev));
+          }
+        }
       }
     };
 
@@ -347,12 +385,17 @@ const Navbar = () => {
                       e.preventDefault();
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className="flex items-center gap-1.5 shrink-0 transition-opacity active:opacity-75 text-left py-1 pr-2 animate-in fade-in duration-200"
+                    className="flex flex-col justify-center items-start shrink-0 transition-opacity active:opacity-75 text-left py-0.5 pr-2 animate-in fade-in duration-200"
                     aria-label="Scroll to top of Market News"
                   >
-                    <span className="text-base font-bold tracking-tight text-foreground">
+                    <span className="text-base font-bold tracking-tight text-foreground leading-tight">
                       Market News
                     </span>
+                    {marketNewsCount > 0 && (
+                      <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 leading-none mt-0.5">
+                        {marketNewsCount} new today
+                      </span>
+                    )}
                   </button>
                 ) : (
                   <Link
