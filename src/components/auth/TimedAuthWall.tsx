@@ -31,6 +31,24 @@ export default function TimedAuthWall() {
     }
   }, [currentFullPath]);
 
+  const handleMicrosoftSignIn = useCallback(async () => {
+    trackEvent("signup_started", { method: "microsoft", source: "timed_soft_wall" });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "azure",
+        options: {
+          redirectTo: `${window.location.origin}${currentFullPath}`,
+          scopes: "email profile openid",
+        },
+      });
+      if (error) {
+        window.location.href = `/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`;
+      }
+    } catch {
+      window.location.href = `/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`;
+    }
+  }, [currentFullPath]);
+
   const handleSnooze = useCallback(() => {
     trackEvent("cta_clicked", { action: "soft_wall_snoozed", path: currentFullPath });
     snooze(10);
@@ -120,6 +138,20 @@ export default function TimedAuthWall() {
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
             Continue with Google
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={handleMicrosoftSignIn}
+            className="w-full h-11 gap-2.5 bg-card/60 hover:bg-card border-border/80 text-foreground font-medium text-sm rounded-xl transition-all shadow-sm active:scale-[0.99]"
+          >
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 21 21">
+              <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+              <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+              <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+              <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+            </svg>
+            Continue with Microsoft
           </Button>
 
           <Button

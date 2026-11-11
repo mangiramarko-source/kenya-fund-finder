@@ -82,4 +82,26 @@ describe("InlineDataGate Component", () => {
       source: "inline_gate_funds",
     });
   });
+
+  it("tracks analytics event when Microsoft Sign In is clicked", () => {
+    render(
+      <MemoryRouter initialEntries={["/news"]}>
+        <InlineDataGate
+          category="news"
+          totalCount={104}
+          visibleCount={3}
+          title="Unlock All Kenyan Market News"
+          description="Description"
+        />
+      </MemoryRouter>
+    );
+
+    const msBtn = screen.getByRole("button", { name: /continue with microsoft/i });
+    fireEvent.click(msBtn);
+
+    expect(trackEvent).toHaveBeenCalledWith("signup_started", {
+      method: "microsoft",
+      source: "inline_gate_news",
+    });
+  });
 });

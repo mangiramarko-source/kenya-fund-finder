@@ -41,6 +41,24 @@ export default function InlineDataGate({
     }
   }, [category, currentFullPath]);
 
+  const handleMicrosoftSignIn = useCallback(async () => {
+    trackEvent("signup_started", { method: "microsoft", source: `inline_gate_${category}` });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "azure",
+        options: {
+          redirectTo: `${window.location.origin}${currentFullPath}`,
+          scopes: "email profile openid",
+        },
+      });
+      if (error) {
+        window.location.href = `/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`;
+      }
+    } catch {
+      window.location.href = `/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`;
+    }
+  }, [category, currentFullPath]);
+
   return (
     <div className="relative mt-3 p-6 sm:p-8 rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-card/80 via-card/95 to-card text-center shadow-xl backdrop-blur-md overflow-hidden animate-in fade-in-50 duration-300">
       {/* Background ambient glow */}
@@ -64,10 +82,10 @@ export default function InlineDataGate({
         </div>
 
         {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-2 max-w-md mx-auto">
+        <div className="flex flex-col gap-2.5 pt-2 max-w-sm mx-auto w-full">
           <Button
             onClick={handleGoogleSignIn}
-            className="w-full sm:w-auto h-11 px-6 gap-2.5 bg-foreground text-background hover:bg-foreground/90 font-medium text-xs sm:text-sm rounded-xl transition-all shadow-md active:scale-[0.99]"
+            className="w-full h-11 gap-2.5 bg-foreground text-background hover:bg-foreground/90 font-medium text-xs sm:text-sm rounded-xl transition-all shadow-md active:scale-[0.99]"
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -80,8 +98,22 @@ export default function InlineDataGate({
 
           <Button
             variant="outline"
+            onClick={handleMicrosoftSignIn}
+            className="w-full h-11 gap-2.5 bg-card/60 hover:bg-card border-border/80 text-foreground font-medium text-xs sm:text-sm rounded-xl transition-all shadow-sm active:scale-[0.99]"
+          >
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 21 21">
+              <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+              <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+              <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+              <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+            </svg>
+            Continue with Microsoft
+          </Button>
+
+          <Button
+            variant="outline"
             asChild
-            className="w-full sm:w-auto h-11 px-6 text-xs sm:text-sm border-border/80 text-foreground rounded-xl hover:bg-muted/40"
+            className="w-full h-10 text-xs border-border/60 text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted/40"
           >
             <Link to={`/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`}>
               Continue with Email
