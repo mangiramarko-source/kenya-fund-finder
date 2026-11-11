@@ -482,7 +482,7 @@ export default function NewsPage() {
 
       {/* Category Filter Pills (Exact Match to Original Market News on Overview) */}
       <div
-        className="no-scrollbar mb-4 flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain sticky z-30 -mx-4 px-4 py-2.5 bg-background/95 backdrop-blur-md border-b border-border/40 top-safe-sticky-tabs md:static md:w-full md:max-w-full md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-b-0 md:z-auto pb-1 md:pb-1"
+        className="no-scrollbar mb-4 flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain sticky z-30 -mx-4 px-4 py-2.5 bg-background/95 backdrop-blur-md border-b border-border/40 top-safe-sticky-tabs md:static md:w-full md:max-w-full md:mx-0 md:px-0 md:py-2 md:bg-transparent md:backdrop-blur-none md:border-b-0 md:z-auto pb-1 md:pb-2"
       >
         {[
           DEFAULT_NEWS_TAB,
