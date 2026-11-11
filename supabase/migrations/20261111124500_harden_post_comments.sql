@@ -140,9 +140,9 @@ BEGIN
 END;
 $$;
 
--- Restrict direct execute privileges
-REVOKE ALL ON FUNCTION public.enforce_post_comment_security() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.enforce_post_comment_security() TO anon, authenticated, service_role;
+-- Restrict direct execute privileges (triggers run automatically; do NOT expose via RPC to anon/authenticated)
+REVOKE ALL ON FUNCTION public.enforce_post_comment_security() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.enforce_post_comment_security() TO service_role;
 
 -- 5. Attach BEFORE INSERT OR UPDATE trigger
 DROP TRIGGER IF EXISTS trg_enforce_post_comment_security ON public.post_comments;
