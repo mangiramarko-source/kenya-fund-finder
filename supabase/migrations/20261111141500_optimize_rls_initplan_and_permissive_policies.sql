@@ -16,13 +16,20 @@ DROP POLICY IF EXISTS "Anon can read published funds via view" ON public.funds;
 DROP POLICY IF EXISTS "Anyone can view published funds" ON public.funds;
 DROP POLICY IF EXISTS "Admins can manage funds" ON public.funds;
 DROP POLICY IF EXISTS "Read funds" ON public.funds;
+DROP POLICY IF EXISTS "Anon read published funds" ON public.funds;
+DROP POLICY IF EXISTS "Auth read funds" ON public.funds;
 DROP POLICY IF EXISTS "Admins can insert funds" ON public.funds;
 DROP POLICY IF EXISTS "Admins can update funds" ON public.funds;
 DROP POLICY IF EXISTS "Admins can delete funds" ON public.funds;
 
-CREATE POLICY "Read funds"
+CREATE POLICY "Anon read published funds"
   ON public.funds FOR SELECT
-  TO anon, authenticated
+  TO anon
+  USING (is_published = true);
+
+CREATE POLICY "Auth read funds"
+  ON public.funds FOR SELECT
+  TO authenticated
   USING (
     is_published = true
     OR public.has_role((SELECT auth.uid()), 'admin'::public.app_role)
@@ -48,13 +55,20 @@ DROP POLICY IF EXISTS "Anon can read published news via view" ON public.news_art
 DROP POLICY IF EXISTS "Anyone can view published news" ON public.news_articles;
 DROP POLICY IF EXISTS "Admins can manage news" ON public.news_articles;
 DROP POLICY IF EXISTS "Read news articles" ON public.news_articles;
+DROP POLICY IF EXISTS "Anon read published news" ON public.news_articles;
+DROP POLICY IF EXISTS "Auth read news" ON public.news_articles;
 DROP POLICY IF EXISTS "Admins can insert news" ON public.news_articles;
 DROP POLICY IF EXISTS "Admins can update news" ON public.news_articles;
 DROP POLICY IF EXISTS "Admins can delete news" ON public.news_articles;
 
-CREATE POLICY "Read news articles"
+CREATE POLICY "Anon read published news"
   ON public.news_articles FOR SELECT
-  TO anon, authenticated
+  TO anon
+  USING (status = 'published');
+
+CREATE POLICY "Auth read news"
+  ON public.news_articles FOR SELECT
+  TO authenticated
   USING (
     status = 'published'
     OR public.has_role((SELECT auth.uid()), 'admin'::public.app_role)
@@ -111,13 +125,20 @@ DROP POLICY IF EXISTS "Anon can read active ads via view" ON public.ads;
 DROP POLICY IF EXISTS "Anyone can view active ads" ON public.ads;
 DROP POLICY IF EXISTS "Admins can manage ads" ON public.ads;
 DROP POLICY IF EXISTS "Read ads" ON public.ads;
+DROP POLICY IF EXISTS "Anon read active ads" ON public.ads;
+DROP POLICY IF EXISTS "Auth read ads" ON public.ads;
 DROP POLICY IF EXISTS "Admins can insert ads" ON public.ads;
 DROP POLICY IF EXISTS "Admins can update ads" ON public.ads;
 DROP POLICY IF EXISTS "Admins can delete ads" ON public.ads;
 
-CREATE POLICY "Read ads"
+CREATE POLICY "Anon read active ads"
   ON public.ads FOR SELECT
-  TO anon, authenticated
+  TO anon
+  USING (is_active = true);
+
+CREATE POLICY "Auth read ads"
+  ON public.ads FOR SELECT
+  TO authenticated
   USING (
     is_active = true
     OR public.has_role((SELECT auth.uid()), 'admin'::public.app_role)
@@ -155,13 +176,20 @@ DROP POLICY IF EXISTS "Anon can read active social links" ON public.social_links
 DROP POLICY IF EXISTS "Authenticated can read active social links" ON public.social_links;
 DROP POLICY IF EXISTS "Admins can manage social links" ON public.social_links;
 DROP POLICY IF EXISTS "Read social links" ON public.social_links;
+DROP POLICY IF EXISTS "Anon read active social links" ON public.social_links;
+DROP POLICY IF EXISTS "Auth read social links" ON public.social_links;
 DROP POLICY IF EXISTS "Admins can insert social links" ON public.social_links;
 DROP POLICY IF EXISTS "Admins can update social links" ON public.social_links;
 DROP POLICY IF EXISTS "Admins can delete social links" ON public.social_links;
 
-CREATE POLICY "Read social links"
+CREATE POLICY "Anon read active social links"
   ON public.social_links FOR SELECT
-  TO anon, authenticated
+  TO anon
+  USING (is_active = true);
+
+CREATE POLICY "Auth read social links"
+  ON public.social_links FOR SELECT
+  TO authenticated
   USING (
     is_active = true
     OR public.has_role((SELECT auth.uid()), 'admin'::public.app_role)
@@ -209,18 +237,25 @@ CREATE POLICY "Admins can delete personas"
   ON public.admin_personas FOR DELETE TO authenticated
   USING (public.has_role((SELECT auth.uid()), 'admin'::public.app_role));
 
--- admin_posts (consolidate SELECT into 1 policy; admins write via separate policies)
+-- admin_posts (consolidate SELECT into split policies; admins write via separate policies)
 DROP POLICY IF EXISTS "Published admin posts public read" ON public.admin_posts;
 DROP POLICY IF EXISTS "Admins can view all posts" ON public.admin_posts;
 DROP POLICY IF EXISTS "Admins can manage posts" ON public.admin_posts;
 DROP POLICY IF EXISTS "Read admin posts" ON public.admin_posts;
+DROP POLICY IF EXISTS "Anon read published admin posts" ON public.admin_posts;
+DROP POLICY IF EXISTS "Auth read admin posts" ON public.admin_posts;
 DROP POLICY IF EXISTS "Admins can insert posts" ON public.admin_posts;
 DROP POLICY IF EXISTS "Admins can update posts" ON public.admin_posts;
 DROP POLICY IF EXISTS "Admins can delete posts" ON public.admin_posts;
 
-CREATE POLICY "Read admin posts"
+CREATE POLICY "Anon read published admin posts"
   ON public.admin_posts FOR SELECT
-  TO anon, authenticated
+  TO anon
+  USING (is_published = true);
+
+CREATE POLICY "Auth read admin posts"
+  ON public.admin_posts FOR SELECT
+  TO authenticated
   USING (
     is_published = true
     OR public.has_role((SELECT auth.uid()), 'admin'::public.app_role)
@@ -381,13 +416,20 @@ DROP POLICY IF EXISTS "Anon can read active stocks" ON public.stocks;
 DROP POLICY IF EXISTS "Auth can read active stocks" ON public.stocks;
 DROP POLICY IF EXISTS "Admins can manage stocks" ON public.stocks;
 DROP POLICY IF EXISTS "Read stocks" ON public.stocks;
+DROP POLICY IF EXISTS "Anon read active stocks" ON public.stocks;
+DROP POLICY IF EXISTS "Auth read stocks" ON public.stocks;
 DROP POLICY IF EXISTS "Admins can insert stocks" ON public.stocks;
 DROP POLICY IF EXISTS "Admins can update stocks" ON public.stocks;
 DROP POLICY IF EXISTS "Admins can delete stocks" ON public.stocks;
 
-CREATE POLICY "Read stocks"
+CREATE POLICY "Anon read active stocks"
   ON public.stocks FOR SELECT
-  TO anon, authenticated
+  TO anon
+  USING (is_active = true);
+
+CREATE POLICY "Auth read stocks"
+  ON public.stocks FOR SELECT
+  TO authenticated
   USING (
     is_active = true
     OR public.has_role((SELECT auth.uid()), 'admin'::public.app_role)
@@ -406,6 +448,9 @@ CREATE POLICY "Admins can delete stocks"
   ON public.stocks FOR DELETE TO authenticated
   USING (public.has_role((SELECT auth.uid()), 'admin'::public.app_role));
 
+GRANT SELECT (provider_updated_at, quote_source, day_low, day_high)
+  ON public.stocks TO anon, authenticated;
+
 -- commodities (preserves admin access to inactive commodities; public reads active via is_active = true)
 DROP POLICY IF EXISTS "Anyone can view active commodities" ON public.commodities;
 DROP POLICY IF EXISTS "Anon can view active commodities" ON public.commodities;
@@ -414,13 +459,20 @@ DROP POLICY IF EXISTS "Anon can read active commodities via view" ON public.comm
 DROP POLICY IF EXISTS "Auth can read active commodities via view" ON public.commodities;
 DROP POLICY IF EXISTS "Admins can manage commodities" ON public.commodities;
 DROP POLICY IF EXISTS "Read commodities" ON public.commodities;
+DROP POLICY IF EXISTS "Anon read active commodities" ON public.commodities;
+DROP POLICY IF EXISTS "Auth read commodities" ON public.commodities;
 DROP POLICY IF EXISTS "Admins can insert commodities" ON public.commodities;
 DROP POLICY IF EXISTS "Admins can update commodities" ON public.commodities;
 DROP POLICY IF EXISTS "Admins can delete commodities" ON public.commodities;
 
-CREATE POLICY "Read commodities"
+CREATE POLICY "Anon read active commodities"
   ON public.commodities FOR SELECT
-  TO anon, authenticated
+  TO anon
+  USING (is_active = true);
+
+CREATE POLICY "Auth read commodities"
+  ON public.commodities FOR SELECT
+  TO authenticated
   USING (
     is_active = true
     OR public.has_role((SELECT auth.uid()), 'admin'::public.app_role)
@@ -447,13 +499,20 @@ DROP POLICY IF EXISTS "Anon can read active rates via view" ON public.exchange_r
 DROP POLICY IF EXISTS "Auth can read active rates via view" ON public.exchange_rates;
 DROP POLICY IF EXISTS "Admins can manage rates" ON public.exchange_rates;
 DROP POLICY IF EXISTS "Read exchange rates" ON public.exchange_rates;
+DROP POLICY IF EXISTS "Anon read active rates" ON public.exchange_rates;
+DROP POLICY IF EXISTS "Auth read rates" ON public.exchange_rates;
 DROP POLICY IF EXISTS "Admins can insert rates" ON public.exchange_rates;
 DROP POLICY IF EXISTS "Admins can update rates" ON public.exchange_rates;
 DROP POLICY IF EXISTS "Admins can delete rates" ON public.exchange_rates;
 
-CREATE POLICY "Read exchange rates"
+CREATE POLICY "Anon read active rates"
   ON public.exchange_rates FOR SELECT
-  TO anon, authenticated
+  TO anon
+  USING (is_active = true);
+
+CREATE POLICY "Auth read rates"
+  ON public.exchange_rates FOR SELECT
+  TO authenticated
   USING (
     is_active = true
     OR public.has_role((SELECT auth.uid()), 'admin'::public.app_role)
@@ -476,13 +535,20 @@ CREATE POLICY "Admins can delete rates"
 DROP POLICY IF EXISTS "Public reads published disclosures" ON public.stock_disclosures;
 DROP POLICY IF EXISTS "Admins manage disclosures" ON public.stock_disclosures;
 DROP POLICY IF EXISTS "Read stock disclosures" ON public.stock_disclosures;
+DROP POLICY IF EXISTS "Anon read published stock disclosures" ON public.stock_disclosures;
+DROP POLICY IF EXISTS "Auth read stock disclosures" ON public.stock_disclosures;
 DROP POLICY IF EXISTS "Admins can insert disclosures" ON public.stock_disclosures;
 DROP POLICY IF EXISTS "Admins can update disclosures" ON public.stock_disclosures;
 DROP POLICY IF EXISTS "Admins can delete disclosures" ON public.stock_disclosures;
 
-CREATE POLICY "Read stock disclosures"
+CREATE POLICY "Anon read published stock disclosures"
   ON public.stock_disclosures FOR SELECT
-  TO anon, authenticated
+  TO anon
+  USING (extraction_status = 'published');
+
+CREATE POLICY "Auth read stock disclosures"
+  ON public.stock_disclosures FOR SELECT
+  TO authenticated
   USING (
     extraction_status = 'published'
     OR public.has_role((SELECT auth.uid()), 'admin'::public.app_role)
@@ -505,13 +571,26 @@ CREATE POLICY "Admins can delete disclosures"
 DROP POLICY IF EXISTS "Public reads published corporate actions" ON public.stock_corporate_actions;
 DROP POLICY IF EXISTS "Admins manage corporate actions" ON public.stock_corporate_actions;
 DROP POLICY IF EXISTS "Read stock corporate actions" ON public.stock_corporate_actions;
+DROP POLICY IF EXISTS "Anon read published corporate actions" ON public.stock_corporate_actions;
+DROP POLICY IF EXISTS "Auth read corporate actions" ON public.stock_corporate_actions;
 DROP POLICY IF EXISTS "Admins can insert corporate actions" ON public.stock_corporate_actions;
 DROP POLICY IF EXISTS "Admins can update corporate actions" ON public.stock_corporate_actions;
 DROP POLICY IF EXISTS "Admins can delete corporate actions" ON public.stock_corporate_actions;
 
-CREATE POLICY "Read stock corporate actions"
+CREATE POLICY "Anon read published corporate actions"
   ON public.stock_corporate_actions FOR SELECT
-  TO anon, authenticated
+  TO anon
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.stock_disclosures disclosure
+      WHERE disclosure.id = disclosure_id
+        AND disclosure.extraction_status = 'published'
+    )
+  );
+
+CREATE POLICY "Auth read corporate actions"
+  ON public.stock_corporate_actions FOR SELECT
+  TO authenticated
   USING (
     EXISTS (
       SELECT 1 FROM public.stock_disclosures disclosure
@@ -687,7 +766,7 @@ CREATE POLICY "Users and guests can insert comments"
 
 DROP POLICY IF EXISTS "Users can update their own comments" ON public.post_comments;
 CREATE POLICY "Users can update their own comments"
-  ON public.post_comments FOR UPDATE
+  ON public.post_comments FOR UPDATE TO authenticated
   USING (
     (SELECT auth.uid()) IS NOT NULL AND user_id = (SELECT auth.uid())
   )
@@ -697,7 +776,7 @@ CREATE POLICY "Users can update their own comments"
 
 DROP POLICY IF EXISTS "Users can delete their own comments or admins can moderate" ON public.post_comments;
 CREATE POLICY "Users can delete their own comments or admins can moderate"
-  ON public.post_comments FOR DELETE
+  ON public.post_comments FOR DELETE TO authenticated
   USING (
     ((SELECT auth.uid()) IS NOT NULL AND user_id = (SELECT auth.uid()))
     OR
