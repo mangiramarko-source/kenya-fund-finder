@@ -72,7 +72,7 @@
     { "source": "/page/source-policy", "destination": "/page/source-policy.html" },
     { "source": "/page/corrections", "destination": "/page/corrections.html" },
     { "source": "/page/financial-disclaimer", "destination": "/page/financial-disclaimer.html" },
-    { "source": "/(.*)", "destination": "/index" }
+    { "source": "/((?!assets/).*)", "destination": "/index" }
   ],
   "headers": [
     {

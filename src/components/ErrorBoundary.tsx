@@ -38,10 +38,18 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  handleReload = () => {
+  handleReload = async () => {
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("kff_eb_chunk_retry");
       sessionStorage.removeItem("kff_vite_preload_retry");
+      if ("caches" in window) {
+        try {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        } catch {
+          // Ignore cache deletion errors
+        }
+      }
     }
     forceReloadWithCacheBust();
   };

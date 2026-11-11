@@ -1,7 +1,8 @@
 import { type ComponentType, lazy } from "react";
 
 /**
- * Checks if an error is due to a failed dynamic import or stale chunk.
+ * Checks if an error is due to a failed dynamic import, stale chunk,
+ * or MIME type mismatch from a stale cached deployment.
  * This commonly happens when a new version of the app is deployed to production
  * and chunk hashes change while a client is browsing the site.
  */
@@ -15,17 +16,26 @@ export function isChunkLoadError(error: unknown): boolean {
     msg.includes("error loading dynamically imported module") ||
     msg.includes("Importing a module script failed") ||
     msg.includes("error resolving module specifier") ||
-    msg.includes("Loading chunk")
+    msg.includes("Loading chunk") ||
+    msg.includes("MIME type") ||
+    msg.includes("text/html") ||
+    msg.includes("Failed to load module script") ||
+    msg.includes("not a valid JavaScript MIME type")
   );
 }
 
 /**
- * Reloads the window with a cache-busting timestamp parameter to force
- * browsers and CDNs to fetch fresh HTML and chunk hashes.
+ * Purges the browser CacheStorage API and reloads the window with a cache-busting
+ * timestamp parameter to force browsers and CDNs to fetch fresh HTML and chunk hashes.
  */
 export function forceReloadWithCacheBust(): void {
   if (typeof window === "undefined") return;
   try {
+    if ("caches" in window) {
+      caches.keys().then((names) => {
+        names.forEach((name) => caches.delete(name));
+      }).catch(() => {});
+    }
     const url = new URL(window.location.href);
     url.searchParams.set("_v", String(Date.now()));
     window.location.replace(url.toString());

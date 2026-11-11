@@ -10,7 +10,8 @@ import * as Sentry from "@sentry/react";
 
 // Automatically recover from stale chunks during new deployments
 if (typeof window !== "undefined") {
-  window.addEventListener("vite:preloadError", () => {
+  window.addEventListener("vite:preloadError", (event) => {
+    event.preventDefault();
     const key = "kff_vite_preload_retry";
     const lastRetry = sessionStorage.getItem(key);
     const now = Date.now();
