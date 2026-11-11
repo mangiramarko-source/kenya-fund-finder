@@ -53,8 +53,9 @@ export const StockFundamentalAnalysisCard: React.FC<
 
   return (
     <section
+      id="5-pillar-analysis"
       aria-label={`${scorecard.symbol} 5-Pillar Fundamental Scorecard`}
-      className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 space-y-5 shadow-xs"
+      className="scroll-mt-20 rounded-2xl border border-border/80 bg-card p-4 sm:p-5 space-y-5 shadow-xs"
     >
       {/* ─── 1. Header Bar ─── */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3.5">

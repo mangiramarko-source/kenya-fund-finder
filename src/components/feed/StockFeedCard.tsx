@@ -102,11 +102,23 @@ export function StockFeedCard({
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
   const avatarUrl = getStockLogoUrl(stock.symbol, stock.logoUrl);
 
-  const openArticle = (event?: MouseEvent) => {
+  const openArticle = (event?: MouseEvent, options?: { focusAnalysis?: boolean }) => {
     event?.stopPropagation();
     onRecordView?.(item.id);
-    if (isMobile) navigate(articlePath);
-    else onSelect(item);
+    const focusAnalysis = options?.focusAnalysis ?? false;
+    const targetPath = focusAnalysis ? `${articlePath}#5-pillar-analysis` : articlePath;
+    if (isMobile) {
+      navigate(targetPath, {
+        state: {
+          article: item.rawItem,
+          stock: item.relatedStock,
+          feedItem: item,
+          focusAnalysis,
+        },
+      });
+    } else {
+      onSelect(item);
+    }
   };
   const handleLike = (event: MouseEvent) => {
     event.stopPropagation();
@@ -380,7 +392,7 @@ export function StockFeedCard({
         <div>
           <button
             type="button"
-            onClick={openArticle}
+            onClick={(e) => openArticle(e, { focusAnalysis: true })}
             className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-[14px] transition-colors cursor-pointer"
           >
             <span>View full 5-pillar analysis</span>

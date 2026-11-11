@@ -179,7 +179,13 @@ export const SocialFeedCard = ({
     onRecordView?.(item.id);
     if (isMobile) {
       const rawId = item.id.startsWith("news-") ? item.id.slice(5) : item.id;
-      navigate(`/news/${rawId}`);
+      navigate(`/news/${rawId}`, {
+        state: {
+          article: item.rawItem,
+          stock: item.relatedStock,
+          feedItem: item,
+        },
+      });
     } else {
       onSelect(item);
     }

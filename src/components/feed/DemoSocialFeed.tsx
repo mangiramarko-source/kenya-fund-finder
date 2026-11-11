@@ -131,7 +131,13 @@ export const DemoSocialFeedCard = ({
   const handleCardClick = () => {
     if (isMobile) {
       const rawId = item.id.startsWith("news-") ? item.id.slice(5) : item.id;
-      navigate(`/news/${rawId}`);
+      navigate(`/news/${rawId}`, {
+        state: {
+          article: item.rawItem,
+          stock: item.relatedStock || item.relatedStocks?.[0],
+          feedItem: item,
+        },
+      });
     } else {
       onSelect(item);
     }

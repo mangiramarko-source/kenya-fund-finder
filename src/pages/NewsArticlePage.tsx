@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { decodeHtmlEntities, splitReadableParagraphs } from "@/lib/utils";
 import { useEffect, useState, useRef } from "react";
 import { 
@@ -25,8 +25,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageLoadingGate from "@/components/PageLoadingGate";
-import { fetchNewsById, fetchPublicStockById, fetchPublicStocks, fetchRelatedNews, fetchFunds, getNewsAiAnalysisDisplayText, type NewsFromDB, type PublicStock } from "@/lib/api";
+import { fetchNewsById, fetchPublicStockById, fetchPublicStocks, fetchRelatedNews, fetchFunds, getNewsAiAnalysisDisplayText, FALLBACK_MOCK_ARTICLES, type NewsFromDB, type PublicStock } from "@/lib/api";
 import { findMentionedStock } from "@/lib/stockNewsFeed";
+import { stockCache } from "@/lib/stockCache";
+import { FALLBACK_KENYAN_STOCKS } from "@/lib/stockDataFallback";
+import { newsCache } from "@/lib/newsCache";
 import { supabase } from "@/integrations/supabase/client";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
@@ -60,15 +63,36 @@ interface CommentItem {
 const NewsArticlePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const isGated = !authLoading && !user && !isBotOrPrerender();
   const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
   
+  const navState = location.state as {
+    article?: NewsFromDB;
+    stock?: any;
+    feedItem?: any;
+    focusAnalysis?: boolean;
+  } | null;
+
   const { toast } = useToast();
-  const [article, setArticle] = useState<NewsFromDB | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [article, setArticle] = useState<NewsFromDB | null>(() => navState?.article || null);
+  const [loading, setLoading] = useState(() => !navState?.article);
   const [related, setRelated] = useState<NewsFromDB[]>([]);
-  const [relatedStock, setRelatedStock] = useState<PublicStock | null>(null);
+  const [relatedStock, setRelatedStock] = useState<PublicStock | null>(() => {
+    if (!navState?.stock) return null;
+    return {
+      ...navState.stock,
+      sector: navState.stock.sector ?? null,
+      day_change_percent: navState.stock.changePercent ?? navState.stock.day_change_percent ?? 0,
+      previous_price: navState.stock.previousPrice ?? navState.stock.previous_price ?? null,
+      pe_ratio: navState.stock.peRatio ?? navState.stock.pe_ratio ?? null,
+      dividend_yield: navState.stock.dividendYield ?? navState.stock.dividend_yield ?? null,
+      year_low: navState.stock.yearLow ?? navState.stock.year_low ?? null,
+      year_high: navState.stock.yearHigh ?? navState.stock.year_high ?? null,
+      market_cap: navState.stock.marketCap ?? navState.stock.market_cap ?? null,
+    } as PublicStock;
+  });
   const [relatedMmf, setRelatedMmf] = useState<any | null>(null);
   const [relatedFx, setRelatedFx] = useState<any | null>(null);
   const [relatedCommodity, setRelatedCommodity] = useState<any | null>(null);
@@ -116,6 +140,14 @@ const educationalTips = [
 ];
 
 function getSyntheticArticle(id: string, allowGenericFallback = false): NewsFromDB | null {
+  const normalizedId = id.replace(/^news-/, "");
+  const mockMatch = FALLBACK_MOCK_ARTICLES.find(
+    (m) => m.id === id || m.id === normalizedId
+  );
+  if (mockMatch) {
+    return mockMatch;
+  }
+
   if (id === "daily-market-summary") {
     return {
       id: "daily-market-summary",
@@ -280,7 +312,60 @@ function getSyntheticArticle(id: string, allowGenericFallback = false): NewsFrom
   return null;
 }
 
+function getCandidateStocks(networkStocks: PublicStock[] = []): PublicStock[] {
+  if (networkStocks.length > 0) return networkStocks;
+  const cached = stockCache.loadStocks()?.stocks;
+  if (cached && cached.length > 0) return cached as PublicStock[];
+  return (FALLBACK_KENYAN_STOCKS as any[]) as PublicStock[];
+}
+
+function resolveStockForArticle(
+  targetArticle: NewsFromDB,
+  candidateStocks: any[]
+): PublicStock | null {
+  if (targetArticle.related_stock_id) {
+    const direct = candidateStocks.find((s) => s.id === targetArticle.related_stock_id);
+    if (direct) return direct;
+  }
+  const mentioned = findMentionedStock(targetArticle, candidateStocks);
+  if (mentioned) return mentioned as PublicStock;
+  return null;
+}
+
+  // Rule 3: Reliable mobile scroll to 5-pillar analysis when requested via hash or nav state
   useEffect(() => {
+    const shouldFocusAnalysis =
+      location.hash === "#5-pillar-analysis" ||
+      Boolean((location.state as any)?.focusAnalysis);
+
+    if (!shouldFocusAnalysis) return;
+
+    let rafId: number;
+    let timerId: ReturnType<typeof setTimeout>;
+
+    rafId = requestAnimationFrame(() => {
+      timerId = setTimeout(() => {
+        const el = document.getElementById("5-pillar-analysis");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 50);
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
+    };
+  }, [article?.id, relatedStock?.symbol, location.hash, location.state]);
+
+  // Scroll to top on route change ONLY if not targeting #5-pillar-analysis
+  useEffect(() => {
+    const shouldFocusAnalysis =
+      location.hash === "#5-pillar-analysis" ||
+      Boolean((location.state as any)?.focusAnalysis);
+
+    if (shouldFocusAnalysis) return;
+
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
@@ -291,59 +376,145 @@ function getSyntheticArticle(id: string, allowGenericFallback = false): NewsFrom
       document.body.scrollTop = 0;
     }, 50);
 
-    if (!id) return () => clearTimeout(timer);
-    setLoading(true);
-    setRelated([]);
-    setRelatedStock(null);
-    setRelatedMmf(null);
-    setRelatedFx(null);
-    setRelatedCommodity(null);
-    setStockLogoError(false);
-    setSourceLogoError(false);
+    return () => clearTimeout(timer);
+  }, [id, location.hash, location.state]);
 
-    const isDemoId = id.startsWith("demo-") || id.includes("safaricom") || id.includes("eqty") || id.includes("kcb");
+  useEffect(() => {
+    if (!id) return;
 
-    if (isDemoId) {
-      const synthetic = getSyntheticArticle(id);
-      if (synthetic) {
-        setArticle(synthetic);
-        fetchPublicStocks()
-          .then((stocks) => {
-            const matched = findMentionedStock(synthetic, stocks) || null;
-            if (matched) setRelatedStock(matched);
-          })
-          .catch(() => {});
-        setLoading(false);
-        return () => clearTimeout(timer);
-      }
+    const normalizedId = id.replace(/^news-/, "");
+    const isStateArticleMatch =
+      navState?.article &&
+      (navState.article.id === id ||
+        navState.article.id === normalizedId ||
+        navState.article.id.replace(/^news-/, "") === normalizedId);
 
-      const demoArticles = getDemoArticles();
-      const demoMatch = demoArticles.find(a => a.id === id);
-      if (demoMatch) {
-        setArticle(demoMatch.rawItem);
-        setRelatedStock(demoMatch.relatedStock || null);
-        setRelatedMmf(demoMatch.relatedMmf || null);
-        setRelatedFx(demoMatch.relatedFx || null);
-        setRelatedCommodity(demoMatch.relatedCommodity || null);
-        setLoading(false);
-        return () => clearTimeout(timer);
-      }
+    if (!isStateArticleMatch) {
+      setLoading(true);
+      setRelated([]);
+      setRelatedStock(null);
+      setRelatedMmf(null);
+      setRelatedFx(null);
+      setRelatedCommodity(null);
+      setStockLogoError(false);
+      setSourceLogoError(false);
     }
 
-    const synthetic = getSyntheticArticle(id);
-    if (synthetic) {
-      setArticle(synthetic);
+    const enrichMarketContext = (currentArticle: NewsFromDB) => {
+      const presentation = getNewsPresentation(currentArticle);
+      Promise.all([
+        fetchFunds().catch(() => []),
+        supabase.from("exchange_rates_public" as any).select("*"),
+        supabase.from("commodities_public" as any).select("*"),
+      ])
+        .then(([fundRows, fxRes, commodityRes]) => {
+          const fxRates = ((fxRes as any)?.data || []).map((rate: any) => ({
+            ...rate,
+            rate: Number(rate.rate) || 0,
+            previous_rate: rate.previous_rate == null ? null : Number(rate.previous_rate),
+            day_change_percent: rate.day_change_percent == null ? null : Number(rate.day_change_percent),
+          }));
+          const commodities = ((commodityRes as any)?.data || []).map((commodity: any) => ({
+            ...commodity,
+            price: Number(commodity.price) || 0,
+            previous_price: commodity.previous_price == null ? null : Number(commodity.previous_price),
+            day_change_percent: commodity.day_change_percent == null ? null : Number(commodity.day_change_percent),
+          }));
+          const marketLinks = buildRelatedMarketLinks(
+            presentation.title,
+            presentation.body,
+            fundRows,
+            fxRates,
+            commodities,
+          );
+          setRelatedMmf(marketLinks.relatedMmf);
+          setRelatedFx(marketLinks.relatedFx);
+          setRelatedCommodity(marketLinks.relatedCommodity);
+        })
+        .catch(() => {});
+
+      fetchRelatedNews(currentArticle.category, currentArticle.id, 3)
+        .then(setRelated)
+        .catch(() => {});
+    };
+
+    // 1. If article was already provided via navigation state, ensure stock is resolved and enrich
+    if (isStateArticleMatch && navState?.article) {
+      const activeArticle = navState.article;
+      if (!navState.stock) {
+        const candidates = getCandidateStocks();
+        const matched = resolveStockForArticle(activeArticle, candidates);
+        if (matched) setRelatedStock(matched);
+      }
+      setLoading(false);
+      enrichMarketContext(activeArticle);
+
       fetchPublicStocks()
         .then((stocks) => {
-          const matched = findMentionedStock(synthetic, stocks) || null;
+          const matched = resolveStockForArticle(activeArticle, stocks);
           if (matched) setRelatedStock(matched);
         })
         .catch(() => {});
-      setLoading(false);
-      return () => clearTimeout(timer);
+      return;
     }
 
-    // Immediately fetch the real article by ID and public stocks in parallel
+    // 2. Check synthetic articles (including FALLBACK_MOCK_ARTICLES)
+    const synthetic = getSyntheticArticle(id);
+    if (synthetic) {
+      setArticle(synthetic);
+      const candidates = getCandidateStocks();
+      const matched = resolveStockForArticle(synthetic, candidates);
+      if (matched) setRelatedStock(matched);
+      setLoading(false);
+      enrichMarketContext(synthetic);
+
+      fetchPublicStocks()
+        .then((stocks) => {
+          const betterStock = resolveStockForArticle(synthetic, stocks);
+          if (betterStock) setRelatedStock(betterStock);
+        })
+        .catch(() => {});
+      return;
+    }
+
+    // 3. Check getDemoArticles()
+    const demoArticles = getDemoArticles();
+    const demoMatch = demoArticles.find((a) => a.id === id || a.id === normalizedId);
+    if (demoMatch) {
+      setArticle(demoMatch.rawItem);
+      const candidates = getCandidateStocks();
+      const matched = demoMatch.relatedStock || resolveStockForArticle(demoMatch.rawItem, candidates);
+      if (matched) setRelatedStock(matched);
+      setRelatedMmf(demoMatch.relatedMmf || null);
+      setRelatedFx(demoMatch.relatedFx || null);
+      setRelatedCommodity(demoMatch.relatedCommodity || null);
+      setLoading(false);
+      return;
+    }
+
+    // 4. Check newsCache
+    const cachedArticles = newsCache.loadNews()?.articles || [];
+    const cachedMatch = cachedArticles.find(
+      (c) => c.id === id || c.id === normalizedId || c.id.replace(/^news-/, "") === normalizedId
+    );
+    if (cachedMatch) {
+      setArticle(cachedMatch);
+      const candidates = getCandidateStocks();
+      const matched = resolveStockForArticle(cachedMatch, candidates);
+      if (matched) setRelatedStock(matched);
+      setLoading(false);
+      enrichMarketContext(cachedMatch);
+
+      fetchPublicStocks()
+        .then((stocks) => {
+          const betterStock = resolveStockForArticle(cachedMatch, stocks);
+          if (betterStock) setRelatedStock(betterStock);
+        })
+        .catch(() => {});
+      return;
+    }
+
+    // 5. Remote fetch
     Promise.all([
       fetchNewsById(id),
       fetchPublicStocks().catch(() => []),
@@ -351,81 +522,45 @@ function getSyntheticArticle(id: string, allowGenericFallback = false): NewsFrom
       .then(([a, stocks]) => {
         if (a) {
           setArticle(a);
+          const candidates = getCandidateStocks(stocks || []);
+          const matched = resolveStockForArticle(a, candidates);
+          if (matched) setRelatedStock(matched);
           setLoading(false);
-          window.scrollTo(0, 0);
-
-          let matchedStock: PublicStock | null = null;
-          if (a.related_stock_id) {
-            matchedStock = (stocks || []).find((s) => s.id === a.related_stock_id) || null;
-            if (!matchedStock) {
-              fetchPublicStockById(a.related_stock_id)
-                .then(setRelatedStock)
-                .catch(() => {});
-            }
-          }
-          if (!matchedStock && stocks && stocks.length > 0) {
-            matchedStock = findMentionedStock(a, stocks) || null;
-          }
-          if (matchedStock) {
-            setRelatedStock(matchedStock);
-          }
-
-          // Asynchronously enrich with related links & news in background without blocking
-          const presentation = getNewsPresentation(a);
-          Promise.all([
-            fetchFunds().catch(() => []),
-            supabase.from("exchange_rates_public" as any).select("*"),
-            supabase.from("commodities_public" as any).select("*"),
-          ]).then(([fundRows, fxRes, commodityRes]) => {
-            const fxRates = ((fxRes as any)?.data || []).map((rate: any) => ({
-              ...rate,
-              rate: Number(rate.rate) || 0,
-              previous_rate: rate.previous_rate == null ? null : Number(rate.previous_rate),
-              day_change_percent: rate.day_change_percent == null ? null : Number(rate.day_change_percent),
-            }));
-            const commodities = ((commodityRes as any)?.data || []).map((commodity: any) => ({
-              ...commodity,
-              price: Number(commodity.price) || 0,
-              previous_price: commodity.previous_price == null ? null : Number(commodity.previous_price),
-              day_change_percent: commodity.day_change_percent == null ? null : Number(commodity.day_change_percent),
-            }));
-            const marketLinks = buildRelatedMarketLinks(
-              presentation.title,
-              presentation.body,
-              fundRows,
-              fxRates,
-              commodities,
-            );
-            setRelatedMmf(marketLinks.relatedMmf);
-            setRelatedFx(marketLinks.relatedFx);
-            setRelatedCommodity(marketLinks.relatedCommodity);
-          }).catch(() => {});
-
-          fetchRelatedNews(a.category, a.id, 3)
-            .then(setRelated)
-            .catch(() => {});
+          enrichMarketContext(a);
         } else {
           const syn = getSyntheticArticle(id, true);
           setArticle(syn);
+          if (syn) {
+            const candidates = getCandidateStocks(stocks || []);
+            const matched = resolveStockForArticle(syn, candidates);
+            if (matched) setRelatedStock(matched);
+          }
           setLoading(false);
         }
       })
       .catch(() => {
         const syn = getSyntheticArticle(id, true);
         setArticle(syn);
+        if (syn) {
+          const candidates = getCandidateStocks();
+          const matched = resolveStockForArticle(syn, candidates);
+          if (matched) setRelatedStock(matched);
+        }
         setLoading(false);
       });
-
-    return () => clearTimeout(timer);
   }, [id]);
 
   useEffect(() => {
-    if (!loading && article) {
+    const shouldFocusAnalysis =
+      location.hash === "#5-pillar-analysis" ||
+      Boolean((location.state as any)?.focusAnalysis);
+
+    if (!loading && article && !shouldFocusAnalysis) {
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     }
-  }, [loading, article]);
+  }, [loading, article, location.hash, location.state]);
 
   const articlePresentation = article ? getNewsPresentation(article) : null;
 

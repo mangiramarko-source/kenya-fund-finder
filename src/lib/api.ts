@@ -3,6 +3,7 @@ import { fetchPublicData } from "@/lib/gateway";
 import { FALLBACK_KENYAN_FUNDS } from "@/lib/fundDataFallback";
 import { isIndexableNewsArticle } from "@/lib/seoNewsEligibility";
 import { dedupeNewsArticles, interleaveItems } from "@/lib/newsDedupe";
+import { newsCache } from "@/lib/newsCache";
 
 export { interleaveItems } from "@/lib/newsDedupe";
 
@@ -151,6 +152,114 @@ export interface NewsFromDB {
   parsed_ai_analysis?: NewsAiAnalysis | null;
   video_url?: string | null;
 }
+
+export const FALLBACK_MOCK_ARTICLES: NewsFromDB[] = [
+  {
+    id: "mock-1",
+    title: "Remove the garbage from your feed. You choose what to filter.",
+    summary: "Take control of your timeline with our new advanced filtering tools.",
+    content: "Take control of your timeline with our new advanced filtering tools. Filter by asset class, publisher tier, date range, or custom tags to keep your intelligence stream clean and signal-dense.",
+    source: "Millan Philipose",
+    date_published: new Date().toISOString(),
+    source_published_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    url: "#",
+    category: "Platform Update",
+    read_time: "1 min read",
+    is_featured: true,
+    status: "published",
+    image_url: "https://images.unsplash.com/photo-1614064641913-6b71a3061145?auto=format&fit=crop&q=80",
+    related_stock_id: null,
+    ai_insight: null,
+    parsed_ai_analysis: null,
+  },
+  {
+    id: "mock-2",
+    title: "CBK holds benchmark rate at 13.00% amid inflation concerns",
+    summary: "The Central Bank of Kenya has decided to maintain its benchmark lending rate at 13.00%...",
+    content: "The Central Bank of Kenya Monetary Policy Committee (MPC) has decided to maintain the Central Bank Rate (CBR) at 13.00%, noting that previous monetary tightening actions were still transmitting through the economy and anchoring inflation expectations.",
+    source: "Business Daily",
+    date_published: new Date(Date.now() - 3600000).toISOString(),
+    source_published_at: new Date(Date.now() - 3600000).toISOString(),
+    created_at: new Date(Date.now() - 3600000).toISOString(),
+    url: "#",
+    category: "Economy",
+    read_time: "3 min read",
+    is_featured: false,
+    status: "published",
+    image_url: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80",
+    related_stock_id: null,
+    ai_insight: null,
+    parsed_ai_analysis: null,
+  },
+  {
+    id: "mock-3",
+    title: "Safaricom reports 12% profit increase for Q3",
+    summary: "Driven by M-PESA and mobile data growth, the telco giant reports strong earnings with double-digit growth in digital services and mobile connectivity.",
+    content: "Safaricom PLC has posted a 12% increase in net profit for the third quarter, underpinned by robust expansion in its M-PESA mobile money ecosystem and sustained demand for mobile data. Voice revenue held steady while digital services and merchant payments registered strong growth. Operating margins improved as cost-optimization initiatives took effect across regional business units.",
+    source: "TechCabal",
+    date_published: new Date(Date.now() - 86400000).toISOString(),
+    source_published_at: new Date(Date.now() - 86400000).toISOString(),
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    url: "#",
+    category: "Corporate Earnings",
+    read_time: "4 min read",
+    is_featured: false,
+    status: "published",
+    image_url: "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80",
+    related_stock_id: null,
+    ai_insight: JSON.stringify({
+      event_label: "Earnings Report",
+      impact_horizon: "Short-term relevance",
+      impact_score: 4,
+      what_happened: "Safaricom reported a 12% profit increase for Q3 driven by M-PESA and mobile data growth.",
+      why_it_matters: "M-PESA transaction volumes and digital finance continue to outpace traditional voice revenue, maintaining market leadership and cash flow stability.",
+      confirmed_facts: [
+        "Net profit grew 12% year-on-year for the third quarter.",
+        "M-PESA merchant network and transaction volumes expanded double digits.",
+        "Mobile data usage sustained robust upward momentum across consumer and enterprise segments."
+      ],
+      factors_positive: [
+        "M-PESA merchant ecosystem driving high-margin transactional revenue.",
+        "Capital expenditure in regional network infrastructure starting to yield returns."
+      ],
+      factors_negative: [
+        "Regulatory scrutiny on mobile transaction fees and digital banking interoperability.",
+        "Currency fluctuations impact imported network equipment costs."
+      ],
+      watch_next: [
+        "Full-year audited financial release and dividend declaration.",
+        "Ethiopia subsidiary growth metrics and EBITDA break-even trajectory."
+      ]
+    }),
+    parsed_ai_analysis: {
+      event_label: "Earnings Report",
+      impact_horizon: "Short-term relevance",
+      impact_score: 4,
+      what_happened: "Safaricom reported a 12% profit increase for Q3 driven by M-PESA and mobile data growth.",
+      why_it_matters: "M-PESA transaction volumes and digital finance continue to outpace traditional voice revenue, maintaining market leadership and cash flow stability.",
+      confirmed_facts: [
+        "Net profit grew 12% year-on-year for the third quarter.",
+        "M-PESA merchant network and transaction volumes expanded double digits.",
+        "Mobile data usage sustained robust upward momentum across consumer and enterprise segments."
+      ],
+      factors_positive: [
+        "M-PESA merchant ecosystem driving high-margin transactional revenue.",
+        "Capital expenditure in regional network infrastructure starting to yield returns."
+      ],
+      factors_negative: [
+        "Regulatory scrutiny on mobile transaction fees and digital banking interoperability.",
+        "Currency fluctuations impact imported network equipment costs."
+      ],
+      watch_next: [
+        "Full-year audited financial release and dividend declaration.",
+        "Ethiopia subsidiary growth metrics and EBITDA break-even trajectory."
+      ]
+    }
+  }
+];
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface PublicStock {
   id: string;
@@ -325,6 +434,8 @@ export function mapNewsArticle(d: any): NewsFromDB {
 
 export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
   const normalizedId = id.replace(/^news-/, "");
+
+  // 1. Check verified YouTube briefings
   const verifiedVideo = VERIFIED_YOUTUBE_BRIEFINGS.find(
     (v) => v.id === id || v.id === normalizedId,
   );
@@ -334,12 +445,39 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
       parsed_ai_analysis: parseNewsAiAnalysis(verifiedVideo.ai_insight),
     };
   }
+
+  // 2. Check mock fallback articles (single source of truth)
+  const mockMatch = FALLBACK_MOCK_ARTICLES.find(
+    (m) => m.id === id || m.id === normalizedId,
+  );
+  if (mockMatch) {
+    return mockMatch;
+  }
+
+  // 3. Check client newsCache
+  const cachedNews = newsCache.loadNews()?.articles || [];
+  const cachedMatch = cachedNews.find(
+    (a) => a.id === id || a.id === normalizedId || a.id.replace(/^news-/, "") === normalizedId,
+  );
+  if (cachedMatch) {
+    return cachedMatch;
+  }
+
+  // 4. Postgres query: ONLY if normalizedId is a valid UUID (prevents Postgres 22P02 error)
+  if (!UUID_REGEX.test(normalizedId)) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("news_articles_public")
     .select("id, title, summary, content, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, video_url, related_stock_id, ai_insight")
-    .eq("id", id)
+    .eq("id", normalizedId)
     .maybeSingle();
-  if (error) throw error;
+
+  if (error) {
+    console.warn("fetchNewsById query error:", error);
+    return null;
+  }
   if (!data) return null;
 
   const dbArticle = mapNewsArticle(data);
@@ -439,38 +577,7 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
     return (data || []).map(mapNewsArticle);
   } catch (err) {
     console.error("Failed to fetch latest news from Supabase (likely RLS error), using mock data", err);
-    return [
-      {
-        id: "mock-1",
-        title: "Remove the garbage from your feed. You choose what to filter.",
-        summary: "Take control of your timeline with our new advanced filtering tools.",
-        content: null,
-        source: "Millan Philipose",
-        date_published: new Date().toISOString(),
-        source_published_at: new Date().toISOString(),
-        url: "#",
-        category: "Platform Update",
-        read_time: "1 min read",
-        is_featured: true,
-        status: "published",
-        image_url: "https://images.unsplash.com/photo-1614064641913-6b71a3061145?auto=format&fit=crop&q=80",
-      },
-      {
-        id: "mock-2",
-        title: "CBK holds benchmark rate at 13.00% amid inflation concerns",
-        summary: "The Central Bank of Kenya has decided to maintain its benchmark lending rate...",
-        content: null,
-        source: "Business Daily",
-        date_published: new Date(Date.now() - 3600000).toISOString(),
-        source_published_at: new Date(Date.now() - 3600000).toISOString(),
-        url: "#",
-        category: "Economy",
-        read_time: "3 min read",
-        is_featured: false,
-        status: "published",
-        image_url: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80",
-      }
-    ];
+    return FALLBACK_MOCK_ARTICLES.slice(0, 2);
   }
 }
 
@@ -738,59 +845,7 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
   } catch (err) {
     console.error("Failed to fetch news from Supabase (likely RLS error), using mock data", err);
     // Return mock data so the right column works while RLS is being fixed
-    return [
-      {
-        id: "mock-1",
-        title: "Remove the garbage from your feed. You choose what to filter.",
-        summary: "Take control of your timeline with our new advanced filtering tools.",
-        content: "Take control of your timeline with our new advanced filtering tools.",
-        source: "Millan Philipose",
-        date_published: new Date().toISOString(),
-        source_published_at: new Date().toISOString(),
-        url: "#",
-        category: "Platform Update",
-        read_time: "1 min read",
-        is_featured: true,
-        status: "published",
-        image_url: "https://images.unsplash.com/photo-1614064641913-6b71a3061145?auto=format&fit=crop&q=80",
-        related_stock_id: null,
-        ai_insight: null,
-      },
-      {
-        id: "mock-2",
-        title: "CBK holds benchmark rate at 13.00% amid inflation concerns",
-        summary: "The Central Bank of Kenya has decided to maintain its benchmark lending rate...",
-        content: "The Central Bank of Kenya has decided to maintain its benchmark lending rate...",
-        source: "Business Daily",
-        date_published: new Date(Date.now() - 3600000).toISOString(),
-        source_published_at: new Date(Date.now() - 3600000).toISOString(),
-        url: "#",
-        category: "Economy",
-        read_time: "3 min read",
-        is_featured: false,
-        status: "published",
-        image_url: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80",
-        related_stock_id: null,
-        ai_insight: null,
-      },
-      {
-        id: "mock-3",
-        title: "Safaricom reports 12% profit increase for Q3",
-        summary: "Driven by M-PESA and mobile data growth, the telco giant...",
-        content: "Driven by M-PESA and mobile data growth, the telco giant...",
-        source: "TechCabal",
-        date_published: new Date(Date.now() - 86400000).toISOString(),
-        source_published_at: new Date(Date.now() - 86400000).toISOString(),
-        url: "#",
-        category: "Tech",
-        read_time: "4 min read",
-        is_featured: false,
-        status: "published",
-        image_url: "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80",
-        related_stock_id: null,
-        ai_insight: null,
-      }
-    ];
+    return FALLBACK_MOCK_ARTICLES;
   }
 }
 
