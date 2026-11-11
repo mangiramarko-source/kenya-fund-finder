@@ -1,4 +1,9 @@
 import { createClient } from "../_shared/supabase-client.ts";
+import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
+import {
+  getSupabasePublishableKey,
+  getSupabaseSecretKey,
+} from "../_shared/supabase-keys.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,11 +44,36 @@ function isGlobalMarketOpen(now: Date): boolean {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const authorization = await authorizePrivilegedRequest(req, {
+    namedSecretKeysJson: Deno.env.get("SUPABASE_SECRET_KEYS"),
+    secretName: "automations",
+    verifyUser: async (accessToken) => {
+      const userClient = createClient(supabaseUrl, getSupabasePublishableKey());
+      const { data, error } = await userClient.auth.getUser(accessToken);
+      return error ? null : data.user?.id ?? null;
+    },
+    isAdmin: async (userId) => {
+      const adminClient = createClient(supabaseUrl, getSupabaseSecretKey());
+      const { data } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      return Boolean(data);
+    },
+  });
+
+  if (!authorization.ok) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: authorization.status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const supabase = createClient(supabaseUrl, getSupabaseSecretKey());
 
     const now = new Date();
     const { hour, weekday, ymd } = nairobiNow();

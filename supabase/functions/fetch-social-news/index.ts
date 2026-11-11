@@ -70,6 +70,7 @@ interface NormalizedSocialPost {
   text: string;
   createdAt?: string;
   imageUrl?: string | null;
+  rawItem?: Record<string, any>;
 }
 
 interface RewrittenPost {

@@ -39,13 +39,6 @@ const AdminLoginPage = () => {
     setError("");
     setLoading(true);
 
-    if (email.toLowerCase() !== "kokoscalbaridi@gmail.com") {
-      setError("Unauthorized access.");
-      setTurnstileToken(null);
-      setLoading(false);
-      return;
-    }
-
     if (!(isTurnstileDevBypassEnabled() && token === TURNSTILE_DEV_BYPASS_TOKEN)) {
       try {
         const { data, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
@@ -70,13 +63,39 @@ const AdminLoginPage = () => {
     }
 
     const { error } = await signIn(email, password);
-    setLoading(false);
-    setTurnstileToken(null);
     if (error) {
       setError(error.message);
-    } else {
-      navigate("/admin");
+      setTurnstileToken(null);
+      setLoading(false);
+      return;
     }
+
+    const { data: { user: signedInUser } } = await supabase.auth.getUser();
+    if (!signedInUser) {
+      setError("Unable to verify user session.");
+      setTurnstileToken(null);
+      setLoading(false);
+      return;
+    }
+
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", signedInUser.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!roleData) {
+      await supabase.auth.signOut();
+      setError("Access denied: administrator privileges required.");
+      setTurnstileToken(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
+    setTurnstileToken(null);
+    navigate("/admin");
   }, [email, password, signIn, navigate]);
 
   // Auto-submit when Turnstile verification completes (after fields are filled)

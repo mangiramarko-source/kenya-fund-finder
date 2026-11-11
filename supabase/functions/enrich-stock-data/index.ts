@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
     }
 
     // Build context for the AI
-    const matchedStockRow = (stocks || []).find((s) => s.id === deterministicMatch.stockId);
+    const matchedStockRow = (stocks || []).find((s) => s.id === deterministicMatch.stock.id);
     const matchedFundamentalsText = matchedStockRow
       ? `Matched Stock Fundamentals (Verified NSE Data): Symbol=${matchedStockRow.symbol}, Name=${matchedStockRow.name}, Sector=${matchedStockRow.sector ?? "NSE"}, Share Price=KES ${matchedStockRow.price ?? "N/A"}, P/E Ratio=${matchedStockRow.pe_ratio ?? "N/A"}x, Dividend Yield=${matchedStockRow.dividend_yield ?? "N/A"}%, 52-Week Range=KES ${matchedStockRow.year_low ?? "N/A"} - KES ${matchedStockRow.year_high ?? "N/A"}`
       : "";

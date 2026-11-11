@@ -48,11 +48,6 @@ Deno.serve(async (request) => {
         return { id: data.user.id, email: data.user.email };
       },
       async isAdmin(user) {
-        // Keep this server-side guard aligned with the legacy administrator
-        // identity already recognized by the application auth context.
-        if (user.email?.trim().toLowerCase() === "kokoscalbaridi@gmail.com") {
-          return true;
-        }
         const { data, error } = await adminClient
           .from("user_roles")
           .select("role")

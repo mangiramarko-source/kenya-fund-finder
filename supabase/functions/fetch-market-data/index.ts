@@ -15,17 +15,28 @@ import {
   shouldAdvanceFlatFundDate,
 } from "./serrari-funds.ts";
 
-const allowedOrigins = [
+const allowedOrigins = new Set([
   "https://kenya-fund-finder.lovable.app",
+  "https://kenyafundfinder.com",
   "https://www.kenyafundfinder.com",
   "https://id-preview--e72d5937-d879-434f-ab8d-95e8c43f9adf.lovable.app",
-];
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:4180",
+  "http://127.0.0.1:4180",
+]);
+
+function isOriginAllowed(origin: string): boolean {
+  if (allowedOrigins.has(origin)) return true;
+  if (/^https:\/\/[a-z0-9-]+--e72d5937-d879-434f-ab8d-95e8c43f9adf\.lovable\.app$/.test(origin)) return true;
+  return false;
+}
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get("origin") || "";
-  const matched = allowedOrigins.find((o) => origin.startsWith(o));
+  const matched = isOriginAllowed(origin) ? origin : "";
   return {
-    "Access-Control-Allow-Origin": matched || "",
+    "Access-Control-Allow-Origin": matched,
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   };

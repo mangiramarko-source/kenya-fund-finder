@@ -24,8 +24,7 @@ serve(async (req) => {
     // 1. Honeypot check – bots fill hidden fields
     if (honeypot && typeof honeypot === "string" && honeypot.length > 0) {
       console.warn("Honeypot triggered");
-      // Return success to not reveal detection to bots
-      return json({ success: true });
+      return json({ success: false, error: "Verification failed" }, 403);
     }
 
     // 2. Timing check – reject submissions completed in under 2 seconds
@@ -38,8 +37,10 @@ serve(async (req) => {
     }
 
     // 3. Rate limiting – 5 requests per minute per IP, 10-minute block
-    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-                     req.headers.get("cf-connecting-ip") || "unknown";
+    const clientIp = req.headers.get("cf-connecting-ip") ||
+                     req.headers.get("x-real-ip") ||
+                     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+                     "unknown";
     // Simple hash for privacy
     const encoder = new TextEncoder();
     const data = encoder.encode(clientIp + (Deno.env.get("CLOUDFLARE_TURNSTILE_SECRET") || "salt"));
