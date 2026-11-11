@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """
 Generate Kenya Fund Finder brand icons from the high-resolution eagle mascot artwork.
-Creates pixel-perfect brand icons matching the "Favicon UI" (deep emerald squircle with
-centered eagle emblem and luminous emerald outline):
+Creates pixel-perfect brand icons matching the user's authentic design:
+- White-to-light-mint gradient squircle card
+- Centered eagle emblem in suit & tie with complete unclipped lower contour
+- Crisp, subtle edge definition for both dark-mode and light-mode interfaces
 
-- public/apple-touch-icon.png (180x180, full-bleed emerald #064e3b, centered eagle)
+Outputs:
+- public/apple-touch-icon.png (180x180, full-bleed master artwork for iOS)
 - public/apple-touch-icon-precomposed.png (180x180)
 - public/apple-touch-icon-180x180.png (180x180)
 - public/apple-touch-icon-152x152.png (152x152)
 - public/apple-touch-icon-120x120.png (120x120)
-- public/icon-192.png (192x192 squircle)
-- public/icon-512.png (512x512 squircle)
-- public/icon-512-maskable.png (512x512 full-bleed emerald safe-zone icon)
+- public/icon-192.png (192x192 squircle with transparent corners)
+- public/icon-512.png (512x512 squircle with transparent corners)
+- public/icon-512-maskable.png (512x512 full-bleed adaptive icon)
 - public/favicon.ico (multi-resolution: 16x16, 32x32, 48x48)
 - public/favicon.svg (SVG vector/squircle wrapper)
 """
@@ -19,141 +22,78 @@ centered eagle emblem and luminous emerald outline):
 import os
 import base64
 from io import BytesIO
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCE_IMAGE = os.path.join(REPO_ROOT, "src", "assets", "brand-master.jpg")
 PUBLIC_DIR = os.path.join(REPO_ROOT, "public")
 
-def extract_clean_eagle(master_img):
-    """
-    Symmetrically crops the eagle emblem from the master image and replaces
-    the light-mint/white exterior background with transparent alpha, preserving
-    all interior eagle details.
-    """
-    # Symmetrical crop around the true eagle center (515, 596)
-    crop_box = (88, 169, 942, 1023)
-    cropped = master_img.crop(crop_box)
-    w, h = cropped.size
-
-    # Floodfill the exterior mint/white background from outer boundary points
-    bin_img = Image.new("L", (w, h), 0)
-    for y in range(h):
-        for x in range(w):
-            r, g, b = cropped.getpixel((x, y))
-            if g > 190 and r > 140 and b > 160:
-                bin_img.putpixel((x, y), 255)
-
-    for start_pt in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1), (w // 2, 0)]:
-        if bin_img.getpixel(start_pt) == 255:
-            ImageDraw.floodfill(bin_img, start_pt, 128)
-
-    # Invert to build eagle alpha (128 = background => 0; rest => 255)
-    alpha = Image.new("L", (w, h), 255)
-    for y in range(h):
-        for x in range(w):
-            if bin_img.getpixel((x, y)) == 128:
-                alpha.putpixel((x, y), 0)
-
-    # Feather alpha slightly for crisp antialiased composite
-    alpha = alpha.filter(ImageFilter.GaussianBlur(1.2))
-
-    # Composite cleanly onto the brand emerald background (#064e3b)
-    bg = Image.new("RGBA", (w, h), (6, 78, 59, 255))
-    eagle_rgba = cropped.convert("RGBA")
-    eagle_rgba.putalpha(alpha)
-    clean_composite = Image.alpha_composite(bg, eagle_rgba)
-
-    return clean_composite
-
-def make_squircle_icon(base_composite, size, outline_alpha=90):
+def make_squircle_icon(master_img, size, radius_ratio=0.223):
     """
     Builds a standard PWA squircle icon (transparent corners outside squircle).
     """
-    corner_r = int(size * (16 / 64))
-    border_w = max(1, int(size * (2 / 64)))
-    border_color = (16, 185, 129, outline_alpha)
+    resized = master_img.resize((size, size), Image.Resampling.LANCZOS)
+    radius = int(size * radius_ratio)
 
-    # 1. Resize base clean eagle composite
-    resized = base_composite.resize((size, size), Image.Resampling.LANCZOS)
-
-    # 2. Build squircle mask
     mask = Image.new("L", (size, size), 0)
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.rounded_rectangle([0, 0, size - 1, size - 1], radius=corner_r, fill=255)
+    draw_mask = ImageDraw.Draw(mask)
+    draw_mask.rounded_rectangle([0, 0, size - 1, size - 1], radius=radius, fill=255)
 
-    # 3. Apply mask to transparent canvas
     out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     out.paste(resized, (0, 0), mask)
 
-    # 4. Draw crisp outer emerald stroke
+    # Subtle 1px anti-aliased border so white top edge stands out on white backgrounds
     border_draw = ImageDraw.Draw(out)
-    half_w = border_w // 2
+    border_width = max(1, size // 128)
     border_draw.rounded_rectangle(
-        [half_w, half_w, size - 1 - half_w, size - 1 - half_w],
-        radius=corner_r,
-        outline=border_color,
-        width=border_w
+        [0, 0, size - 1, size - 1],
+        radius=radius,
+        outline=(0, 0, 0, 24),
+        width=border_width
     )
     return out
 
-def make_apple_touch_icon(base_composite, size=180):
+def make_apple_touch_icon(master_img, size=180):
     """
     Builds an Apple Touch Icon.
     iOS automatically rounds the icon on home screen; transparent corners turn solid black.
-    Therefore, the background MUST be solid #064e3b, with an inner rounded emerald border.
+    Therefore, the background is full-bleed solid artwork (white-to-mint gradient).
     """
-    corner_r = int(size * (16 / 64))
-    border_w = max(1, int(size * (2 / 64)))
-    border_color = (16, 185, 129, 90)
+    resized = master_img.resize((size, size), Image.Resampling.LANCZOS)
+    return resized.convert("RGBA")
 
-    # Full-bleed solid emerald canvas
-    out = Image.new("RGBA", (size, size), (6, 78, 59, 255))
-    resized = base_composite.resize((size, size), Image.Resampling.LANCZOS)
-    out.paste(resized, (0, 0))
-
-    # Inner squircle border matching the favicon UI
-    draw = ImageDraw.Draw(out)
-    half_w = border_w // 2
-    draw.rounded_rectangle(
-        [half_w + 1, half_w + 1, size - 2 - half_w, size - 2 - half_w],
-        radius=corner_r,
-        outline=border_color,
-        width=border_w
-    )
-    return out
-
-def make_maskable_icon(base_composite, size=512):
+def make_maskable_icon(master_img, size=512):
     """
-    Builds an Android maskable icon.
-    Full-bleed emerald (#064e3b) background with artwork contained in the 80% safe zone.
+    Builds an Android maskable adaptive icon.
+    Full-bleed background with artwork scaled to ~94% to guarantee all details
+    (including the bottom tie) remain within Android's 80% safe zone.
     """
-    out = Image.new("RGBA", (size, size), (6, 78, 59, 255))
+    scale_factor = 0.94
+    scaled_size = int(size * scale_factor)
+    offset = (size - scaled_size) // 2
 
-    # Scale eagle to fit safely inside the 80% diameter safe zone
-    safe_size = int(size * 0.74)
-    offset = (size - safe_size) // 2
-    resized = base_composite.resize((safe_size, safe_size), Image.Resampling.LANCZOS)
+    # Background vertical gradient matching the master artwork
+    bg = Image.new("RGBA", (size, size))
+    top_c = (255, 255, 255, 255)
+    bot_c = (202, 247, 226, 255)
+    for y in range(size):
+        factor = y / (size - 1)
+        r = int(top_c[0] + factor * (bot_c[0] - top_c[0]))
+        g = int(top_c[1] + factor * (bot_c[1] - top_c[1]))
+        b = int(top_c[2] + factor * (bot_c[2] - top_c[2]))
+        for x in range(size):
+            bg.putpixel((x, y), (r, g, b, 255))
 
-    # Squircle mask for the inner emblem
-    inner_r = int(safe_size * (16 / 64))
-    mask = Image.new("L", (safe_size, safe_size), 0)
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.rounded_rectangle([0, 0, safe_size - 1, safe_size - 1], radius=inner_r, fill=255)
+    scaled = master_img.resize((scaled_size, scaled_size), Image.Resampling.LANCZOS)
 
-    out.paste(resized, (offset, offset), mask)
+    # Paste scaled master with feathered edge to eliminate any seam
+    feather_mask = Image.new("L", (scaled_size, scaled_size), 255)
+    f_draw = ImageDraw.Draw(feather_mask)
+    f_draw.rectangle([0, 0, scaled_size - 1, scaled_size - 1], outline=240, width=1)
+    f_draw.rectangle([1, 1, scaled_size - 2, scaled_size - 2], outline=250, width=1)
 
-    # Draw safe-zone emerald stroke
-    border_w = max(2, int(safe_size * (2 / 64)))
-    border_draw = ImageDraw.Draw(out)
-    half_w = border_w // 2
-    border_draw.rounded_rectangle(
-        [offset + half_w, offset + half_w, offset + safe_size - 1 - half_w, offset + safe_size - 1 - half_w],
-        radius=inner_r,
-        outline=(16, 185, 129, 90),
-        width=border_w
-    )
-    return out
+    bg.paste(scaled, (offset, offset), feather_mask)
+    return bg
 
 def main():
     if not os.path.exists(SOURCE_IMAGE):
@@ -163,50 +103,45 @@ def main():
     master_img = Image.open(SOURCE_IMAGE).convert("RGB")
     print(f"Master image size: {master_img.size}")
 
-    print("Extracting clean eagle composite on #064e3b background...")
-    clean_composite = extract_clean_eagle(master_img)
-
-    # 1. Generate Apple Touch Icons (solid #064e3b with inner squircle stroke)
-    apple_touch_180 = make_apple_touch_icon(clean_composite, 180)
+    # 1. Generate Apple Touch Icons (full-bleed for iOS home screen & navbar)
     touch_targets = [
-        "apple-touch-icon.png",
-        "apple-touch-icon-precomposed.png",
-        "apple-touch-icon-180x180.png",
-        "apple-touch-icon-152x152.png",
-        "apple-touch-icon-120x120.png",
+        ("apple-touch-icon.png", 180),
+        ("apple-touch-icon-precomposed.png", 180),
+        ("apple-touch-icon-180x180.png", 180),
+        ("apple-touch-icon-152x152.png", 152),
+        ("apple-touch-icon-120x120.png", 120),
     ]
-    for target in touch_targets:
-        size = 180 if "180" in target or target in ["apple-touch-icon.png", "apple-touch-icon-precomposed.png"] else (152 if "152" in target else 120)
-        icon = make_apple_touch_icon(clean_composite, size)
-        out_path = os.path.join(PUBLIC_DIR, target)
+    for filename, size in touch_targets:
+        icon = make_apple_touch_icon(master_img, size)
+        out_path = os.path.join(PUBLIC_DIR, filename)
         icon.save(out_path, format="PNG", optimize=True)
-        print(f"Generated {target} ({size}x{size}) -> {out_path}")
+        print(f"Generated {filename} ({size}x{size}) -> {out_path}")
 
     # 2. Generate PWA standard squircle icons
-    icon_192 = make_squircle_icon(clean_composite, 192)
+    icon_192 = make_squircle_icon(master_img, 192)
     path_192 = os.path.join(PUBLIC_DIR, "icon-192.png")
     icon_192.save(path_192, format="PNG", optimize=True)
     print(f"Generated icon-192.png (192x192) -> {path_192}")
 
-    icon_512 = make_squircle_icon(clean_composite, 512)
+    icon_512 = make_squircle_icon(master_img, 512)
     path_512 = os.path.join(PUBLIC_DIR, "icon-512.png")
     icon_512.save(path_512, format="PNG", optimize=True)
     print(f"Generated icon-512.png (512x512) -> {path_512}")
 
     # 3. Generate Android Adaptive Maskable Icon
-    icon_maskable = make_maskable_icon(clean_composite, 512)
+    icon_maskable = make_maskable_icon(master_img, 512)
     path_maskable = os.path.join(PUBLIC_DIR, "icon-512-maskable.png")
     icon_maskable.save(path_maskable, format="PNG", optimize=True)
     print(f"Generated icon-512-maskable.png (512x512) -> {path_maskable}")
 
     # 4. Generate multi-resolution ICO (16, 32, 48)
-    ico_img = make_squircle_icon(clean_composite, 128)
+    ico_img = make_squircle_icon(master_img, 128)
     ico_path = os.path.join(PUBLIC_DIR, "favicon.ico")
     ico_img.save(ico_path, format="ICO", sizes=[(16, 16), (32, 32), (48, 48)])
     print(f"Generated multi-resolution favicon.ico -> {ico_path}")
 
     # 5. Generate SVG favicon with embedded high-definition base64 squircle
-    preview_img = clean_composite.resize((128, 128), Image.Resampling.LANCZOS)
+    preview_img = master_img.resize((128, 128), Image.Resampling.LANCZOS)
     buffer = BytesIO()
     preview_img.save(buffer, format="PNG", optimize=True)
     b64_data = base64.b64encode(buffer.getvalue()).decode("ascii")
@@ -214,13 +149,12 @@ def main():
     svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
   <defs>
     <clipPath id="squircle">
-      <rect width="64" height="64" rx="16" ry="16" />
+      <rect width="64" height="64" rx="14" ry="14" />
     </clipPath>
   </defs>
-  <rect width="64" height="64" rx="16" fill="#064e3b" />
   <g clip-path="url(#squircle)">
     <image href="data:image/png;base64,{b64_data}" width="64" height="64" />
-    <rect x="0" y="0" width="64" height="64" rx="16" fill="none" stroke="#10b981" stroke-width="2" stroke-opacity="0.3" />
+    <rect x="0" y="0" width="64" height="64" rx="14" fill="none" stroke="rgba(0, 0, 0, 0.12)" stroke-width="1" />
   </g>
 </svg>
 '''
@@ -229,7 +163,7 @@ def main():
         f.write(svg_content)
     print(f"Generated favicon.svg -> {svg_path}")
 
-    print("All PWA and touch brand assets generated successfully!")
+    print("All PWA, favicon, and touch brand assets generated successfully!")
 
 if __name__ == "__main__":
     main()

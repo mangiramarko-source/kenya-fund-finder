@@ -405,7 +405,7 @@ const Navbar = () => {
                   >
                     <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-emerald-500/30 bg-emerald-950/20 shadow-sm">
                       <img
-                        src="/apple-touch-icon.png?v=20261110"
+                        src="/apple-touch-icon.png?v=20261111"
                         alt="KenyaFundFinder logo"
                         className="h-full w-full object-cover"
                         width={32}
