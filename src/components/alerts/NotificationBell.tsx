@@ -28,13 +28,18 @@ const NotificationBell = ({ variant = "default" }: NotificationBellProps) => {
   };
 
   const isRound = variant === "round";
+  const isMultiDigit = unreadCount > 9;
   const buttonClass = isRound
     ? "inline-flex items-center justify-center relative h-10 w-10 rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground hover:bg-muted dark:hover:bg-muted active:scale-95 transition-all shrink-0"
     : "inline-flex items-center justify-center relative h-9 w-9 rounded-full text-foreground hover:bg-muted transition-colors";
   const iconClass = isRound ? "h-5 w-5" : "h-5 w-5";
   const badgeClass = isRound
-    ? "absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-4.5 min-w-4.5 px-1.5 flex items-center justify-center shadow-sm"
-    : "absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full h-4 min-w-4 px-1 flex items-center justify-center";
+    ? `absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none shadow-sm ${
+        isMultiDigit ? "h-[18px] min-w-[18px] px-1.5" : "h-[18px] w-[18px] aspect-square"
+      }`
+    : `absolute -top-0.5 -right-0.5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold leading-none ${
+        isMultiDigit ? "h-4 min-w-[16px] px-1" : "h-4 w-4 aspect-square"
+      }`;
 
   // For non-authenticated users on mobile, show bell that prompts sign-up
   if (!user) {
