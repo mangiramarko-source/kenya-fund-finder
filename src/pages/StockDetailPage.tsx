@@ -412,14 +412,14 @@ const StockDetailPage = () => {
     <div className="min-h-screen px-3 pb-6 pt-0 md:px-6 md:py-6 max-w-6xl mx-auto">
       {/* Header */}
 
-      <div className="fixed inset-x-0 top-0 z-50 flex h-safe-detail-header pt-safe items-center justify-between border-b border-border bg-background px-5 md:hidden">
+      <div className="fixed inset-x-0 top-0 z-50 flex h-safe-detail-header pt-safe items-center justify-between border-b border-border bg-background px-4 md:hidden">
         <button
           type="button"
           onClick={() => navigate(-1)}
           aria-label="Go back"
-          className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted/50"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground transition-all active:scale-95 hover:bg-muted"
         >
-          <ArrowLeft className="h-6 w-6" />
+          <ArrowLeft className="h-5 w-5" />
         </button>
         <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[14px] font-medium lowercase tracking-wide text-foreground">
           stocks
@@ -429,7 +429,7 @@ const StockDetailPage = () => {
             <button
               type="button"
               aria-label="More options"
-              className="-mr-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted/50"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground transition-all active:scale-95 hover:bg-muted"
             >
               <MoreHorizontal className="h-5 w-5" />
             </button>

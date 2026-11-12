@@ -568,10 +568,10 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center justify-center relative h-8 w-8 rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground hover:bg-muted dark:hover:bg-muted transition-colors shrink-0"
+          className="inline-flex items-center justify-center relative h-10 w-10 rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground hover:bg-muted dark:hover:bg-muted active:scale-95 transition-all shrink-0"
           aria-label="Search"
         >
-          <Search className="h-4 w-4" />
+          <Search className="h-5 w-5" />
         </button>
       ) : variant === "mobile-pill" ? (
         <button

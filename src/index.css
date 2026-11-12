@@ -41,10 +41,10 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .top-safe-nav {
-    top: calc(3.5rem + env(safe-area-inset-top, 0px));
+    top: calc(4rem + env(safe-area-inset-top, 0px));
   }
   .top-safe-sticky-tabs {
-    top: calc(var(--kf-mobile-header, calc(3.5rem + env(safe-area-inset-top, 0px))) - 3px);
+    top: calc(var(--kf-mobile-header, calc(4rem + env(safe-area-inset-top, 0px))) - 3px);
   }
   @media (min-width: 768px) {
     .top-safe-sticky-tabs {
@@ -52,10 +52,10 @@
     }
   }
   .h-safe-nav {
-    height: calc(3.5rem + env(safe-area-inset-top, 0px));
+    height: calc(4rem + env(safe-area-inset-top, 0px));
   }
   .h-safe-detail-header {
-    height: calc(58px + env(safe-area-inset-top, 0px));
+    height: calc(4rem + env(safe-area-inset-top, 0px));
   }
 
   .scrollbar-hide, .hide-scrollbar, .no-scrollbar {

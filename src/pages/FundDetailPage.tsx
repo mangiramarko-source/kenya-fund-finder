@@ -313,16 +313,16 @@ const FundDetailPage = () => {
   return (
     <>
     <div className="min-h-screen px-3 pb-6 pt-0 md:hidden">
-      <div className="fixed inset-x-0 top-0 z-50 flex h-safe-detail-header pt-safe items-center justify-between border-b border-border bg-background px-5">
-        <button type="button" onClick={() => navigate(-1)} aria-label="Go back" className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted/50">
-          <ArrowLeft className="h-6 w-6" />
+      <div className="fixed inset-x-0 top-0 z-50 flex h-safe-detail-header pt-safe items-center justify-between border-b border-border bg-background px-4">
+        <button type="button" onClick={() => navigate(-1)} aria-label="Go back" className="flex h-10 w-10 items-center justify-center rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground hover:bg-muted active:scale-95 transition-all">
+          <ArrowLeft className="h-5 w-5" />
         </button>
         <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[14px] font-medium lowercase tracking-wide text-foreground">
           {fund.fund_type === "money_market" ? "mmf" : (fund.fund_type?.replace(/_/g, " ") || "fund")}
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" aria-label="More options" className="-mr-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted/50">
+            <button type="button" aria-label="More options" className="flex h-10 w-10 items-center justify-center rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground hover:bg-muted active:scale-95 transition-all">
               <MoreHorizontal className="h-5 w-5" />
             </button>
           </DropdownMenuTrigger>

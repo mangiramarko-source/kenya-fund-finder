@@ -1316,7 +1316,7 @@ const OverviewPage = () => {
     const headerEl = document.getElementById("market-news-header");
     if (headerEl) {
       const rect = headerEl.getBoundingClientRect();
-      const targetScrollY = Math.max(0, window.scrollY + rect.bottom - 56);
+      const targetScrollY = Math.max(0, window.scrollY + rect.bottom - 64);
       if (window.scrollY > targetScrollY) {
         window.scrollTo({ top: targetScrollY, behavior: "instant" });
       }

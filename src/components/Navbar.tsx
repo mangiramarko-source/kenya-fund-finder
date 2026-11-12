@@ -119,10 +119,10 @@ function MobileProfileButton({
       <button
         type="button"
         onClick={onClick}
-        className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-emerald-500/40 dark:border-emerald-500/45 bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/25 transition-colors shrink-0 shadow-2xs dark:shadow-[0_0_8px_rgba(16,185,129,0.15)]"
+        className="inline-flex items-center justify-center h-10 w-10 rounded-full border border-emerald-500/40 dark:border-emerald-500/45 bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/25 active:scale-95 transition-all shrink-0 shadow-2xs dark:shadow-[0_0_8px_rgba(16,185,129,0.15)]"
         aria-label="Open account & settings"
       >
-        <User className="h-4 w-4" />
+        <User className="h-5 w-5" />
       </button>
     );
   }
@@ -133,10 +133,10 @@ function MobileProfileButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center justify-center h-8 w-8 rounded-full text-foreground hover:bg-muted transition-colors relative shrink-0"
+      className="inline-flex items-center justify-center h-10 w-10 rounded-full text-foreground hover:bg-muted active:scale-95 transition-all relative shrink-0"
       aria-label="Open account & settings"
     >
-      <Avatar className="h-8 w-8 border border-emerald-500/40 dark:border-emerald-400/50 shadow-2xs dark:shadow-[0_0_8px_rgba(16,185,129,0.2)]">
+      <Avatar className="h-10 w-10 border border-emerald-500/40 dark:border-emerald-400/50 shadow-2xs dark:shadow-[0_0_8px_rgba(16,185,129,0.2)]">
         {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName || "User"} /> : null}
         <AvatarFallback className="bg-emerald-600 text-white font-bold text-xs tracking-wider">
           {initials}
@@ -150,7 +150,7 @@ function MobileProfileButton({
 const Navbar = () => {
   const [accountOpen, setAccountOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [mobileHeaderHeight, setMobileHeaderHeight] = useState(56);
+  const [mobileHeaderHeight, setMobileHeaderHeight] = useState(64);
   const [dark, setDark] = useState(() => {
     const saved = getStoredTheme();
     if (saved) return saved === "dark";
@@ -280,8 +280,8 @@ const Navbar = () => {
       const target = document.getElementById("market-news-header");
       if (target) {
         const rect = target.getBoundingClientRect();
-        const headerBottom = headerRef.current ? headerRef.current.getBoundingClientRect().bottom : 56;
-        const threshold = headerBottom > 0 ? headerBottom : 56;
+        const headerBottom = headerRef.current ? headerRef.current.getBoundingClientRect().bottom : 64;
+        const threshold = headerBottom > 0 ? headerBottom : 64;
         const isPast = rect.bottom <= threshold;
         setNewsScrolledPast((prev) => (prev !== isPast ? isPast : prev));
 
@@ -306,13 +306,13 @@ const Navbar = () => {
       try {
         observer = new IntersectionObserver(
           ([entry]) => {
-            const headerBottom = headerRef.current ? headerRef.current.getBoundingClientRect().bottom : 56;
-            const threshold = headerBottom > 0 ? headerBottom : 56;
+            const headerBottom = headerRef.current ? headerRef.current.getBoundingClientRect().bottom : 64;
+            const threshold = headerBottom > 0 ? headerBottom : 64;
             const isPast = !entry.isIntersecting && entry.boundingClientRect.bottom <= threshold;
             setNewsScrolledPast((prev) => (prev !== isPast ? isPast : prev));
           },
           {
-            rootMargin: "-56px 0px 0px 0px",
+            rootMargin: "-64px 0px 0px 0px",
             threshold: 0,
           }
         );
@@ -347,14 +347,14 @@ const Navbar = () => {
             isFeedPage && newsScrolledPast ? "border-b-0" : "border-b border-border/50"
           }`}
         >
-          <nav className="flex h-14 items-center px-3">
+          <nav className="flex h-16 items-center px-3.5">
             {navTitle.type === "detail" ? (
               <div className="flex h-full w-full items-center justify-between">
-                <div className="flex items-center gap-1.5 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
                   <button
                     type="button"
                     onClick={() => (navTitle.backTo ? navigate(navTitle.backTo) : navigate(-1))}
-                    className="-ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-foreground hover:bg-muted active:scale-95 transition-all"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground hover:bg-muted active:scale-95 transition-all shrink-0"
                     aria-label="Go back"
                   >
                     <ArrowLeft className="h-5 w-5" />
@@ -364,9 +364,9 @@ const Navbar = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <SearchDialog variant="icon" />
-                  <NotificationBell />
+                <div className="flex items-center gap-2 shrink-0">
+                  <SearchDialog variant="round" />
+                  <NotificationBell variant="round" />
                   <MobileProfileButton
                     user={user}
                     displayName={displayName}
@@ -403,13 +403,13 @@ const Navbar = () => {
                     className="flex items-center gap-2 shrink-0 transition-transform active:scale-95 animate-in fade-in duration-200"
                     aria-label="KenyaFundFinder Home"
                   >
-                    <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-emerald-500/30 bg-emerald-950/20 shadow-sm">
+                    <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-emerald-500/30 bg-emerald-950/20 shadow-sm">
                       <img
                         src="/apple-touch-icon.png?v=20261111"
                         alt="KenyaFundFinder logo"
                         className="h-full w-full object-cover"
-                        width={32}
-                        height={32}
+                        width={40}
+                        height={40}
                       />
                     </div>
                   </Link>

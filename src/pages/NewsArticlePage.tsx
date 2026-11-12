@@ -679,14 +679,14 @@ function resolveStockForArticle(
     <PageLoadingGate isReady={!loading && Boolean(article)} message="Loading market news…" resetKey={id} minimumDuration={0} loaderClassName="min-h-screen">
     <div className="min-h-screen bg-background text-foreground pb-28 md:pb-24">
       {/* ─── 1. Top Navigation Bar (Fixed top header below main navbar) ─── */}
-      <header className="fixed inset-x-0 top-0 z-50 flex h-safe-detail-header pt-safe items-center justify-between border-b border-border bg-background px-5 md:sticky md:z-40 md:h-12 md:px-4 md:pt-0">
+      <header className="fixed inset-x-0 top-0 z-50 flex h-safe-detail-header pt-safe items-center justify-between border-b border-border bg-background px-4 md:sticky md:z-40 md:h-12 md:px-4 md:pt-0">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="flex items-center justify-center h-9 w-9 rounded-full text-foreground hover:bg-muted/50 transition-colors -ml-2 cursor-pointer"
+          className="flex items-center justify-center h-10 w-10 rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground hover:bg-muted active:scale-95 transition-all md:h-9 md:w-9 md:border-transparent md:bg-transparent cursor-pointer"
           aria-label="Back"
         >
-          <ArrowLeft className="h-6 w-6 md:h-5 md:w-5" />
+          <ArrowLeft className="h-5 w-5" />
         </button>
 
         <div className="font-bold text-sm text-foreground uppercase tracking-[0.3em] md:text-base md:normal-case md:tracking-tight">
@@ -697,7 +697,7 @@ function resolveStockForArticle(
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex items-center justify-center h-9 w-9 rounded-full text-foreground hover:bg-muted/50 transition-colors -mr-2 cursor-pointer"
+              className="flex items-center justify-center h-10 w-10 rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground hover:bg-muted active:scale-95 transition-all md:h-9 md:w-9 md:border-transparent md:bg-transparent cursor-pointer"
               aria-label="More options"
             >
               <MoreHorizontal className="h-5 w-5" />

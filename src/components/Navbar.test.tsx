@@ -181,11 +181,11 @@ describe("Mobile & Desktop Navigation Verification", () => {
       expect(screen.queryByRole("button", { name: "Scroll to top of Market News" })).not.toBeInTheDocument();
       unmount();
 
-      // 2. When scrolled past Market News (bottom <= 56) with new count
+      // 2. When scrolled past Market News (bottom <= 64) with new count
       headerEl.setAttribute("data-new-count", "38");
       headerEl.getBoundingClientRect = vi.fn(() => ({
         top: -20,
-        bottom: 30, // <= 56, header has scrolled past mobile navbar
+        bottom: 30, // <= 64, header has scrolled past mobile navbar
         left: 0,
         right: 390,
         width: 390,
