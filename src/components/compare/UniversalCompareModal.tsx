@@ -112,8 +112,8 @@ export const UniversalCompareModal = () => {
                     </div>
                     <div>{row.getValue(item)}</div>
                     {winner && row.winnerBadge && (
-                      <span className="inline-flex items-center gap-0.5 mt-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                        <Sparkles className="h-2.5 w-2.5" /> {row.winnerBadge}
+                      <span className="inline-flex items-center gap-0.5 mt-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                        <Sparkles className="h-2.5 w-2.5 shrink-0" /> {row.winnerBadge}
                       </span>
                     )}
                   </div>
@@ -239,8 +239,8 @@ export const UniversalCompareModal = () => {
                     </div>
                     <div>{row.getValue(item)}</div>
                     {winner && row.winnerBadge && (
-                      <span className="inline-flex items-center gap-0.5 mt-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                        <Sparkles className="h-2.5 w-2.5" /> {row.winnerBadge}
+                      <span className="inline-flex items-center gap-0.5 mt-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                        <Sparkles className="h-2.5 w-2.5 shrink-0" /> {row.winnerBadge}
                       </span>
                     )}
                   </div>
@@ -432,17 +432,29 @@ export const UniversalCompareModal = () => {
               {row.sublabel && <div className="text-[11px] text-muted-foreground">{row.sublabel}</div>}
             </div>
             <div className={`grid ${getGridColsClass(items.length)} gap-2 pt-1 border-t border-border/40`}>
-              {items.map((item) => (
-                <div key={item.id} className="relative rounded-xl bg-muted/40 p-3 text-center">
-                  {row.isWinner?.(item) && row.winnerBadge && (
-                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                      <Sparkles className="h-2.5 w-2.5" />
-                      {row.winnerBadge}
-                    </span>
-                  )}
-                  {row.getValue(item)}
-                </div>
-              ))}
+              {items.map((item) => {
+                const winner = row.isWinner?.(item);
+                return (
+                  <div
+                    key={item.id}
+                    className={`rounded-xl p-2.5 text-center transition-all ${
+                      winner
+                        ? "bg-emerald-500/10 border border-emerald-500/30 dark:bg-emerald-500/15"
+                        : "bg-muted/40"
+                    }`}
+                  >
+                    <div className="text-[11px] font-semibold text-muted-foreground truncate mb-1">
+                      {item.subtitle || item.title}
+                    </div>
+                    <div>{row.getValue(item)}</div>
+                    {winner && row.winnerBadge && (
+                      <span className="inline-flex items-center gap-0.5 mt-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                        <Sparkles className="h-2.5 w-2.5 shrink-0" /> {row.winnerBadge}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
