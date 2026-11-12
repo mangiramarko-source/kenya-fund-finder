@@ -44,8 +44,17 @@ export const CompareProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+const DEFAULT_COMPARE_CONTEXT: CompareContextType = {
+  selected: [],
+  add: () => {},
+  remove: () => {},
+  clear: () => {},
+  isSelected: () => false,
+  isOpen: false,
+  setIsOpen: () => {},
+};
+
 export const useCompare = () => {
   const ctx = useContext(CompareContext);
-  if (!ctx) throw new Error("useCompare must be used within CompareProvider");
-  return ctx;
+  return ctx || DEFAULT_COMPARE_CONTEXT;
 };

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Calculator, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUniversalCompare } from "@/hooks/useUniversalCompare";
+import { useCompare } from "@/hooks/useCompare";
 import {
   Sheet,
   SheetContent,
@@ -36,6 +38,10 @@ export const FloatingPageCalculator = ({
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const isMobile = useIsMobile();
+  const universalCompare = useUniversalCompare();
+  const legacyCompare = useCompare();
+
+  const isComparing = (universalCompare?.selected?.length ?? 0) > 0 || (legacyCompare?.selected?.length ?? 0) > 0;
 
   useEffect(() => {
     setMounted(true);
@@ -44,12 +50,15 @@ export const FloatingPageCalculator = ({
   return (
     <>
       {/* Floating Action Button (FAB)
+          - Hidden on mobile when comparing items so it never overlaps the Compare bar
           - Exactly matching Banking (/savings) in size, padding, typography, shadow, and positioning on mobile & desktop */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Open ${title}`}
-        className={`fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-8 right-4 md:right-8 z-40 flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs md:text-sm font-bold border border-emerald-400/30 cursor-pointer ${className}`}
+        className={`fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-8 right-4 md:right-8 z-40 items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs md:text-sm font-bold border border-emerald-400/30 cursor-pointer ${
+          isComparing ? "hidden md:flex" : "flex"
+        } ${className}`}
       >
         <Icon className="h-4 w-4 stroke-[2.5]" />
         <span>{buttonLabel}</span>
