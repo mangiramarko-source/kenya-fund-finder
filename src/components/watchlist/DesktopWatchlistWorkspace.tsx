@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowDown, ArrowUp, Bell,
-  Gem, GripVertical, Plus, Search, SlidersHorizontal, Star, Trash2, TrendingDown, TrendingUp,
+  Gem, GripVertical, Plus, RotateCcw, Search, SlidersHorizontal, Star, Trash2, TrendingDown, TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +23,7 @@ import { getStockLogoUrl } from "@/lib/stockBranding";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
 import { getCurrencyFlagUrl } from "@/lib/currencyBranding";
 import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
+import { resolveAlertAsset, isAlertTriggered, doesPriceSatisfyTarget } from "@/lib/priceAlertEvaluation";
 
 type WorkspaceTab = "watchlist" | "alerts";
 type AssetType = AlertAssetType;
@@ -61,7 +62,7 @@ function currentAlertState(alert?: PriceAlert) {
 export default function DesktopWatchlistWorkspace({ active }: { active: WorkspaceTab }) {
   const { user } = useAuth();
   const { items, loading: watchlistLoading, add, remove, reorder, hasLocalState } = useUnifiedWatchlist();
-  const { alerts, loading: alertsLoading, deleteAlert, toggleAlert } = usePriceAlerts();
+  const { alerts, loading: alertsLoading, deleteAlert, toggleAlert, resetAlert } = usePriceAlerts();
   const { stocks, rates, commodities, loading: marketLoading } = useMarketData();
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [fundsLoading, setFundsLoading] = useState(true);
@@ -226,14 +227,52 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
     return commodities.filter((asset) => !saved.has(`commodity:${asset.id}`) && match(asset.name, asset.symbol)).slice(0, 50).map((asset) => ({ id: asset.id, name: asset.name, value: formatValue(asset.price, asset.unit) }));
   }, [addQuery, addType, commodities, funds, items, rates, stocks]);
 
-  const visibleAlerts = useMemo(() => alerts.filter((alert) =>
-    alertFilter === "triggered" ? alert.is_triggered : alertFilter === "paused" ? !alert.is_active && !alert.is_triggered : alert.is_active && !alert.is_triggered,
-  ), [alertFilter, alerts]);
+  const enrichedAlerts = useMemo(() => {
+    return alerts.map((alert) => {
+      const parsed = resolveAlertAsset(alert, stocks, rates, commodities);
+      const isHit = isAlertTriggered(alert, parsed.currentPrice);
+      return {
+        ...alert,
+        _parsed: parsed,
+        _isHit: isHit,
+      };
+    });
+  }, [alerts, stocks, rates, commodities]);
+
   const counts = useMemo(() => ({
-    active: alerts.filter((alert) => alert.is_active && !alert.is_triggered).length,
-    triggered: alerts.filter((alert) => alert.is_triggered).length,
-    paused: alerts.filter((alert) => !alert.is_active && !alert.is_triggered).length,
-  }), [alerts]);
+    active: enrichedAlerts.filter((a) => a.is_active && !a._isHit && !a.is_triggered).length,
+    triggered: enrichedAlerts.filter((a) => a._isHit || a.is_triggered).length,
+    paused: enrichedAlerts.filter((a) => !a.is_active && !a._isHit && !a.is_triggered).length,
+  }), [enrichedAlerts]);
+
+  const visibleAlerts = useMemo(() => {
+    return enrichedAlerts.filter((a) => {
+      if (alertFilter === "triggered") return a._isHit || a.is_triggered;
+      if (alertFilter === "paused") return !a.is_active && !a._isHit && !a.is_triggered;
+      return a.is_active && !a._isHit && !a.is_triggered;
+    });
+  }, [alertFilter, enrichedAlerts]);
+
+  const handleReset = async (id: string, currentPrice?: number | null) => {
+    const res = await resetAlert(id, currentPrice);
+    if (res?.error) {
+      toast.error("Failed to re-arm alert");
+    } else {
+      toast.success("Alert re-armed");
+    }
+  };
+
+  const handleResetOrEdit = (alert: (typeof enrichedAlerts)[number]) => {
+    const currentPrice = alert._parsed?.currentPrice;
+    const stillSatisfied = doesPriceSatisfyTarget(alert.condition, alert.target_price, currentPrice);
+
+    if (stillSatisfied) {
+      editAlert(alert);
+      toast.info(`Price (${alert.asset_unit} ${currentPrice?.toLocaleString()}) already meets target. Set a new target to re-arm.`);
+    } else {
+      void handleReset(alert.id, currentPrice);
+    }
+  };
 
   const loading = watchlistLoading || marketLoading || fundsLoading;
   const move = async (row: AssetRow, offset: -1 | 1) => {
@@ -356,7 +395,7 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
             </div>
             <Button disabled={!user || rows.length === 0} size="sm" onClick={() => { const first = rows[0]; if (first) { setEditing(first); setEditingAlert(null); } }} className="ml-auto h-9 shrink-0 gap-1.5 rounded-full bg-emerald-600 px-4 font-bold text-white hover:bg-emerald-700"><Plus className="h-4 w-4" /> New alert</Button>
           </div>
-          {!user ? <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm text-muted-foreground">Sign in to create and manage alerts.</div> : rows.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">Save an asset first, then create its alert here.</div> : alertsLoading ? <div className="h-32 animate-pulse rounded-2xl bg-muted" /> : visibleAlerts.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">No {alertFilter} alerts.</div> : <section className="overflow-hidden rounded-2xl border border-border bg-card"><div className="border-b border-border px-5 py-4"><h2 className="text-sm font-bold capitalize">{alertFilter} alerts</h2><p className="mt-0.5 text-xs text-muted-foreground">One-shot alerts are delivered when their target is met.</p></div><div className="grid gap-3 p-4 lg:grid-cols-2">{visibleAlerts.map((alert) => <AlertRow key={alert.id} alert={alert} visualUrl={rowByAlert.get(`${alert.asset_type}:${alert.asset_id}`)?.visualUrl} onEdit={() => editAlert(alert)} onToggle={() => void toggleAlert(alert.id, !alert.is_active)} onDelete={() => void deleteAlert(alert.id)} />)}</div></section>}
+          {!user ? <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm text-muted-foreground">Sign in to create and manage alerts.</div> : rows.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">Save an asset first, then create its alert here.</div> : alertsLoading ? <div className="h-32 animate-pulse rounded-2xl bg-muted" /> : visibleAlerts.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">No {alertFilter} alerts.</div> : <section className="overflow-hidden rounded-2xl border border-border bg-card"><div className="border-b border-border px-5 py-4"><h2 className="text-sm font-bold capitalize">{alertFilter} alerts</h2><p className="mt-0.5 text-xs text-muted-foreground">One-shot alerts are delivered when their target is met.</p></div><div className="grid gap-3 p-4 lg:grid-cols-2">{visibleAlerts.map((alert) => <AlertRow key={alert.id} alert={alert} visualUrl={rowByAlert.get(`${alert.asset_type}:${alert.asset_id}`)?.visualUrl} onEdit={() => editAlert(alert)} onToggle={() => void toggleAlert(alert.id, !alert.is_active)} onReset={() => handleResetOrEdit(alert)} onDelete={() => void deleteAlert(alert.id)} />)}</div></section>}
         </>
       )}
 
@@ -459,10 +498,10 @@ function AddAssetsDialog({ open, onOpenChange, type, onTypeChange, query, onQuer
   return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-w-xl rounded-2xl border-border p-6 shadow-soft"><DialogHeader><DialogTitle className="text-lg tracking-tight">Add to watchlist</DialogTitle></DialogHeader><div className="flex gap-1 overflow-x-auto rounded-xl bg-muted/70 p-1">{(Object.keys(assetLabels) as AssetType[]).map((value) => <button key={value} type="button" onClick={() => onTypeChange(value)} className={cn("whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold transition-colors", type === value ? "bg-background text-foreground shadow-xs" : "text-muted-foreground")}>{assetLabels[value]}</button>)}</div><div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder={`Search ${assetLabels[type].toLowerCase()}`} className="h-10 rounded-xl pl-9" /></div><div className="max-h-80 space-y-1 overflow-y-auto">{items.map((item) => <button key={item.id} type="button" onClick={() => void onAdd(item.id, item.name)} className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted"><span className="text-sm font-bold">{item.name}</span><span className="text-xs font-semibold text-muted-foreground">{item.value}</span></button>)}{items.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No matching assets available.</p>}</div></DialogContent></Dialog>;
 }
 
-function AlertRow({ alert, visualUrl, onEdit, onToggle, onDelete }: { alert: PriceAlert; visualUrl?: string; onEdit: () => void; onToggle: () => void; onDelete: () => void; }) {
-  const triggered = alert.is_triggered;
+function AlertRow({ alert, visualUrl, onEdit, onToggle, onReset, onDelete }: { alert: PriceAlert & { _isHit?: boolean; _parsed?: any }; visualUrl?: string; onEdit: () => void; onToggle: () => void; onReset: () => void; onDelete: () => void; }) {
+  const triggered = Boolean(alert._isHit || alert.is_triggered);
   return (
-    <article className={cn("flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-emerald-500/40", triggered && "border-amber-500/30 bg-amber-500/[0.04]")}>
+    <article className={cn("flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-emerald-500/40", triggered && "border-emerald-500/30 bg-emerald-500/[0.04]")}>
       <AssetVisual type={alert.asset_type} visualUrl={visualUrl} title={alert.asset_name} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
@@ -470,14 +509,20 @@ function AlertRow({ alert, visualUrl, onEdit, onToggle, onDelete }: { alert: Pri
           <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[10px] font-bold capitalize text-muted-foreground">
             {alert.asset_type === "fund" ? "MMF" : alert.asset_type}
           </span>
-          {triggered && <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-500">Triggered</span>}
+          {triggered && <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-500">Hit</span>}
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
           <span className="font-bold text-foreground">{alert.condition === "above" ? "Above" : "Below"} {formatValue(alert.target_price, alert.asset_unit)}</span>
-          <span className="ml-2">{alert.is_active ? "Monitoring" : "Paused"}</span>
+          <span className="ml-2">{triggered ? "Target hit" : alert.is_active ? "Monitoring" : "Paused"}</span>
         </p>
       </div>
-      {!triggered && <Switch checked={alert.is_active} onCheckedChange={onToggle} aria-label={alert.is_active ? "Pause alert" : "Resume alert"} />}
+      {triggered ? (
+        <Button size="sm" variant="outline" onClick={onReset} className="h-8 rounded-full border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 text-xs font-bold gap-1">
+          <RotateCcw className="h-3.5 w-3.5" /> Re-arm
+        </Button>
+      ) : (
+        <Switch checked={alert.is_active} onCheckedChange={onToggle} aria-label={alert.is_active ? "Pause alert" : "Resume alert"} />
+      )}
       <Button variant="ghost" size="sm" onClick={onEdit} className="rounded-lg text-xs font-bold">Edit</Button>
       <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive" onClick={onDelete} aria-label="Delete alert"><Trash2 className="h-4 w-4" /></Button>
     </article>

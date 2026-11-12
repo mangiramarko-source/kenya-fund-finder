@@ -85,6 +85,7 @@ export const CreateAlertDialog = ({
       ? await updateAlert(editAlert.id, {
           target_price: target,
           condition,
+          baseline_price: currentPrice ?? editAlert.baseline_price,
           notify_email: notifyEmail,
           notify_inapp: notifyInapp,
         })
@@ -95,6 +96,7 @@ export const CreateAlertDialog = ({
           asset_unit: unit,
           target_price: target,
           condition,
+          baseline_price: currentPrice,
           notify_email: notifyEmail,
           notify_inapp: notifyInapp,
         });

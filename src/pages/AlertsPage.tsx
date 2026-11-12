@@ -1,9 +1,19 @@
 import { useState, useEffect, useMemo } from "react";
-import { usePriceAlerts } from "@/hooks/usePriceAlerts";
+import { usePriceAlerts, type PriceAlert } from "@/hooks/usePriceAlerts";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useEmailPreferences } from "@/hooks/useEmailPreferences";
+import { useMarketData } from "@/components/home/MarketTicker";
+import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
+import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
+import {
+  resolveAlertAsset,
+  isAlertTriggered,
+  calculateAlertProgress,
+  calculateAlertDistance,
+  doesPriceSatisfyTarget,
+} from "@/lib/priceAlertEvaluation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Bell, BellOff, Trash2, TrendingUp, TrendingDown, Clock, CheckCircle,
-  Plus, Mail, Settings2, Search, ChevronRight,
+  Plus, Mail, Settings2, Search, ChevronRight, RotateCcw, Pencil,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -42,11 +52,13 @@ const AlertsPage = () => {
   );
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { alerts, loading, deleteAlert, toggleAlert, createAlert } = usePriceAlerts();
+  const { alerts, loading, deleteAlert, toggleAlert, createAlert, resetAlert } = usePriceAlerts();
   const { prefs, loading: prefsLoading, updatePref } = useEmailPreferences();
+  const { stocks, rates, commodities } = useMarketData();
 
   const [tab, setTab] = useState<TabKey>("active");
   const [alertQuery, setAlertQuery] = useState("");
+  const [editingAlert, setEditingAlert] = useState<PriceAlert | null>(null);
 
   // New Alert dialog state
   const [showCreate, setShowCreate] = useState(false);
@@ -94,6 +106,7 @@ const AlertsPage = () => {
       asset_name: selectedAsset.name,
       target_price: price,
       condition,
+      baseline_price: selectedAsset.currentValue,
     });
     setSaving(false);
     if (result?.error) {
@@ -248,11 +261,41 @@ const AlertsPage = () => {
     );
   }
 
-  const activeAlerts = alerts.filter(a => a.is_active && !a.is_triggered);
-  const triggeredAlerts = alerts.filter(a => a.is_triggered);
-  const pausedAlerts = alerts.filter(a => !a.is_active && !a.is_triggered);
-  const matchesAlertQuery = (alert: typeof alerts[number]) =>
-    !alertQuery.trim() || `${alert.asset_name} ${alert.asset_type}`.toLowerCase().includes(alertQuery.trim().toLowerCase());
+  const enrichedAlerts = useMemo(() => {
+    return alerts.map((alert) => {
+      const parsed = resolveAlertAsset(alert, stocks, rates, commodities);
+      const isHit = isAlertTriggered(alert, parsed.currentPrice);
+      const progress = calculateAlertProgress(alert, parsed.currentPrice, isHit);
+      const distance = calculateAlertDistance(alert, parsed.currentPrice, isHit);
+      return {
+        ...alert,
+        _parsed: parsed,
+        _isHit: isHit,
+        _progress: progress,
+        _distance: distance,
+      };
+    });
+  }, [alerts, stocks, rates, commodities]);
+
+  const activeAlerts = useMemo(
+    () => enrichedAlerts.filter((a) => a.is_active && !a._isHit && !a.is_triggered),
+    [enrichedAlerts]
+  );
+  const triggeredAlerts = useMemo(
+    () => enrichedAlerts.filter((a) => a._isHit || a.is_triggered),
+    [enrichedAlerts]
+  );
+  const pausedAlerts = useMemo(
+    () => enrichedAlerts.filter((a) => !a.is_active && !a._isHit && !a.is_triggered),
+    [enrichedAlerts]
+  );
+
+  const matchesAlertQuery = (alert: (typeof enrichedAlerts)[number]) =>
+    !alertQuery.trim() ||
+    `${alert.asset_name} ${alert.asset_type} ${alert._parsed.symbol}`
+      .toLowerCase()
+      .includes(alertQuery.trim().toLowerCase());
+
   const visibleActiveAlerts = activeAlerts.filter(matchesAlertQuery);
   const visibleTriggeredAlerts = triggeredAlerts.filter(matchesAlertQuery);
   const visiblePausedAlerts = pausedAlerts.filter(matchesAlertQuery);
@@ -267,6 +310,27 @@ const AlertsPage = () => {
     toast.success(currentActive ? "Alert paused" : "Alert resumed");
   };
 
+  const handleReset = async (id: string, currentPrice?: number | null) => {
+    const result = await resetAlert(id, currentPrice);
+    if (result?.error) {
+      toast.error("Failed to re-arm alert");
+    } else {
+      toast.success("Alert re-armed at current price");
+    }
+  };
+
+  const handleResetOrEdit = (alert: (typeof enrichedAlerts)[number]) => {
+    const currentPrice = alert._parsed.currentPrice;
+    const stillSatisfied = doesPriceSatisfyTarget(alert.condition, alert.target_price, currentPrice);
+
+    if (stillSatisfied) {
+      setEditingAlert(alert);
+      toast.info(`Price (${alert.asset_unit} ${currentPrice?.toLocaleString()}) already meets target. Set a new target to re-arm.`);
+    } else {
+      void handleReset(alert.id, currentPrice);
+    }
+  };
+
   const tabs: { key: TabKey; label: string; count: number; icon: any }[] = [
     { key: "active", label: "Active", count: activeAlerts.length, icon: Bell },
     { key: "triggered", label: "Triggered", count: triggeredAlerts.length, icon: CheckCircle },
@@ -278,26 +342,79 @@ const AlertsPage = () => {
     if (loading) {
       return (
         <div className="space-y-2.5">
-          {[1, 2, 3].map(i => (
+          {[1, 2, 3].map((i) => (
             <div key={i} className="rounded-xl border border-border bg-card p-4 h-24 animate-pulse" />
           ))}
         </div>
       );
     }
     if (tab === "active") {
-      return visibleActiveAlerts.length > 0
-        ? <div className="space-y-2.5">{visibleActiveAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
-        : <EmptyState icon={Bell} title={alertQuery ? "No matching alerts" : "No active alerts"} description={alertQuery ? "Try another search term." : "Tap '+ New' to create your first one."} onCta={alertQuery ? undefined : () => setShowCreate(true)} ctaLabel="New Alert" />;
+      return visibleActiveAlerts.length > 0 ? (
+        <div className="space-y-2.5">
+          {visibleActiveAlerts.map((a) => (
+            <AlertCard
+              key={a.id}
+              alert={a}
+              onToggle={handleToggle}
+              onDelete={handleDelete}
+              onReset={() => handleResetOrEdit(a)}
+              onEdit={() => setEditingAlert(a)}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={Bell}
+          title={alertQuery ? "No matching alerts" : "No active alerts"}
+          description={alertQuery ? "Try another search term." : "Tap '+ New' to create your first one."}
+          onCta={alertQuery ? undefined : () => setShowCreate(true)}
+          ctaLabel="New Alert"
+        />
+      );
     }
     if (tab === "triggered") {
-      return visibleTriggeredAlerts.length > 0
-        ? <div className="space-y-2.5">{visibleTriggeredAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
-        : <EmptyState icon={CheckCircle} title="Nothing triggered yet" description="Alerts move here once your target is hit." />;
+      return visibleTriggeredAlerts.length > 0 ? (
+        <div className="space-y-2.5">
+          {visibleTriggeredAlerts.map((a) => (
+            <AlertCard
+              key={a.id}
+              alert={a}
+              onToggle={handleToggle}
+              onDelete={handleDelete}
+              onReset={() => handleResetOrEdit(a)}
+              onEdit={() => setEditingAlert(a)}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={CheckCircle}
+          title="Nothing triggered yet"
+          description="Alerts move here once your target is hit."
+        />
+      );
     }
     if (tab === "paused") {
-      return visiblePausedAlerts.length > 0
-        ? <div className="space-y-2.5">{visiblePausedAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
-        : <EmptyState icon={BellOff} title="No paused alerts" description="Pause an alert to temporarily stop monitoring." />;
+      return visiblePausedAlerts.length > 0 ? (
+        <div className="space-y-2.5">
+          {visiblePausedAlerts.map((a) => (
+            <AlertCard
+              key={a.id}
+              alert={a}
+              onToggle={handleToggle}
+              onDelete={handleDelete}
+              onReset={() => handleResetOrEdit(a)}
+              onEdit={() => setEditingAlert(a)}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={BellOff}
+          title="No paused alerts"
+          description="Pause an alert to temporarily stop monitoring."
+        />
+      );
     }
     return (
       <div className="space-y-3">
@@ -524,6 +641,26 @@ const AlertsPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Alert Target Dialog */}
+      {editingAlert && (
+        <CreateAlertDialog
+          open={Boolean(editingAlert)}
+          onOpenChange={(open) => {
+            if (!open) setEditingAlert(null);
+          }}
+          assetType={editingAlert.asset_type}
+          assetId={editingAlert.asset_id}
+          assetName={editingAlert.asset_name}
+          currentPrice={
+            resolveAlertAsset(editingAlert, stocks, rates, commodities).currentPrice ??
+            editingAlert.target_price
+          }
+          unit={editingAlert.asset_unit || "KES"}
+          editAlert={editingAlert}
+          onSaved={() => setEditingAlert(null)}
+        />
+      )}
       </main>
     </>
   );
@@ -531,46 +668,73 @@ const AlertsPage = () => {
 
 /* ─── Alert card ─── */
 const AlertCard = ({
-  alert, onToggle, onDelete,
+  alert,
+  onToggle,
+  onDelete,
+  onReset,
+  onEdit,
 }: {
   alert: any;
   onToggle: (id: string, isActive: boolean) => void;
   onDelete: (id: string) => void;
+  onReset: () => void;
+  onEdit?: () => void;
 }) => {
-  const isTriggered = alert.is_triggered;
+  const isTriggered = Boolean(alert._isHit || alert.is_triggered);
   const isPaused = !alert.is_active && !isTriggered;
   const isFund = alert.asset_type === "fund";
   const suffix = isFund ? "%" : "";
+  const parsed = alert._parsed;
+  const currentPrice = parsed?.currentPrice;
+  const progress = alert._progress ?? (isTriggered ? 100 : 5);
+  const formattedDelta = alert._distance?.formattedDelta;
 
   return (
-    <div className={cn(
-      "rounded-xl border bg-card p-3.5 transition-all",
-      isTriggered && "border-accent/40 bg-accent/5",
-      isPaused && "opacity-70",
-      !isTriggered && !isPaused && "border-border"
-    )}>
+    <div
+      className={cn(
+        "rounded-2xl border bg-card p-3.5 transition-all shadow-2xs",
+        isTriggered && "border-emerald-500/35 bg-emerald-500/[0.04]",
+        isPaused && "opacity-75 border-border",
+        !isTriggered && !isPaused && "border-border/80 hover:border-primary/40"
+      )}
+    >
       <div className="flex items-start gap-3">
-        {/* Direction icon */}
-        <div className={cn(
-          "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center",
-          alert.condition === "above" ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive"
-        )}>
-          {alert.condition === "above"
-            ? <TrendingUp className="h-4.5 w-4.5" />
-            : <TrendingDown className="h-4.5 w-4.5" />}
+        {/* Watchlist branding avatar with directional indicator */}
+        <div className="relative shrink-0">
+          <WatchlistAssetAvatar
+            type={alert.asset_type}
+            symbol={parsed?.symbol}
+            name={parsed?.name || alert.asset_name}
+            logoUrl={parsed?.logoUrl}
+            currencyCode={parsed?.currencyCode}
+            size={40}
+            className="rounded-xl border border-border/50"
+          />
+          <div
+            className={cn(
+              "absolute -bottom-1 -right-1 h-4 w-4 rounded-full flex items-center justify-center border border-background text-[10px]",
+              alert.condition === "above" ? "bg-emerald-500 text-slate-950" : "bg-destructive text-white"
+            )}
+          >
+            {alert.condition === "above" ? (
+              <TrendingUp className="h-2.5 w-2.5" />
+            ) : (
+              <TrendingDown className="h-2.5 w-2.5" />
+            )}
+          </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-semibold text-sm text-foreground truncate max-w-[180px] sm:max-w-none">
-              {alert.asset_name}
+            <span className="font-bold text-sm text-foreground truncate max-w-[170px] sm:max-w-none">
+              {parsed?.name || alert.asset_name}
             </span>
-            <Badge variant="outline" className="text-[10px] capitalize px-1.5 py-0 h-4">
+            <Badge variant="outline" className="text-[10px] capitalize px-1.5 py-0 h-4 border-border/80 font-medium">
               {isFund ? "Unit Trust" : alert.asset_type}
             </Badge>
             {isTriggered && (
-              <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0 h-4 gap-0.5">
+              <Badge className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[10px] px-1.5 py-0 h-4 font-bold gap-0.5">
                 <CheckCircle className="h-2.5 w-2.5" /> Hit
               </Badge>
             )}
@@ -581,47 +745,93 @@ const AlertCard = ({
             )}
           </div>
 
-          <p className="text-xs text-muted-foreground mt-1">
-            {alert.condition === "above" ? "Above" : "Below"}{" "}
-            <span className="font-semibold text-foreground">
-              {alert.target_price.toLocaleString()}{suffix}
-            </span>
-          </p>
-
-          {isTriggered && alert.triggered_price != null && (
-            <p className="text-[11px] text-accent mt-1 inline-flex items-center gap-1">
-              <CheckCircle className="h-3 w-3" />
-              Hit at {alert.triggered_price.toLocaleString()}{suffix}
-              {alert.triggered_at && ` · ${formatDistanceToNow(new Date(alert.triggered_at), { addSuffix: true })}`}
+          {/* Target & Live Quote */}
+          <div className="mt-1 flex items-center justify-between text-xs">
+            <p className="text-muted-foreground">
+              Target {alert.condition === "above" ? ">" : "<"}{" "}
+              <span className="font-bold text-foreground">
+                {alert.asset_unit} {alert.target_price.toLocaleString()}{suffix}
+              </span>
             </p>
-          )}
+            {currentPrice != null && (
+              <p className="text-muted-foreground tabular-nums text-[11px]">
+                Now <strong className="text-foreground">{alert.asset_unit} {currentPrice.toLocaleString()}</strong>
+              </p>
+            )}
+          </div>
 
-          {!isTriggered && (
-            <p className="text-[11px] text-muted-foreground/80 mt-1 inline-flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })}
-            </p>
-          )}
+          {/* Distance and hit info */}
+          <div className="mt-1 flex items-center justify-between text-[11px]">
+            {isTriggered ? (
+              <p className="text-emerald-500 font-medium inline-flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" />
+                {alert.triggered_price != null
+                  ? `Hit at ${alert.asset_unit} ${alert.triggered_price.toLocaleString()}${suffix}`
+                  : formattedDelta || "Target met"}
+                {alert.triggered_at && ` · ${formatDistanceToNow(new Date(alert.triggered_at), { addSuffix: true })}`}
+              </p>
+            ) : (
+              <p className="text-muted-foreground/80 inline-flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formattedDelta ? formattedDelta : formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })}
+              </p>
+            )}
+          </div>
+
+          {/* Progress Bar */}
+          <div className="w-full bg-muted/80 rounded-full h-1.5 overflow-hidden mt-2">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all duration-300",
+                isTriggered ? "bg-emerald-500" : "bg-primary"
+              )}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col items-end gap-1.5 shrink-0">
-          {!isTriggered && (
+        <div className="flex flex-col items-end gap-1.5 shrink-0 ml-1">
+          {isTriggered ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2.5 text-xs font-bold rounded-full border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-400 gap-1 shadow-2xs"
+              onClick={onReset}
+              aria-label="Re-arm alert"
+            >
+              <RotateCcw className="h-3 w-3 stroke-[2.5]" /> Re-arm
+            </Button>
+          ) : (
             <Switch
               checked={alert.is_active}
               onCheckedChange={() => onToggle(alert.id, alert.is_active)}
               aria-label={alert.is_active ? "Pause alert" : "Resume alert"}
             />
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-            onClick={() => onDelete(alert.id)}
-            aria-label="Delete alert"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+
+          <div className="flex items-center gap-0.5">
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-full"
+                onClick={onEdit}
+                aria-label="Edit alert target"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive rounded-full"
+              onClick={() => onDelete(alert.id)}
+              aria-label="Delete alert"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
