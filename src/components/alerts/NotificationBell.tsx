@@ -1,30 +1,73 @@
-import { useState } from "react";
-import { Bell, ChevronRight, Coffee, Trash2, WalletCards, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Bell, CheckCheck, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { priceAlertPresentation } from "./priceAlertPresentation";
-import { portfolioDailyPresentation } from "./portfolioDailyPresentation";
-import { getCurrencyFlagUrl } from "@/lib/currencyBranding";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { NotificationCard } from "./NotificationCard";
+import {
+  notificationCategory,
+  type NotificationCategory,
+} from "./notificationPresentation";
+import { cn } from "@/lib/utils";
 
 interface NotificationBellProps {
   variant?: "default" | "round";
 }
 
+type FilterKey = "all" | NotificationCategory;
+
+const FILTER_OPTIONS: Array<{ key: FilterKey; label: string }> = [
+  { key: "all", label: "All" },
+  { key: "alerts", label: "Alerts" },
+  { key: "portfolio", label: "Portfolio" },
+  { key: "market", label: "Market" },
+];
+
 const NotificationBell = ({ variant = "default" }: NotificationBellProps) => {
   const { user } = useAuth();
-  const { notifications, unreadCount, clearAllNotifications, deleteNotification, openNotification } = useNotifications();
-  const [open, setOpen] = useState(false);
+  const {
+    notifications,
+    unreadCount,
+    drawerOpen,
+    setDrawerOpen,
+    markAllRead,
+    clearAllNotifications,
+    deleteNotification,
+    openNotification,
+  } = useNotifications();
+  const [localOpen, setLocalOpen] = useState(false);
+  const [filter, setFilter] = useState<FilterKey>("all");
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  const open = typeof drawerOpen === "boolean" ? drawerOpen : localOpen;
+  const setOpen = setDrawerOpen ?? setLocalOpen;
+
+  const counts = useMemo(() => {
+    const result: Record<FilterKey, number> = { all: notifications.length, alerts: 0, portfolio: 0, market: 0 };
+    for (const item of notifications) {
+      result[notificationCategory(item.type)] += 1;
+    }
+    return result;
+  }, [notifications]);
+
+  const filteredNotifications = useMemo(() => {
+    if (filter === "all") return notifications;
+    return notifications.filter((item) => notificationCategory(item.type) === filter);
+  }, [filter, notifications]);
 
   const handleClearAll = async () => {
     await clearAllNotifications();
     toast.success("All notifications cleared");
+  };
+
+  const handleMarkAllRead = async () => {
+    await markAllRead();
+    toast.success("All notifications marked as read");
   };
 
   const isRound = variant === "round";
@@ -32,7 +75,7 @@ const NotificationBell = ({ variant = "default" }: NotificationBellProps) => {
   const buttonClass = isRound
     ? "inline-flex items-center justify-center relative h-10 w-10 rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground hover:bg-muted dark:hover:bg-muted active:scale-95 transition-all shrink-0"
     : "inline-flex items-center justify-center relative h-9 w-9 rounded-full text-foreground hover:bg-muted transition-colors";
-  const iconClass = isRound ? "h-5 w-5" : "h-5 w-5";
+  const iconClass = "h-5 w-5";
   const badgeClass = isRound
     ? `absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none shadow-sm ${
         isMultiDigit ? "h-[18px] min-w-[18px] px-1.5" : "h-[18px] w-[18px] aspect-square"
@@ -71,10 +114,33 @@ const NotificationBell = ({ variant = "default" }: NotificationBellProps) => {
           )}
         </button>
       </SheetTrigger>
-      <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "inset-x-2 bottom-[max(env(safe-area-inset-bottom),0.75rem)] flex max-h-[82svh] flex-col overflow-hidden rounded-[28px] border bg-background p-0 [&>button]:hidden" : "flex h-full w-[min(420px,calc(100vw-1rem))] flex-col border-l border-border bg-background p-0 [&>button]:hidden sm:max-w-none"}>
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={
+          isMobile
+            ? "inset-x-2 bottom-[max(env(safe-area-inset-bottom),0.75rem)] flex max-h-[82svh] flex-col overflow-hidden rounded-[28px] border bg-background p-0 [&>button]:hidden"
+            : "flex h-full w-[min(420px,calc(100vw-1rem))] flex-col border-l border-border bg-background p-0 [&>button]:hidden sm:max-w-none"
+        }
+      >
         {isMobile && <div aria-hidden="true" className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-muted" />}
         <div className="flex items-center gap-2 border-b border-border/80 px-5 py-2.5 md:py-3 shrink-0">
-          <div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold text-foreground">Notifications</SheetTitle><p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new notification${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
+          <div className="min-w-0 flex-1">
+            <SheetTitle className="text-base font-bold text-foreground">Notifications</SheetTitle>
+            <p className="text-xs text-muted-foreground">
+              {unreadCount ? `${unreadCount} new notification${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}
+            </p>
+          </div>
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs h-8 px-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+              onClick={handleMarkAllRead}
+              aria-label="Mark all notifications as read"
+            >
+              <CheckCheck className="h-3.5 w-3.5 mr-1" /> Read all
+            </Button>
+          )}
           {notifications.length > 0 && (
             <Button
               variant="ghost"
@@ -86,24 +152,67 @@ const NotificationBell = ({ variant = "default" }: NotificationBellProps) => {
               <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear all
             </Button>
           )}
-          <button onClick={() => setOpen(false)} aria-label="Close notifications" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 hover:bg-muted transition-colors">
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="Close notifications"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 hover:bg-muted transition-colors"
+          >
             <X className="h-4 w-4 text-muted-foreground stroke-[2.5]" />
           </button>
         </div>
+
+        {notifications.length > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto border-b border-border/60 px-4 py-2 shrink-0 scrollbar-hide" role="tablist" aria-label="Filter notifications">
+            {FILTER_OPTIONS.map((option) => {
+              const active = filter === option.key;
+              const count = counts[option.key];
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setFilter(option.key)}
+                  className={cn(
+                    "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold transition-colors",
+                    active
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border/80 bg-muted/40 text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <span>{option.label}</span>
+                  <span className={cn("tabular-nums text-[10px]", active ? "opacity-80" : "opacity-70")}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
           {notifications.length === 0 ? (
             <div className="px-5 py-10 text-center">
               <Bell className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm font-medium text-foreground">No notifications yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">Market alerts and portfolio updates will appear here.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Price alerts, watchlist movers, MMF shifts, T-Bill auctions, and portfolio updates will appear here.
+              </p>
+            </div>
+          ) : filteredNotifications.length === 0 ? (
+            <div className="px-5 py-10 text-center">
+              <Bell className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm font-medium text-foreground">No notifications in this category</p>
+              <p className="mt-1 text-xs text-muted-foreground">Try switching back to All to view your other updates.</p>
             </div>
           ) : (
-            <div className="w-full max-w-full divide-y divide-border/60 overflow-x-hidden">
-              {notifications.map((n) => (
-                <NotificationRow
+            <div className="w-full max-w-full space-y-2.5 overflow-x-hidden p-3 sm:p-4">
+              {filteredNotifications.map((n) => (
+                <NotificationCard
                   key={n.id}
                   notification={n}
-                  onOpen={() => { void openNotification(n); setOpen(false); }}
+                  onOpen={() => {
+                    void openNotification(n);
+                    setOpen(false);
+                  }}
                   onDelete={() => deleteNotification(n.id)}
                 />
               ))}
@@ -115,48 +224,6 @@ const NotificationBell = ({ variant = "default" }: NotificationBellProps) => {
   );
 };
 
-function NotificationAssetVisual({ notification, symbol }: { notification: ReturnType<typeof useNotifications>["notifications"][number]; symbol: string | null }) {
-  const [imageFailed, setImageFailed] = useState(false);
-  const flagUrl = notification.assetType === "currency" ? getCurrencyFlagUrl(symbol) : undefined;
-  const label = notification.assetName ?? notification.title;
-
-  if (notification.type === "portfolio_daily") return <WalletCards className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-label="Portfolio" />;
-
-  if (notification.assetVisualUrl && !imageFailed) {
-    return <img src={notification.assetVisualUrl} alt={`${label} logo`} className="h-full w-full object-contain p-1.5" onError={() => setImageFailed(true)} />;
-  }
-  if (flagUrl && !imageFailed) {
-    return <img src={flagUrl} alt={`${symbol} flag`} className="h-5 w-5 rounded-full object-cover" onError={() => setImageFailed(true)} />;
-  }
-  if (notification.assetType === "commodity") return <Coffee className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-label="Commodity" />;
-  return <span className="text-xs font-black tracking-wide text-foreground">{symbol?.slice(0, 3) ?? "KFF"}</span>;
-}
-
-function notificationTime(value: string | null) {
-  if (!value) return "Recently";
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return "Recently";
-  const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60_000));
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  if (minutes < 1_440) return `${Math.floor(minutes / 60)}h ago`;
-  return `${Math.floor(minutes / 1_440)}d ago`;
-}
-
-export function NotificationRow({ notification, onOpen, onDelete }: { notification: ReturnType<typeof useNotifications>["notifications"][number]; onOpen: () => void; onDelete: () => void }) {
-  const details = notification.type === "price_alert" ? priceAlertPresentation(notification) : null;
-  const portfolioDetails = notification.type === "portfolio_daily" ? portfolioDailyPresentation(notification) : null;
-  const assetName = details?.assetName ?? notification.title;
-  const symbol = details?.symbol ?? notification.assetSymbol ?? null;
-  return <div className={`group relative box-border flex w-full max-w-full min-w-0 items-center gap-2 overflow-hidden px-4 py-3 md:py-4 transition ${notification.is_read ? "hover:bg-muted/40" : "bg-emerald-500/[0.045] hover:bg-emerald-500/[0.08]"}`}>
-    {!notification.is_read && <span className="absolute inset-y-3 left-0 w-0.5 rounded-r-full bg-emerald-500" aria-label="Unread" />}
-    <button type="button" onClick={onOpen} aria-label={`Open alert: ${assetName}`} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm"><NotificationAssetVisual notification={notification} symbol={symbol} /></span>
-      <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-foreground">{assetName}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{details?.target ?? portfolioDetails?.target ?? notification.message}</span></span>
-      <span className="flex shrink-0 items-center gap-1.5 text-right"><span><span className="block text-sm font-bold tabular-nums text-foreground">{details?.currentPrice ?? portfolioDetails?.currentPrice ?? "View update"}</span><span className="mt-0.5 block text-xs text-muted-foreground">{notificationTime(details?.observedAt ?? portfolioDetails?.observedAt ?? notification.created_at)}</span></span><ChevronRight className="h-4 w-4 text-muted-foreground" /></span>
-    </button>
-    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:text-destructive" onClick={onDelete} aria-label={`Delete notification: ${notification.title}`}><Trash2 className="h-3.5 w-3.5" /></Button>
-  </div>;
-}
+export { NotificationCard as NotificationRow } from "./NotificationCard";
 
 export default NotificationBell;

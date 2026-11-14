@@ -983,28 +983,49 @@ export type Database = {
       }
       communication_preferences: {
         Row: {
+          admin_broadcast_inapp: boolean
           created_at: string
           market_brief_email: boolean
+          market_brief_inapp: boolean
+          mmf_yield_inapp: boolean
+          portfolio_daily_inapp: boolean
           price_alert_email: boolean
           price_alert_inapp: boolean
+          price_alert_push: boolean
+          tbill_auction_inapp: boolean
           updated_at: string
           user_id: string
+          watchlist_mover_inapp: boolean
         }
         Insert: {
+          admin_broadcast_inapp?: boolean
           created_at?: string
           market_brief_email?: boolean
+          market_brief_inapp?: boolean
+          mmf_yield_inapp?: boolean
+          portfolio_daily_inapp?: boolean
           price_alert_email?: boolean
           price_alert_inapp?: boolean
+          price_alert_push?: boolean
+          tbill_auction_inapp?: boolean
           updated_at?: string
           user_id: string
+          watchlist_mover_inapp?: boolean
         }
         Update: {
+          admin_broadcast_inapp?: boolean
           created_at?: string
           market_brief_email?: boolean
+          market_brief_inapp?: boolean
+          mmf_yield_inapp?: boolean
+          portfolio_daily_inapp?: boolean
           price_alert_email?: boolean
           price_alert_inapp?: boolean
+          price_alert_push?: boolean
+          tbill_auction_inapp?: boolean
           updated_at?: string
           user_id?: string
+          watchlist_mover_inapp?: boolean
         }
         Relationships: []
       }

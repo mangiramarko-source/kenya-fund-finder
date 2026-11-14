@@ -66,6 +66,13 @@ Deno.serve(async (request) => {
     const priorBySnapshot = new Map<string, typeof priorHoldings>();
     for (const holding of priorHoldings ?? []) priorBySnapshot.set(holding.snapshot_id, [...(priorBySnapshot.get(holding.snapshot_id) ?? []), holding]);
 
+    const { data: prefsRows } = await supabase.from("communication_preferences").select("*").in("user_id", userIds);
+    const portfolioInappDisabled = new Set<string>(
+      (prefsRows ?? [])
+        .filter((row: { user_id?: string; portfolio_daily_inapp?: boolean | null }) => row.portfolio_daily_inapp === false && row.user_id)
+        .map((row: { user_id: string }) => row.user_id),
+    );
+
     let notifications = 0;
     for (const [userId, userHoldings] of byUser) {
       const valued: HoldingValue[] = [];
@@ -97,6 +104,7 @@ Deno.serve(async (request) => {
       const message = direction === "unchanged"
         ? `Your comparable holdings closed at ${kes(movement.closingValue)}, unchanged from opening.${moverText}`
         : `Your comparable holdings moved ${movement.change >= 0 ? "+" : ""}${kes(movement.change)} (${movement.percentChange >= 0 ? "+" : ""}${movement.percentChange.toFixed(2)}%) from ${kes(movement.openingValue)} to ${kes(movement.closingValue)}.${moverText}`;
+      if (portfolioInappDisabled.has(userId)) continue;
       const { error: notificationError } = await supabase.from("notifications").insert({
         user_id: userId, event_key: `portfolio_daily:${userId}:${today}`, title, message, type: "portfolio_daily",
         metadata: { snapshot_date: today, opening_value: movement.openingValue, closing_value: movement.closingValue, change: movement.change, percent_change: movement.percentChange, movers },

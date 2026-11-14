@@ -41,7 +41,10 @@ vi.mock("@/integrations/supabase/client", () => ({
           order: vi.fn(() => query),
           limit: vi.fn(() => Promise.resolve({ data: state.notificationRows })),
           maybeSingle: vi.fn(() => Promise.resolve({ data: state.notificationRows[0] ?? null })),
-          update: state.update,
+          update: vi.fn((...args: unknown[]) => {
+            state.update(...args);
+            return query;
+          }),
           delete: vi.fn(() => {
             state.delete();
             return query;
@@ -155,5 +158,27 @@ describe("NotificationProvider price-alert modals", () => {
     await waitFor(() => expect(screen.getByTestId("count")).toHaveTextContent("0"));
     expect(state.delete).toHaveBeenCalled();
     expect(state.eq).toHaveBeenCalledWith("user_id", "user-1");
+  });
+
+  it("shows top banner for broadcast T-Bill, watchlist mover, and MMF notifications and routes cleanly", async () => {
+    const tbillBroadcast: AppNotification = {
+      id: "tbill-1",
+      user_id: "user-1",
+      title: "CBK T-Bill Auction Results",
+      message: "91d: 15.65%",
+      type: "tbill_auction",
+      is_read: false,
+      created_at: "2026-09-10T10:00:00.000Z",
+      metadata: { rate_91: 15.65, route: "/treasury" },
+    };
+    render(<MemoryRouter><NotificationProvider><PortfolioNotificationOpener /></NotificationProvider></MemoryRouter>);
+    await waitFor(() => expect(state.broadcastHandler).toBeDefined());
+    state.notificationRows = [tbillBroadcast];
+
+    await act(async () => { await state.broadcastHandler?.({ payload: { id: tbillBroadcast.id } }); });
+    expect(await screen.findByRole("alertdialog")).toHaveTextContent("tbill-1");
+
+    fireEvent.click(screen.getByRole("button", { name: "Open portfolio notification" }));
+    await waitFor(() => expect(screen.getByText("/treasury")).toBeInTheDocument());
   });
 });

@@ -90,6 +90,16 @@ describe("email preference persistence", () => {
     expect(state.invoke).not.toHaveBeenCalled();
     await waitFor(() => expect(result.current.prefs.price_alert_push).toBe(true));
   });
+  it("persists expanded in-app category preferences directly", async () => {
+    const { result } = setup();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.prefs.tbill_auction_inapp).toBe(true);
+    state.single.mockResolvedValue({ data: { ...row(), tbill_auction_inapp: false }, error: null });
+    await act(async () => { expect(await result.current.updatePref("tbill_auction_inapp", false)).toBe(true); });
+    expect(state.update).toHaveBeenCalledWith({ tbill_auction_inapp: false });
+    expect(state.invoke).not.toHaveBeenCalled();
+    await waitFor(() => expect(result.current.prefs.tbill_auction_inapp).toBe(false));
+  });
   it("does not leak cached choices between accounts", async () => {
     state.single.mockResolvedValue({ data: { ...row(), market_brief_email: true, market_brief_email_consented_at: "2026-08-26T20:00:00Z" }, error: null });
     const { result, rerender } = setup();

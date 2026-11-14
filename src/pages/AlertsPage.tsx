@@ -3,10 +3,10 @@ import { usePriceAlerts, type PriceAlert } from "@/hooks/usePriceAlerts";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { useEmailPreferences } from "@/hooks/useEmailPreferences";
 import { useMarketData } from "@/components/home/MarketTicker";
 import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
+import { NotificationPreferencesSection } from "@/components/alerts/NotificationPreferencesSection";
 import {
   resolveAlertAsset,
   isAlertTriggered,
@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Bell, BellOff, Trash2, TrendingUp, TrendingDown, Clock, CheckCircle,
-  Plus, Mail, Settings2, Search, ChevronRight, RotateCcw, Pencil,
+  Plus, Settings2, Search, ChevronRight, RotateCcw, Pencil,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -53,7 +53,6 @@ const AlertsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { alerts, loading, deleteAlert, toggleAlert, createAlert, resetAlert } = usePriceAlerts();
-  const { prefs, loading: prefsLoading, updatePref } = useEmailPreferences();
   const { stocks, rates, commodities } = useMarketData();
 
   const [tab, setTab] = useState<TabKey>("active");
@@ -416,32 +415,7 @@ const AlertsPage = () => {
         />
       );
     }
-    return (
-      <div className="space-y-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Mail className="h-4 w-4 text-accent" />
-              <h3 className="font-semibold text-sm text-foreground">Email Notifications</h3>
-            </div>
-            <SettingRow
-              title="Instant Price Alerts"
-              description="Email preference for triggered market alerts."
-              checked={prefs.price_alert_email}
-              onChange={(v) => updatePref("price_alert_email", v)}
-              disabled={prefsLoading}
-            />
-            <SettingRow
-              title="Market Brief & Morning News"
-              description="Market Brief updates plus weekday morning News Highlights from stored, quality-checked articles."
-              checked={prefs.market_brief_email}
-              onChange={(v) => updatePref("market_brief_email", v)}
-              disabled={prefsLoading}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <NotificationPreferencesSection />;
   };
 
   return (
@@ -853,21 +827,6 @@ const EmptyState = ({
         <Plus className="h-3.5 w-3.5" /> {ctaLabel}
       </Button>
     )}
-  </div>
-);
-
-/* ─── Setting row ─── */
-const SettingRow = ({
-  title, description, checked, onChange, disabled,
-}: {
-  title: string; description: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean;
-}) => (
-  <div className="flex items-center justify-between gap-3 py-3 border-t border-border/60 first:border-t-0">
-    <div className="min-w-0">
-      <p className="text-sm font-medium text-foreground">{title}</p>
-      <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-    </div>
-    <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} />
   </div>
 );
 

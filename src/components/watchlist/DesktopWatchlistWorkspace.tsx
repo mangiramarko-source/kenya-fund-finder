@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
+import { NotificationPreferencesSection } from "@/components/alerts/NotificationPreferencesSection";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
@@ -73,7 +74,7 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
   const [addQuery, setAddQuery] = useState("");
   const [editing, setEditing] = useState<AssetRow | null>(null);
   const [editingAlert, setEditingAlert] = useState<PriceAlert | null>(null);
-  const [alertFilter, setAlertFilter] = useState<"active" | "triggered" | "paused">("active");
+  const [alertFilter, setAlertFilter] = useState<"active" | "triggered" | "paused" | "settings">("active");
   const [isReordering, setIsReordering] = useState(false);
 
   useEffect(() => {
@@ -392,10 +393,11 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
               </nav>
               <span className="h-6 w-px shrink-0 bg-border" />
               {(["active", "triggered", "paused"] as const).map((value) => <button key={value} type="button" onClick={() => setAlertFilter(value)} className={cn("inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-4 text-xs font-bold capitalize transition-colors", alertFilter === value ? "border-foreground bg-foreground text-background" : "border-border bg-card text-muted-foreground hover:text-foreground")}>{value} <span className="tabular-nums opacity-70">{counts[value]}</span></button>)}
+              <button type="button" onClick={() => setAlertFilter("settings")} className={cn("inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-4 text-xs font-bold capitalize transition-colors", alertFilter === "settings" ? "border-foreground bg-foreground text-background" : "border-border bg-card text-muted-foreground hover:text-foreground")}>Settings</button>
             </div>
             <Button disabled={!user || rows.length === 0} size="sm" onClick={() => { const first = rows[0]; if (first) { setEditing(first); setEditingAlert(null); } }} className="ml-auto h-9 shrink-0 gap-1.5 rounded-full bg-emerald-600 px-4 font-bold text-white hover:bg-emerald-700"><Plus className="h-4 w-4" /> New alert</Button>
           </div>
-          {!user ? <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm text-muted-foreground">Sign in to create and manage alerts.</div> : rows.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">Save an asset first, then create its alert here.</div> : alertsLoading ? <div className="h-32 animate-pulse rounded-2xl bg-muted" /> : visibleAlerts.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">No {alertFilter} alerts.</div> : <section className="overflow-hidden rounded-2xl border border-border bg-card"><div className="border-b border-border px-5 py-4"><h2 className="text-sm font-bold capitalize">{alertFilter} alerts</h2><p className="mt-0.5 text-xs text-muted-foreground">One-shot alerts are delivered when their target is met.</p></div><div className="grid gap-3 p-4 lg:grid-cols-2">{visibleAlerts.map((alert) => <AlertRow key={alert.id} alert={alert} visualUrl={rowByAlert.get(`${alert.asset_type}:${alert.asset_id}`)?.visualUrl} onEdit={() => editAlert(alert)} onToggle={() => void toggleAlert(alert.id, !alert.is_active)} onReset={() => handleResetOrEdit(alert)} onDelete={() => void deleteAlert(alert.id)} />)}</div></section>}
+          {!user ? <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm text-muted-foreground">Sign in to create and manage alerts.</div> : alertFilter === "settings" ? <NotificationPreferencesSection /> : rows.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">Save an asset first, then create its alert here.</div> : alertsLoading ? <div className="h-32 animate-pulse rounded-2xl bg-muted" /> : visibleAlerts.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">No {alertFilter} alerts.</div> : <section className="overflow-hidden rounded-2xl border border-border bg-card"><div className="border-b border-border px-5 py-4"><h2 className="text-sm font-bold capitalize">{alertFilter} alerts</h2><p className="mt-0.5 text-xs text-muted-foreground">One-shot alerts are delivered when their target is met.</p></div><div className="grid gap-3 p-4 lg:grid-cols-2">{visibleAlerts.map((alert) => <AlertRow key={alert.id} alert={alert} visualUrl={rowByAlert.get(`${alert.asset_type}:${alert.asset_id}`)?.visualUrl} onEdit={() => editAlert(alert)} onToggle={() => void toggleAlert(alert.id, !alert.is_active)} onReset={() => handleResetOrEdit(alert)} onDelete={() => void deleteAlert(alert.id)} />)}</div></section>}
         </>
       )}
 

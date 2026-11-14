@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LivePriceAlertCard } from "./LivePriceAlertCard";
-import { toast } from "sonner";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
 import { getStockLogoUrl } from "@/lib/stockBranding";
+import { notificationPresentation } from "./notificationPresentation";
 
 export interface AppNotification {
   id: string;
@@ -25,6 +25,8 @@ export interface AppNotification {
 type NotificationContextValue = {
   notifications: AppNotification[];
   unreadCount: number;
+  drawerOpen: boolean;
+  setDrawerOpen: (open: boolean) => void;
   markAsRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
@@ -50,7 +52,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const userId = user?.id;
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [livePriceAlert, setLivePriceAlert] = useState<AppNotification | null>(null);
+  const [liveBannerNotification, setLiveBannerNotification] = useState<AppNotification | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const seenIds = useRef(new Set<string>());
   const shownPriceAlertIds = useRef(readShownPriceAlertIds());
 
@@ -59,78 +62,151 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     try {
       window.sessionStorage.setItem(shownPriceAlertStorageKey, JSON.stringify([...shownPriceAlertIds.current]));
     } catch {
-      // The live alert remains functional when session storage is unavailable.
+      // The top notification banner remains functional when session storage is unavailable.
     }
   }, []);
 
   const hydrateNotifications = useCallback(async (items: AppNotification[]) => {
-    const priceAlerts = items.filter((item) => item.type === "price_alert");
-    const idsFor = (assetType: "stock" | "fund" | "currency" | "commodity") => [...new Set(priceAlerts
-      .map((item) => item.metadata?.asset_type === assetType ? item.metadata.asset_id : assetType === "stock" ? item.metadata?.stock_id : null)
-      .filter((id): id is string => typeof id === "string"))];
+    const assetItems = items.filter(
+      (item) => item.type === "price_alert" || item.type === "watchlist_mover" || item.type === "mmf_yield_shift",
+    );
+    const inferAssetType = (item: AppNotification): "stock" | "fund" | "currency" | "commodity" | null => {
+      const explicit = item.metadata?.asset_type;
+      if (explicit === "stock" || explicit === "fund" || explicit === "currency" || explicit === "commodity") return explicit;
+      if (item.type === "watchlist_mover") return "stock";
+      if (item.type === "mmf_yield_shift") return "fund";
+      return null;
+    };
+    const idsFor = (assetType: "stock" | "fund" | "currency" | "commodity") => [
+      ...new Set(
+        assetItems
+          .map((item) => {
+            const type = inferAssetType(item);
+            if (type === assetType && typeof item.metadata?.asset_id === "string") return item.metadata.asset_id;
+            if (assetType === "stock" && typeof item.metadata?.stock_id === "string") return item.metadata.stock_id;
+            return null;
+          })
+          .filter((id): id is string => typeof id === "string"),
+      ),
+    ];
+
     const [stockResult, fundResult, currencyResult, commodityResult] = await Promise.all([
       idsFor("stock").length ? supabase.from("stocks").select("id,name,symbol,logo_url").in("id", idsFor("stock")) : Promise.resolve({ data: [] }),
       idsFor("fund").length ? supabase.from("funds").select("id,name,manager,logo_url").in("id", idsFor("fund")) : Promise.resolve({ data: [] }),
       idsFor("currency").length ? supabase.from("exchange_rates").select("id,currency_code,currency_name").in("id", idsFor("currency")) : Promise.resolve({ data: [] }),
       idsFor("commodity").length ? supabase.from("commodities").select("id,name,symbol").in("id", idsFor("commodity")) : Promise.resolve({ data: [] }),
     ]);
+
     const stocks = new Map((stockResult.data ?? []).map((stock) => [stock.id, stock]));
     const funds = new Map((fundResult.data ?? []).map((fund) => [fund.id, fund]));
     const currencies = new Map((currencyResult.data ?? []).map((currency) => [currency.id, currency]));
     const commodities = new Map((commodityResult.data ?? []).map((commodity) => [commodity.id, commodity]));
 
     return items.map((item) => {
-      if (item.type !== "price_alert") return item;
-      const assetType = item.metadata?.asset_type;
+      if (item.type !== "price_alert" && item.type !== "watchlist_mover" && item.type !== "mmf_yield_shift") {
+        return item;
+      }
+      const assetType = inferAssetType(item);
       const assetId = typeof item.metadata?.asset_id === "string" ? item.metadata.asset_id : null;
       const stockId = assetType === "stock" ? assetId : typeof item.metadata?.stock_id === "string" ? item.metadata.stock_id : null;
       const stock = stockId ? stocks.get(stockId) : null;
-      if (stock) return { ...item, assetType: "stock" as const, assetName: stock.name, assetSymbol: stock.symbol, assetVisualUrl: getStockLogoUrl(stock.symbol, stock.logo_url) || undefined };
+      if (stock) {
+        return {
+          ...item,
+          assetType: "stock" as const,
+          assetName: stock.name,
+          assetSymbol: stock.symbol,
+          assetVisualUrl: getStockLogoUrl(stock.symbol, stock.logo_url) || undefined,
+        };
+      }
       const fund = assetType === "fund" && assetId ? funds.get(assetId) : null;
-      if (fund) return { ...item, assetType: "fund" as const, assetName: fund.name, assetVisualUrl: getFundManagerLogoUrl(fund.manager, fund.logo_url) };
+      if (fund) {
+        return {
+          ...item,
+          assetType: "fund" as const,
+          assetName: fund.name,
+          assetVisualUrl: getFundManagerLogoUrl(fund.manager, fund.logo_url),
+        };
+      }
       const currency = assetType === "currency" && assetId ? currencies.get(assetId) : null;
-      if (currency) return { ...item, assetType: "currency" as const, assetName: `${currency.currency_code}/KES · ${currency.currency_name}`, assetSymbol: currency.currency_code };
+      if (currency) {
+        return {
+          ...item,
+          assetType: "currency" as const,
+          assetName: `${currency.currency_code}/KES · ${currency.currency_name}`,
+          assetSymbol: currency.currency_code,
+        };
+      }
       const commodity = assetType === "commodity" && assetId ? commodities.get(assetId) : null;
-      if (commodity) return { ...item, assetType: "commodity" as const, assetName: commodity.name, assetSymbol: commodity.symbol };
-      return { ...item, assetType: assetType === "stock" || assetType === "fund" || assetType === "currency" || assetType === "commodity" ? assetType : undefined, assetName: typeof item.metadata?.asset_name === "string" ? item.metadata.asset_name : item.assetName };
+      if (commodity) {
+        return {
+          ...item,
+          assetType: "commodity" as const,
+          assetName: commodity.name,
+          assetSymbol: commodity.symbol,
+        };
+      }
+      return {
+        ...item,
+        assetType: assetType ?? undefined,
+        assetName: typeof item.metadata?.asset_name === "string" ? item.metadata.asset_name : item.assetName,
+        assetSymbol: typeof item.metadata?.symbol === "string" ? item.metadata.symbol : item.assetSymbol,
+      };
     });
   }, []);
 
   const fetchNotifications = useCallback(async () => {
-    if (!userId) { setNotifications([]); setLivePriceAlert(null); seenIds.current.clear(); return; }
-    const { data } = await supabase.from("notifications").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50);
+    if (!userId) {
+      setNotifications([]);
+      setLiveBannerNotification(null);
+      seenIds.current.clear();
+      return;
+    }
+    const { data } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
     const next = await hydrateNotifications((data as AppNotification[] | null) ?? []);
     setNotifications(next);
     next.forEach((notification) => seenIds.current.add(notification.id));
-    const newestUnshownPriceAlert = next.find((notification) => notification.type === "price_alert" && !notification.is_read && !shownPriceAlertIds.current.has(notification.id));
-    if (newestUnshownPriceAlert) {
-      markPriceAlertModalShown(newestUnshownPriceAlert.id);
-      setLivePriceAlert(newestUnshownPriceAlert);
+    const newestUnshown = next.find(
+      (notification) => !notification.is_read && !shownPriceAlertIds.current.has(notification.id),
+    );
+    if (newestUnshown) {
+      markPriceAlertModalShown(newestUnshown.id);
+      setLiveBannerNotification(newestUnshown);
     }
   }, [hydrateNotifications, markPriceAlertModalShown, userId]);
 
   const markAsRead = useCallback(async (id: string) => {
     await supabase.from("notifications").update({ is_read: true }).eq("id", id);
-    setNotifications((items) => items.map((item) => item.id === id ? { ...item, is_read: true } : item));
+    setNotifications((items) => items.map((item) => (item.id === id ? { ...item, is_read: true } : item)));
   }, []);
+
   const markAllRead = useCallback(async () => {
     if (!userId) return;
     await supabase.from("notifications").update({ is_read: true }).eq("user_id", userId).eq("is_read", false);
     setNotifications((items) => items.map((item) => ({ ...item, is_read: true })));
   }, [userId]);
+
   const deleteNotification = useCallback(async (id: string) => {
     await supabase.from("notifications").delete().eq("id", id);
     setNotifications((items) => items.filter((item) => item.id !== id));
   }, []);
+
   const clearAllNotifications = useCallback(async () => {
     if (!userId) return;
     await supabase.from("notifications").delete().eq("user_id", userId);
     setNotifications([]);
+    setLiveBannerNotification(null);
   }, [userId]);
+
   const openNotification = useCallback(async (notification: AppNotification) => {
     if (!notification.is_read) await markAsRead(notification.id);
-    if (notification.type === "price_alert") navigate("/alerts");
-    if (notification.type === "portfolio_daily") navigate("/portfolio");
+    const { destination } = notificationPresentation(notification);
+    navigate(destination);
   }, [markAsRead, navigate]);
 
   useEffect(() => {
@@ -145,7 +221,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const subscribe = async () => {
       const { data: session } = await supabase.auth.getSession();
       if (session.session?.access_token) await supabase.realtime.setAuth(session.session.access_token);
-      channel = supabase.channel(`user:${userId}:notifications`, { config: { private: true } })
+      channel = supabase
+        .channel(`user:${userId}:notifications`, { config: { private: true } })
         .on("broadcast", { event: "notification_created" }, async (event) => {
           const id = String((event.payload as { id?: string }).id ?? "");
           if (!id || seenIds.current.has(id)) return;
@@ -155,13 +232,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           if (!notification) return;
           seenIds.current.add(notification.id);
           setNotifications((items) => [notification, ...items.filter((item) => item.id !== notification.id)]);
-          if (notification.type === "price_alert") {
-            markPriceAlertModalShown(notification.id);
-            setLivePriceAlert(notification);
-          } else {
-            toast(notification.title, { description: notification.message });
-          }
-        }).subscribe();
+          markPriceAlertModalShown(notification.id);
+          setLiveBannerNotification(notification);
+        })
+        .subscribe();
     };
     touchPresence();
     timer = window.setInterval(touchPresence, 45_000);
@@ -174,12 +248,41 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     };
   }, [fetchNotifications, hydrateNotifications, markPriceAlertModalShown, userId]);
 
-  const value = useMemo(() => ({
-    notifications,
-    unreadCount: notifications.filter((notification) => !notification.is_read).length,
-    markAsRead, markAllRead, deleteNotification, clearAllNotifications, openNotification,
-  }), [clearAllNotifications, deleteNotification, markAllRead, markAsRead, notifications, openNotification]);
-  return <NotificationContext.Provider value={value}>{children}<LivePriceAlertCard notification={livePriceAlert} onDismiss={() => setLivePriceAlert(null)} onView={(notification) => { setLivePriceAlert(null); void openNotification(notification); }} /></NotificationContext.Provider>;
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => !notification.is_read).length,
+    [notifications],
+  );
+
+  const value = useMemo(
+    () => ({
+      notifications,
+      unreadCount,
+      drawerOpen,
+      setDrawerOpen,
+      markAsRead,
+      markAllRead,
+      deleteNotification,
+      clearAllNotifications,
+      openNotification,
+    }),
+    [clearAllNotifications, deleteNotification, drawerOpen, markAllRead, markAsRead, notifications, openNotification, unreadCount],
+  );
+
+  return (
+    <NotificationContext.Provider value={value}>
+      {children}
+      <LivePriceAlertCard
+        notification={liveBannerNotification}
+        unreadCount={unreadCount}
+        onDismiss={() => setLiveBannerNotification(null)}
+        onView={(notification) => {
+          setLiveBannerNotification(null);
+          void openNotification(notification);
+        }}
+        onOpenDrawer={() => setDrawerOpen(true)}
+      />
+    </NotificationContext.Provider>
+  );
 }
 
 export function useNotifications() {

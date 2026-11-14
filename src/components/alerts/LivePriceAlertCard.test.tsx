@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { LivePriceAlertCard } from "./LivePriceAlertCard";
+import { TopNotificationBanner } from "./TopNotificationBanner";
 import NotificationBell, { NotificationRow } from "./NotificationBell";
 import type { AppNotification } from "./NotificationProvider";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ vi.mock("@/hooks/useAuth", () => ({
 }));
 
 const mockClearAllNotifications = vi.fn();
+const mockMarkAllRead = vi.fn();
 let mockNotifications: AppNotification[] = [];
 
 vi.mock("./NotificationProvider", async (importOriginal) => {
@@ -27,7 +29,7 @@ vi.mock("./NotificationProvider", async (importOriginal) => {
     useNotifications: () => ({
       notifications: mockNotifications,
       unreadCount: mockNotifications.filter((n) => !n.is_read).length,
-      markAllRead: vi.fn(),
+      markAllRead: mockMarkAllRead,
       deleteNotification: vi.fn(),
       clearAllNotifications: mockClearAllNotifications,
       openNotification: vi.fn(),
@@ -77,9 +79,29 @@ describe("NotificationRow", () => {
     const onOpen = vi.fn();
     render(<NotificationRow notification={notification} onOpen={onOpen} onDelete={vi.fn()} />);
 
+    expect(screen.getByText("Price Alert")).toBeInTheDocument();
     expect(screen.getByText("Above KES 36.90")).toBeInTheDocument();
+    expect(screen.getByText("KES 37.05")).toBeInTheDocument();
+    expect(screen.queryByText("Target hit")).not.toBeInTheDocument();
+    expect(screen.queryByText("View alert")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Unread")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Open alert: Safaricom PLC/ }));
     expect(onOpen).toHaveBeenCalledOnce();
+  });
+
+  it("softens styling and hides the unread dot on read cards", () => {
+    const onDelete = vi.fn();
+    render(
+      <NotificationRow
+        notification={{ ...notification, is_read: true }}
+        onOpen={vi.fn()}
+        onDelete={onDelete}
+      />
+    );
+
+    expect(screen.queryByLabelText("Unread")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: `Delete notification: ${notification.title}` }));
+    expect(onDelete).toHaveBeenCalledOnce();
   });
 
   it("keeps long market-alert text inside the available card width", () => {
@@ -94,7 +116,7 @@ describe("NotificationRow", () => {
 
     const title = screen.getByText(longNotification.assetName);
     expect(title).toHaveClass("truncate");
-    expect(screen.getByText("Above KES 36.90")).toHaveClass("truncate");
+    expect(screen.getByText("Above KES 36.90")).toHaveClass("line-clamp-2");
     expect(title.closest(".group")).toHaveClass("w-full", "max-w-full", "overflow-hidden", "min-w-0");
     fireEvent.click(screen.getByRole("button", { name: /Open alert: Market alert: AUD\/KES/ }));
     expect(onOpen).toHaveBeenCalledOnce();
@@ -155,7 +177,49 @@ describe("Notification drawer", () => {
 
     fireEvent.click(clearAllButton);
     expect(mockClearAllNotifications).toHaveBeenCalledOnce();
-    expect(toast.success).toHaveBeenCalledWith("All notifications cleared");
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("All notifications cleared"));
+  });
+
+  it("filters notifications by category tab and supports Read all", async () => {
+    mockNotifications = [
+      notification,
+      {
+        id: "portfolio-1",
+        user_id: "user-1",
+        title: "Portfolio up today",
+        message: "Up 10%",
+        type: "portfolio_daily",
+        is_read: false,
+        created_at: "2026-09-09T14:15:00.000Z",
+        metadata: { closing_value: 110000, change: 10000, percent_change: 10 },
+      },
+      {
+        id: "tbill-1",
+        user_id: "user-1",
+        title: "CBK T-Bill Auction Results",
+        message: "91d: 15.65%",
+        type: "tbill_auction",
+        is_read: true,
+        created_at: "2026-09-10T10:00:00.000Z",
+        metadata: { rate_91: 15.65, rate_182: 16.5, rate_364: 16.8 },
+      },
+    ];
+    mockMarkAllRead.mockReset();
+    render(<MemoryRouter><NotificationBell /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole("button", { name: /open notifications/i }));
+    expect(screen.getByText("Safaricom PLC")).toBeInTheDocument();
+    expect(screen.getByText("Portfolio up today")).toBeInTheDocument();
+    expect(screen.getByText("Auction Results")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: /Market/i }));
+    expect(screen.getByText("Auction Results")).toBeInTheDocument();
+    expect(screen.queryByText("Safaricom PLC")).not.toBeInTheDocument();
+    expect(screen.queryByText("Portfolio up today")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark all notifications as read" }));
+    expect(mockMarkAllRead).toHaveBeenCalledOnce();
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("All notifications marked as read"));
   });
 
   it("renders the notification list in a touch-friendly native scroll container", () => {
@@ -166,5 +230,107 @@ describe("Notification drawer", () => {
     const scrollContainer = screen.getByText("Safaricom PLC").closest(".overflow-y-auto");
     expect(scrollContainer).toBeInTheDocument();
     expect(scrollContainer).toHaveClass("overscroll-contain", "touch-pan-y", "min-h-0", "flex-1");
+  });
+});
+
+describe("TopNotificationBanner", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("shows +N more badge, opens drawer, and supports swipe-up dismissal", () => {
+    const onDismiss = vi.fn();
+    const onOpenDrawer = vi.fn();
+    const tbillNotification: AppNotification = {
+      id: "tbill-banner",
+      user_id: "user-1",
+      title: "CBK T-Bill Auction Results",
+      message: "91d: 15.65%",
+      type: "tbill_auction",
+      is_read: false,
+      created_at: "2026-09-10T10:00:00.000Z",
+      metadata: { rate_91: 15.65, rate_182: 16.5, rate_364: 16.8 },
+    };
+
+    render(
+      <TopNotificationBanner
+        notification={tbillNotification}
+        unreadCount={4}
+        onDismiss={onDismiss}
+        onView={vi.fn()}
+        onOpenDrawer={onOpenDrawer}
+      />
+    );
+
+    expect(screen.getByText("CBK T-Bills")).toBeInTheDocument();
+    expect(screen.getByText("15.65%")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /\+3 more/i }));
+    expect(onDismiss).toHaveBeenCalledOnce();
+    expect(onOpenDrawer).toHaveBeenCalledOnce();
+
+    onDismiss.mockReset();
+    const dialog = screen.getByRole("alertdialog");
+    fireEvent.touchStart(dialog, { touches: [{ clientY: 120 }] });
+    fireEvent.touchMove(dialog, { touches: [{ clientY: 80 }] });
+    fireEvent.touchEnd(dialog);
+    expect(onDismiss).toHaveBeenCalledOnce();
+  });
+
+  it("hides the View button on mobile compact banners while tapping the banner opens the notification", () => {
+    const onView = vi.fn();
+    render(
+      <TopNotificationBanner
+        notification={notification}
+        compact
+        onDismiss={vi.fn()}
+        onView={onView}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: "View alert" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Safaricom PLC"));
+    expect(onView).toHaveBeenCalledWith(notification);
+  });
+
+  it("auto-dismisses after durationMs and pauses while hovered", () => {
+    vi.useFakeTimers();
+    let now = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+      return window.setTimeout(() => {
+        now += 1000;
+        cb(now);
+      }, 1000) as unknown as number;
+    });
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) => window.clearTimeout(id));
+
+    const onDismiss = vi.fn();
+    render(
+      <TopNotificationBanner
+        notification={notification}
+        durationMs={6000}
+        onDismiss={onDismiss}
+        onView={vi.fn()}
+      />
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    const dialog = screen.getByRole("alertdialog");
+    fireEvent.mouseEnter(dialog);
+    act(() => {
+      vi.advanceTimersByTime(10000);
+    });
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    fireEvent.mouseLeave(dialog);
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+    expect(onDismiss).toHaveBeenCalledOnce();
+    vi.restoreAllMocks();
   });
 });
