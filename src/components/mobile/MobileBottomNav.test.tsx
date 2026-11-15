@@ -1,11 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { Routes, Route, MemoryRouter } from "react-router-dom";
 import MobileBottomNav from "./MobileBottomNav";
 
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ user: null, signOut: vi.fn() }),
+}));
+
+vi.mock("@/lib/primaryRouteLoaders", () => ({
+  prefetchPrimaryRoute: vi.fn(),
+  prefetchAllPrimaryRoutes: vi.fn(),
 }));
 
 describe("MobileBottomNav Tab Highlighting Verification", () => {
@@ -153,5 +158,30 @@ describe("MobileBottomNav Tab Highlighting Verification", () => {
     const moreButton = screen.getByRole("button", { name: /open more tools and markets menu/i });
     expect(pill).not.toContainElement(moreButton);
     expect(moreButton).toHaveClass("rounded-full", "backdrop-blur-2xl");
+  });
+
+  it("removes pill dead-zone padding and navigates on touch tap with minor thumb drift", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route path="/" element={<div data-testid="route-news">News</div>} />
+          <Route path="/stocks" element={<div data-testid="route-stocks">Stocks Page</div>} />
+        </Routes>
+        <MobileBottomNav />
+      </MemoryRouter>
+    );
+
+    const pill = screen.getByTestId("mobile-nav-pill");
+    expect(pill).toHaveClass("touch-none");
+    expect(pill).not.toHaveClass("p-1");
+
+    const stocksLink = screen.getByRole("link", { name: /stocks/i });
+    expect(stocksLink).toHaveClass("h-full", "touch-none");
+
+    fireEvent.touchStart(stocksLink, { touches: [{ clientX: 90, clientY: 820 }] });
+    fireEvent.touchEnd(stocksLink, { changedTouches: [{ clientX: 94, clientY: 814 }] });
+
+    expect(screen.getByTestId("route-stocks")).toBeInTheDocument();
+    expect(screen.getByText("Stocks")).toHaveClass("text-emerald-600");
   });
 });

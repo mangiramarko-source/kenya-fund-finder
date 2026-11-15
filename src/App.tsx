@@ -45,8 +45,16 @@ const CompareModalHost = () => {
   );
 };
 
+import {
+  loadFundsPage,
+  loadOverviewPage,
+  loadPortfolioPage,
+  loadSavingsPage,
+  loadStocksPage,
+} from "@/lib/primaryRouteLoaders";
+
 // Lazy-loaded routes with stale-chunk auto-retry
-const Index = lazyWithRetry(() => import("./pages/Index"), "Index");
+const Index = lazyWithRetry(loadFundsPage, "Index");
 const ComparePage = lazyWithRetry(() => import("./pages/ComparePage"), "ComparePage");
 const FundDetailPage = lazyWithRetry(() => import("./pages/FundDetailPage"), "FundDetailPage");
 
@@ -65,18 +73,18 @@ const DeleteAccountPage = lazyWithRetry(() => import("./pages/DeleteAccountPage"
 const SitePage = lazyWithRetry(() => import("./pages/SitePage"), "SitePage");
 const RatesPage = lazyWithRetry(() => import("./pages/RatesPage"), "RatesPage");
 const CommoditiesPage = lazyWithRetry(() => import("./pages/CommoditiesPage"), "CommoditiesPage");
-const StocksPage = lazyWithRetry(() => import("./pages/StocksPage"), "StocksPage");
+const StocksPage = lazyWithRetry(loadStocksPage, "StocksPage");
 const TreasuryPage = lazyWithRetry(() => import("./pages/TreasuryPage"), "TreasuryPage");
 const StockDetailPage = lazyWithRetry(() => import("./pages/StockDetailPage"), "StockDetailPage");
 const MarketDashboardPage = lazyWithRetry(() => import("./pages/MarketDashboardPage"), "MarketDashboardPage");
 const AlertsPage = lazyWithRetry(() => import("./pages/AlertsPage"), "AlertsPage");
-const PortfolioPage = lazyWithRetry(() => import("./pages/PortfolioPage"), "PortfolioPage");
+const PortfolioPage = lazyWithRetry(loadPortfolioPage, "PortfolioPage");
 const PortfolioSummaryPage = lazyWithRetry(() => import("./pages/PortfolioSummaryPage"), "PortfolioSummaryPage");
-const OverviewPage = lazyWithRetry(() => import("./pages/OverviewPage"), "OverviewPage");
+const OverviewPage = lazyWithRetry(loadOverviewPage, "OverviewPage");
 const CalculatorPage = lazyWithRetry(() => import("./pages/CalculatorPage"), "CalculatorPage");
 const MmfResearchPage = lazyWithRetry(() => import("./pages/MmfResearchPage"), "MmfResearchPage");
 const MmfCalculatorPage = lazyWithRetry(() => import("./pages/MmfCalculatorPage"), "MmfCalculatorPage");
-const SavingsPage = lazyWithRetry(() => import("./pages/SavingsPage"), "SavingsPage");
+const SavingsPage = lazyWithRetry(loadSavingsPage, "SavingsPage");
 const ResearchArticlePage = lazyWithRetry(() => import("./pages/ResearchArticlePage"), "ResearchArticlePage");
 const WatchlistPage = lazyWithRetry(() => import("./pages/WatchlistPage"), "WatchlistPage");
 const UpdatesPage = lazyWithRetry(() => import("./pages/UpdatesPage"), "UpdatesPage");
