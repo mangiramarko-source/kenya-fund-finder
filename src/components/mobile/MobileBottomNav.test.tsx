@@ -134,4 +134,24 @@ describe("MobileBottomNav Tab Highlighting Verification", () => {
     const moreLabel = screen.getByText("More");
     expect(moreLabel).toHaveClass("text-emerald-600");
   });
+
+  it("renders the split iOS floating pill capsule and detached More orb", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <MobileBottomNav />
+      </MemoryRouter>
+    );
+
+    const nav = screen.getByRole("navigation", { name: "Mobile Bottom Navigation" });
+    expect(nav).toHaveClass("pointer-events-none");
+
+    const pill = screen.getByTestId("mobile-nav-pill");
+    expect(pill).toHaveClass("rounded-full", "backdrop-blur-2xl");
+    expect(pill).toContainElement(screen.getByText("News"));
+    expect(pill).toContainElement(screen.getByText("My Assets"));
+
+    const moreButton = screen.getByRole("button", { name: /open more tools and markets menu/i });
+    expect(pill).not.toContainElement(moreButton);
+    expect(moreButton).toHaveClass("rounded-full", "backdrop-blur-2xl");
+  });
 });
