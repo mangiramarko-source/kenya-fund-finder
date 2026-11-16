@@ -133,8 +133,8 @@ SELECT is(
   'updating user A does not modify user B preferences'
 );
 
-INSERT INTO public.stocks (id, symbol, name, price, previous_price)
-VALUES ('20000000-0000-0000-0000-000000000001', 'MVPT', 'MVP Test Stock', 110, 100);
+INSERT INTO public.stocks (id, symbol, exchange_ticker, name, price, previous_price)
+VALUES ('20000000-0000-0000-0000-000000000001', 'MVPT', 'MVPT', 'MVP Test Stock', 110, 100);
 INSERT INTO public.price_alerts (
   id, user_id, stock_id, asset_type, asset_id, asset_name,
   condition, target_price, notify_email, notify_inapp
