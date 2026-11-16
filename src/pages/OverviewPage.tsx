@@ -57,6 +57,8 @@ import { getCurrencyFlag } from "@/lib/currencyFlags";
 import InlineDataGate from "@/components/auth/InlineDataGate";
 import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/fundsFixedIncomeNews";
+import MobileStickyCategoryTabs from "@/components/feed/MobileStickyCategoryTabs";
+import { scrollToStickyFeedTop } from "@/lib/mobileStickyFeed";
 
 const INTERNATIONAL_SOURCES = new Set([
   "Reuters Business",
@@ -1318,16 +1320,7 @@ const OverviewPage = () => {
   }, [location.pathname]);
 
   const scrollToFeedTop = useCallback(() => {
-    const headerEl = document.getElementById("market-news-header");
-    if (headerEl) {
-      const rect = headerEl.getBoundingClientRect();
-      const targetScrollY = Math.max(0, window.scrollY + rect.bottom - 64);
-      if (window.scrollY > targetScrollY) {
-        window.scrollTo({ top: targetScrollY, behavior: "instant" });
-      }
-    } else if (window.scrollY > 0) {
-      window.scrollTo({ top: 0, behavior: "instant" });
-    }
+    scrollToStickyFeedTop();
 
     const middleCol = document.getElementById("overview-middle-feed-column");
     if (middleCol && middleCol.scrollTop > 0) {
@@ -1446,7 +1439,7 @@ const OverviewPage = () => {
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 
-          {/* Mobile Market News & Sticky Tabs (100% untouched for mobile) */}
+          {/* Mobile Market News Header */}
           <div className="md:hidden">
             <div className="mb-3.5 mt-0 px-4" id="market-news-header" data-new-count={newTodayCount}>
               <div className="flex items-baseline justify-between">
@@ -1456,39 +1449,19 @@ const OverviewPage = () => {
                 </span>
               </div>
             </div>
-
-            <div
-              className="no-scrollbar mb-4 flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain sticky z-30 -mx-4 px-4 py-2.5 bg-background/95 backdrop-blur-md border-b border-border/40 top-safe-sticky-tabs pb-1"
-            >
-              {["All", "Stocks", "Kenyan", "International", FUNDS_AND_FIXED_INCOME_TAB, "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => {
-                const isActive = activeUpdateCategory === f;
-                return (
-                  <button
-                    key={f}
-                    type="button"
-                    onClick={(e) => {
-                      setActiveUpdateCategory(f);
-                      scrollToFeedTop();
-                      const pill = e.currentTarget;
-                      const container = pill.parentElement;
-                      if (container) {
-                        const targetLeft = pill.offsetLeft - (container.clientWidth - pill.clientWidth) / 2;
-                        container.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
-                      }
-                      triggerFillForCategory(f, news, newsOffset, newsHasMore, stocks);
-                    }}
-                    className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors shrink-0 ${
-                      isActive
-                        ? "bg-foreground text-background shadow-xs font-semibold"
-                        : "border border-border/80 bg-background text-zinc-800 dark:text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                    }`}
-                  >
-                    {f}
-                  </button>
-                );
-              })}
-            </div>
           </div>
+
+          {/* Mobile Sticky Category Bar (direct child of feed column so sticky spans full feed) */}
+          <MobileStickyCategoryTabs
+            mobileOnly
+            categories={["All", "Stocks", "Kenyan", "International", FUNDS_AND_FIXED_INCOME_TAB, "FX Rates", "Commodities", "Latest", "Oldest"]}
+            activeCategory={activeUpdateCategory}
+            onSelectCategory={(f) => {
+              setActiveUpdateCategory(f);
+              scrollToFeedTop();
+              triggerFillForCategory(f, news, newsOffset, newsHasMore, stocks);
+            }}
+          />
 
           {/* Desktop Market News & Sticky Filter Bar (Restored to exact pre-483557c4 desktop structure) */}
           <div className="hidden md:block border-b border-border/60 bg-background/95 backdrop-blur-md px-2 pt-2 pb-1 shadow-sm sticky top-0 z-30 mb-3">

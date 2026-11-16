@@ -27,6 +27,8 @@ import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWid
 import { newsCache } from "@/lib/newsCache";
 import { stockCache } from "@/lib/stockCache";
 import { feedNavigationState } from "@/lib/feedNavigationState";
+import MobileStickyCategoryTabs from "@/components/feed/MobileStickyCategoryTabs";
+import { scrollToStickyFeedTop } from "@/lib/mobileStickyFeed";
 
 const DEFAULT_NEWS_TAB = "All";
 
@@ -119,16 +121,7 @@ export default function NewsPage() {
   }, [location.pathname]);
 
   const scrollToFeedTop = useCallback(() => {
-    const headerEl = document.getElementById("market-news-header");
-    if (headerEl) {
-      const rect = headerEl.getBoundingClientRect();
-      const targetScrollY = Math.max(0, window.scrollY + rect.bottom - 64);
-      if (window.scrollY > targetScrollY) {
-        window.scrollTo({ top: targetScrollY, behavior: "instant" });
-      }
-    } else if (window.scrollY > 0) {
-      window.scrollTo({ top: 0, behavior: "instant" });
-    }
+    scrollToStickyFeedTop();
   }, []);
 
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
@@ -479,11 +472,9 @@ export default function NewsPage() {
         </div>
       )}
 
-      {/* Category Filter Pills (Exact Match to Original Market News on Overview) */}
-      <div
-        className="no-scrollbar mb-4 flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain sticky z-30 -mx-4 px-4 py-2.5 bg-background/95 backdrop-blur-md border-b border-border/40 top-safe-sticky-tabs md:static md:w-full md:max-w-full md:mx-0 md:px-0 md:py-2 md:bg-transparent md:backdrop-blur-none md:border-b-0 md:z-auto pb-1 md:pb-2"
-      >
-        {[
+      {/* Category Filter Pills (Smoothly dock under mobile Market News navbar on scroll) */}
+      <MobileStickyCategoryTabs
+        categories={[
           DEFAULT_NEWS_TAB,
           "Top Ranked",
           "Saved",
@@ -495,33 +486,14 @@ export default function NewsPage() {
           "Commodities",
           "Latest",
           "Oldest",
-        ].map((f) => {
-          const isActive = activeNavTab === f;
-          return (
-            <button
-              key={f}
-              onClick={(e) => {
-                setActiveNavTab(f);
-                scrollToFeedTop();
-                const pill = e.currentTarget;
-                const container = pill.parentElement;
-                if (container) {
-                  const targetLeft = pill.offsetLeft - (container.clientWidth - pill.clientWidth) / 2;
-                  container.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
-                }
-                triggerFillForTab(f, articles, offset, hasMore, stocks);
-              }}
-              className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
-                isActive
-                  ? "bg-foreground text-background font-bold shadow-xs"
-                  : "border border-border/80 bg-background text-zinc-800 dark:text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`}
-            >
-              {f}
-            </button>
-          );
-        })}
-      </div>
+        ]}
+        activeCategory={activeNavTab}
+        onSelectCategory={(f) => {
+          setActiveNavTab(f);
+          scrollToFeedTop();
+          triggerFillForTab(f, articles, offset, hasMore, stocks);
+        }}
+      />
 
       {/* Articles Feed */}
       {feedItems.length === 0 ? (

@@ -26,6 +26,7 @@ import {
 import { fetchBankFixedDeposits, fetchSaccoRecords } from "@/lib/savingsApi";
 import { fetchPublicData } from "@/lib/gateway";
 import { fetchFunds, type FundFromDB } from "@/lib/api";
+import { NEWS_CATEGORY_SENTINEL_ID, NEWS_TABS_DOCKED_EVENT } from "@/lib/mobileStickyFeed";
 
 export const mobileNavLinks = [
   { to: "/", label: "Overview" },
@@ -261,6 +262,7 @@ const Navbar = () => {
   const mobileSectionKind = resolveMobileNavSectionKind(cleanPath);
   const { selectedExchange, market: selectedMarket, setSelectedExchange } = useSelectedStockExchange();
   const [newsScrolledPast, setNewsScrolledPast] = useState(false);
+  const [newsTabsDocked, setNewsTabsDocked] = useState(false);
   const [marketNewsCount, setMarketNewsCount] = useState<number>(0);
 
   const [navFunds, setNavFunds] = useState<FundFromDB[]>(() => cachedNavbarFunds ?? getStoredFundListForCounts());
@@ -480,6 +482,36 @@ const Navbar = () => {
     };
   }, [isFeedPage, location.pathname]);
 
+  useEffect(() => {
+    if (!isFeedPage) {
+      setNewsTabsDocked(false);
+      return;
+    }
+
+    const syncFromDom = () => {
+      const bar = document.querySelector('[data-testid="mobile-news-category-bar"]');
+      if (bar) {
+        setNewsTabsDocked(bar.getAttribute("data-docked") === "true");
+      }
+    };
+
+    const handleDocked = (e: Event) => {
+      const customEvent = e as CustomEvent<boolean>;
+      setNewsTabsDocked(Boolean(customEvent.detail));
+    };
+
+    syncFromDom();
+    window.addEventListener(NEWS_TABS_DOCKED_EVENT, handleDocked);
+    return () => {
+      window.removeEventListener(NEWS_TABS_DOCKED_EVENT, handleDocked);
+    };
+  }, [isFeedPage, location.pathname]);
+
+  const hasCategorySentinel =
+    typeof document !== "undefined" && Boolean(document.getElementById(NEWS_CATEGORY_SENTINEL_ID));
+  const hideHeaderDivider =
+    isFeedPage && newsScrolledPast && (newsTabsDocked || !hasCategorySentinel);
+
   const hasCustomDetailHeader =
     /^\/stocks\/[^/]+/.test(location.pathname) ||
     /^\/compare\/[^/]+/.test(location.pathname) ||
@@ -495,7 +527,7 @@ const Navbar = () => {
         <header
           ref={headerRef}
           className={`fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md pt-safe transition-colors ${
-            isFeedPage && newsScrolledPast ? "border-b-0" : "border-b border-border/50"
+            hideHeaderDivider ? "border-b-0" : "border-b border-border/50"
           }`}
         >
           <nav className="flex h-16 items-center px-3.5">

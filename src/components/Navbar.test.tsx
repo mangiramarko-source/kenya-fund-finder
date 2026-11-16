@@ -1,9 +1,10 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import React from "react";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { act, render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import DesktopTopBar from "./DesktopTopBar";
+import { NEWS_CATEGORY_SENTINEL_ID, NEWS_TABS_DOCKED_EVENT } from "@/lib/mobileStickyFeed";
 
 const LocationProbe = () => {
   const loc = useLocation();
@@ -357,4 +358,49 @@ describe("Mobile & Desktop Navigation Verification", () => {
       headerEl.remove();
     }
   );
+
+  it("coordinates mobile header bottom border with docked category tabs on /news", () => {
+    const headerEl = document.createElement("div");
+    headerEl.id = "market-news-header";
+    headerEl.getBoundingClientRect = vi.fn(() => ({
+      top: -20,
+      bottom: 30,
+      left: 0,
+      right: 390,
+      width: 390,
+      height: 50,
+      x: 0,
+      y: -20,
+      toJSON: () => {},
+    }));
+    document.body.appendChild(headerEl);
+
+    const sentinelEl = document.createElement("div");
+    sentinelEl.id = NEWS_CATEGORY_SENTINEL_ID;
+    document.body.appendChild(sentinelEl);
+
+    render(
+      <MemoryRouter initialEntries={["/news"]}>
+        <Navbar />
+      </MemoryRouter>,
+    );
+
+    const header = document.querySelector("header")!;
+    expect(header).toHaveClass("border-b");
+    expect(header).not.toHaveClass("border-b-0");
+
+    act(() => {
+      window.dispatchEvent(new CustomEvent(NEWS_TABS_DOCKED_EVENT, { detail: true }));
+    });
+    expect(header).toHaveClass("border-b-0");
+
+    act(() => {
+      window.dispatchEvent(new CustomEvent(NEWS_TABS_DOCKED_EVENT, { detail: false }));
+    });
+    expect(header).toHaveClass("border-b");
+    expect(header).not.toHaveClass("border-b-0");
+
+    headerEl.remove();
+    sentinelEl.remove();
+  });
 });

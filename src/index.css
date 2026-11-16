@@ -82,6 +82,30 @@
   .animate-rise {
     animation: rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
+
+  @keyframes category-dock {
+    from {
+      transform: translateY(-5px);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  .animate-category-dock {
+    animation: category-dock 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes category-undock {
+    from {
+      transform: translateY(4px);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  .animate-category-undock {
+    animation: category-undock 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
   
   @keyframes marquee {
     0% {
