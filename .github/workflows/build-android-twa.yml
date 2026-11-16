@@ -8,16 +8,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-35 build-tools;35.0.0
 
       - name: Setup Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
@@ -36,8 +38,8 @@ jobs:
             exit 1
           fi
           mkdir -p android-twa/keystore
-          echo "$KFF_KEYSTORE_BASE64" | base64 --decode > android-twa/keystore/kff-release-key.p12
-          ACTUAL_SHA256=$(keytool -list -v -keystore android-twa/keystore/kff-release-key.p12 -storetype PKCS12 -storepass "$KFF_KEYSTORE_PASSWORD" -alias kff-release | grep -i "SHA256:" | awk '{print $2}')
+          printf '%s' "$KFF_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode > android-twa/keystore/kff-release-key.p12
+          ACTUAL_SHA256=$(keytool -list -v -keystore android-twa/keystore/kff-release-key.p12 -storetype PKCS12 -storepass "$KFF_KEYSTORE_PASSWORD" -alias kff-release | grep -i "SHA256:" | head -n 1 | awk '{print $2}')
           if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
             echo "❌ [FAIL-CLOSED] Keystore SHA-256 ($ACTUAL_SHA256) does not match assetlinks.json ($EXPECTED_SHA256)!"
             exit 1
@@ -47,7 +49,7 @@ jobs:
       - name: Build Signed Release APK & AAB
         working-directory: android-twa
         env:
-          KFF_KEYSTORE_PATH: keystore/kff-release-key.p12
+          KFF_KEYSTORE_PATH: ${{ github.workspace }}/android-twa/keystore/kff-release-key.p12
           KFF_KEYSTORE_TYPE: PKCS12
           KFF_KEYSTORE_PASSWORD: ${{ secrets.KFF_KEYSTORE_PASSWORD }}
           KFF_KEY_ALIAS: kff-release
