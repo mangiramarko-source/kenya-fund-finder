@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Calculator, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { isAiLabEnabled } from "@/lib/featureFlags";
 import { useUniversalCompare } from "@/hooks/useUniversalCompare";
 import { useCompare } from "@/hooks/useCompare";
 import {
@@ -47,16 +48,18 @@ export const FloatingPageCalculator = ({
     setMounted(true);
   }, []);
 
+  const desktopOffsetClass = isAiLabEnabled() ? "md:bottom-[8rem] md:right-6" : "md:bottom-[4.25rem] md:right-6";
+
   return (
     <>
       {/* Floating Action Button (FAB)
           - Hidden on mobile when comparing items so it never overlaps the Compare bar
-          - Exactly matching Banking (/savings) in size, padding, typography, shadow, and positioning on mobile & desktop */}
+          - Positioned on desktop above the "Why Kenya Fund Finder?" trigger to avoid bottom-right overlap */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Open ${title}`}
-        className={`fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-8 right-4 md:right-8 z-40 items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs md:text-sm font-bold border border-emerald-400/30 cursor-pointer ${
+        className={`fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 ${desktopOffsetClass} z-40 items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs md:text-sm font-bold border border-emerald-400/30 cursor-pointer ${
           isComparing ? "hidden md:flex" : "flex"
         } ${className}`}
       >

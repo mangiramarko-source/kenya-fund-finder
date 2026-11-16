@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isAiLabEnabled } from "@/lib/featureFlags";
 
 const STORAGE_KEY = "kff_intro_sheet_dismissed";
 
@@ -138,8 +139,9 @@ export default function QuestionLedIntroSheet({
 
   // If dismissed, show a slim, elegant re-open trigger
   if (!isOpen) {
+    const desktopOffsetClass = isAiLabEnabled() ? "md:bottom-[4.75rem] md:right-6" : "md:bottom-4 md:right-6";
     return (
-      <div className="fixed bottom-3 right-4 z-40 hidden sm:block animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className={`fixed bottom-3 right-4 ${desktopOffsetClass} z-40 hidden sm:block animate-in fade-in slide-in-from-bottom-2 duration-300`}>
         <button
           onClick={handleReopen}
           className="group flex items-center gap-2 rounded-full border border-border/80 bg-card/95 px-3.5 py-2 text-xs font-semibold text-foreground shadow-lg backdrop-blur-md hover:border-emerald-500/50 hover:text-emerald-500 transition-all"

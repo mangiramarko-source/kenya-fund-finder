@@ -15,6 +15,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { isAiLabEnabled } from "@/lib/featureFlags";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SavingsBenchmarkCalculator } from "@/components/savings/SavingsBenchmarkCalculator";
 import { FixedDepositTable } from "@/components/savings/FixedDepositTable";
@@ -246,12 +247,14 @@ const SavingsPage = () => {
 
       <DisclaimerBlock />
 
-      {/* Floating Action Button (FAB) for Return Simulator — positioned above MobileBottomNav on small screens */}
+      {/* Floating Action Button (FAB) for Return Simulator — positioned above MobileBottomNav on small screens, and above bottom-right desktop triggers */}
       <button
         type="button"
         onClick={() => setCalcOpen(true)}
         aria-label="Open Savings Return Calculator"
-        className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-8 right-4 md:right-8 z-40 flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs md:text-sm font-bold border border-emerald-400/30 cursor-pointer"
+        className={`fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 ${
+          isAiLabEnabled() ? "md:bottom-[8rem] md:right-6" : "md:bottom-[4.25rem] md:right-6"
+        } z-40 flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs md:text-sm font-bold border border-emerald-400/30 cursor-pointer`}
       >
         <Calculator className="h-4 w-4 stroke-[2.5]" />
         <span>Compare Calculator</span>

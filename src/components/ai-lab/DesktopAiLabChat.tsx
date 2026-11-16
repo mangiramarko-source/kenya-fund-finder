@@ -123,7 +123,7 @@ export default function DesktopAiLabChat() {
     })();
   }, [messages, market.data, news.data, setMessages]);
 
-  if (!open) return <KoraAiLauncher onActivate={() => setOpen(true)} className="fixed bottom-5 right-5 z-50 hidden md:flex" />;
+  if (!open) return <KoraAiLauncher onActivate={() => setOpen(true)} className="fixed bottom-4 right-6 z-50 hidden md:flex" />;
 
   return <>
     <div className="fixed inset-0 z-50 hidden bg-black/5 md:block" onClick={() => setOpen(false)} aria-hidden="true" />

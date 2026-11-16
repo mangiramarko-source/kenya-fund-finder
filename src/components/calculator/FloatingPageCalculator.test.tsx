@@ -44,6 +44,9 @@ describe("FloatingPageCalculator", () => {
     expect(button).toBeInTheDocument();
     expect(button).toHaveTextContent("MMF Calculator");
     expect(button.className).toContain("flex");
+    expect(button.className).toContain("bottom-[calc(5.75rem+env(safe-area-inset-bottom))]");
+    expect(button.className).toContain("md:bottom-[4.25rem]");
+    expect(button.className).toContain("md:right-6");
     expect(button.className).not.toContain("hidden md:flex");
   });
 
