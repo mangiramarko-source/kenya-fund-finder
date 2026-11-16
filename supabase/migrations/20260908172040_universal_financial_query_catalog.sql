@@ -154,7 +154,7 @@ as $$
 declare
   row_data jsonb;
   entity_kind text;
-  entity_id text;
+  v_entity_id text;
   label_value text;
   short_value text;
   key_value text;
@@ -171,10 +171,10 @@ begin
     when 'exchange_rates' then 'fx'
     when 'commodities' then 'commodity'
   end;
-  entity_id := entity_kind || ':' || (row_data->>'id');
+  v_entity_id := entity_kind || ':' || (row_data->>'id');
 
   if tg_op = 'delete' then
-    update public.financial_entities set is_active = false, updated_at = now() where id = entity_id;
+    update public.financial_entities set is_active = false, updated_at = now() where id = v_entity_id;
     return old;
   end if;
 
@@ -208,7 +208,7 @@ begin
     id, kind, subtype, display_label, short_label, source_table, source_id,
     source_key, manager, market, is_active, updated_at
   ) values (
-    entity_id, entity_kind, subtype_value, label_value, short_value,
+    v_entity_id, entity_kind, subtype_value, label_value, short_value,
     tg_table_name, (row_data->>'id')::uuid, key_value, manager_value,
     market_value, active_value, now()
   )
@@ -223,7 +223,7 @@ begin
     updated_at = now();
 
   insert into public.financial_entity_aliases (entity_id, alias, alias_normalized, origin, is_approved)
-  select entity_id, value, public.normalize_financial_alias(value), 'catalog', true
+  select v_entity_id, value, public.normalize_financial_alias(value), 'catalog', true
   from unnest(array[label_value, short_value, key_value, manager_value]) value
   where value is not null and public.normalize_financial_alias(value) <> ''
   on conflict (entity_id, alias_normalized) do update set alias = excluded.alias, is_approved = true;
@@ -237,10 +237,10 @@ begin
     values (brand_id, manager_value, public.normalize_financial_alias(manager_value), 'catalog', true)
     on conflict (entity_id, alias_normalized) do update set alias = excluded.alias, is_approved = true;
     insert into public.financial_entity_relations (from_entity_id, to_entity_id, relation_type)
-    values (brand_id, entity_id, 'manages')
+    values (brand_id, v_entity_id, 'manages')
     on conflict do nothing;
     insert into public.financial_entity_relations (from_entity_id, to_entity_id, relation_type)
-    values (entity_id, brand_id, 'managed_by')
+    values (v_entity_id, brand_id, 'managed_by')
     on conflict do nothing;
   end if;
 
