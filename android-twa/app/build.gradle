@@ -15,7 +15,7 @@ def resolvedKeyPassword = System.getenv("KFF_KEY_PASSWORD") ?: keystoreProps['ke
 
 android {
     namespace 'com.kenyafundfinder.app'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.kenyafundfinder.app"
