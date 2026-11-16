@@ -3,6 +3,20 @@
 -- & Schedule Daily Automated MMF Sync
 -- =============================================================================
 
+-- Ensure section_live_status table exists when replaying from scratch
+CREATE TABLE IF NOT EXISTS public.section_live_status (
+  section_key text PRIMARY KEY,
+  is_live boolean NOT NULL DEFAULT true,
+  last_verified_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.section_live_status ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read of section_live_status') THEN
+    CREATE POLICY "Allow public read of section_live_status" ON public.section_live_status FOR SELECT USING (true);
+  END IF;
+END $$;
+
 DO $sync$
 DECLARE
   r RECORD;
