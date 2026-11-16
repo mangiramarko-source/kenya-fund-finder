@@ -15,7 +15,11 @@ import {
   stockCache,
   type CachedStock,
 } from "@/lib/stockCache";
-import { buildStocksRouteUrl, readStoredStockExchange } from "@/lib/stockExchangeSelection";
+import {
+  buildStocksRouteUrl,
+  getEastAfricanMarketMeta,
+  readStoredStockExchange,
+} from "@/lib/stockExchangeSelection";
 import { formatMarketDate, formatMarketDateTime, decodeHtmlEntities } from "@/lib/utils";
 import {
   downsampleStockHistory,
@@ -168,58 +172,64 @@ const StockDetailPage = () => {
       description: stockSeoDescription,
     } : undefined
   );
-  useJsonLd(stock ? {
+  const stockMarketMeta = stock ? getEastAfricanMarketMeta(stock.exchange) : null;
+  const stockJsonLdCcy = stock ? getStockCurrencySymbol(stock.currency || stockMarketMeta?.currency) : null;
+  const stockJsonLdTicker = stock ? (stock.exchange_ticker || stock.symbol) : "";
+
+  useJsonLd(stock && stockMarketMeta ? {
     "@context": "https://schema.org",
     "@type": "Corporation",
     name: stock.name,
-    tickerSymbol: `NSE:${stock.symbol}`,
+    tickerSymbol: `${stockMarketMeta.exchange}:${stockJsonLdTicker}`,
     url: `https://kenyafundfinder.com/stocks/${stock.symbol}`,
     ...(stock.company_summary ? { description: stock.company_summary } : {}),
   } : null);
   useJsonLd(stock ? {
     "@context": "https://schema.org",
     "@type": "FinancialProduct",
-    name: `${stock.name} (${stock.symbol})`,
+    name: `${stock.name} (${stockJsonLdTicker})`,
     description: stockSeoDescription,
     url: `https://kenyafundfinder.com/stocks/${stock.symbol}`,
   } : null);
-  useJsonLd(stock ? {
+  useJsonLd(stock && stockMarketMeta && stockJsonLdCcy ? {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: [
       {
         "@type": "Question",
-        name: `What is the ${stock.name} (${stock.symbol}) share price on the NSE today?`,
+        name: `What is the ${stock.name} (${stockJsonLdTicker}) share price on the ${stockMarketMeta.exchange} today?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `${stock.name} (${stock.symbol}) is currently quoted at KSh ${stock.price.toLocaleString("en-KE", { maximumFractionDigits: 2 })} on the Nairobi Securities Exchange (NSE)${stock.year_high && stock.year_low ? `, with a 52-week range of KSh ${stock.year_low.toLocaleString("en-KE")} to KSh ${stock.year_high.toLocaleString("en-KE")}` : ""}.`,
+          text: `${stock.name} (${stockJsonLdTicker}) is currently quoted at ${stockJsonLdCcy} ${stock.price.toLocaleString("en-KE", { maximumFractionDigits: 2 })} on the ${stockMarketMeta.exchangeName} (${stockMarketMeta.exchange})${stock.year_high && stock.year_low ? `, with a 52-week range of ${stockJsonLdCcy} ${stock.year_low.toLocaleString("en-KE")} to ${stockJsonLdCcy} ${stock.year_high.toLocaleString("en-KE")}` : ""}.`,
         },
       },
       {
         "@type": "Question",
-        name: `What is ${stock.name}'s (${stock.symbol}) dividend yield and P/E ratio?`,
+        name: `What is ${stock.name}'s (${stockJsonLdTicker}) dividend yield and P/E ratio?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `${stock.name} (${stock.symbol}) has a reported dividend yield of ${stock.dividend_yield != null ? `${stock.dividend_yield}%` : "unavailable"} and a price-to-earnings (P/E) ratio of ${stock.pe_ratio != null ? stock.pe_ratio : "unavailable"}.`,
+          text: `${stock.name} (${stockJsonLdTicker}) has a reported dividend yield of ${stock.dividend_yield != null ? `${stock.dividend_yield}%` : "unavailable"} and a price-to-earnings (P/E) ratio of ${stock.pe_ratio != null ? stock.pe_ratio : "unavailable"}.`,
         },
       },
       {
         "@type": "Question",
-        name: `How do I buy ${stock.name} (${stock.symbol}) shares in Kenya?`,
+        name: `How do I buy ${stock.name} (${stockJsonLdTicker}) shares in ${stockMarketMeta.countryName}?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `To buy ${stock.name} (${stock.symbol}) shares on the Nairobi Securities Exchange, open a Central Depository System (CDS) account through a CMA-licensed stockbroker or investment bank in Kenya, fund your trading account, and place a market or limit order for ticker ${stock.symbol}.`,
+          text: stockMarketMeta.exchange === "NSE"
+            ? `To buy ${stock.name} (${stockJsonLdTicker}) shares on the Nairobi Securities Exchange, open a Central Depository System (CDS) account through a CMA-licensed stockbroker or investment bank in Kenya, fund your trading account, and place a market or limit order for ticker ${stockJsonLdTicker}.`
+            : `To buy ${stock.name} (${stockJsonLdTicker}) shares on the ${stockMarketMeta.exchangeName} (${stockMarketMeta.exchange}), open a brokerage trading account through a licensed stockbroker in ${stockMarketMeta.countryName}, fund your account in ${stockMarketMeta.currency}, and place a market or limit order for ticker ${stockJsonLdTicker}.`,
         },
       },
     ],
   } : null);
-  useJsonLd(stock ? {
+  useJsonLd(stock && stockMarketMeta ? {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: "https://kenyafundfinder.com/" },
-      { "@type": "ListItem", position: 2, name: "NSE Stocks", item: "https://kenyafundfinder.com/stocks" },
-      { "@type": "ListItem", position: 3, name: `${stock.symbol} – ${stock.name}`, item: `https://kenyafundfinder.com/stocks/${stock.symbol}` },
+      { "@type": "ListItem", position: 2, name: `${stockMarketMeta.exchange} Stocks`, item: `https://kenyafundfinder.com${buildStocksRouteUrl(stockMarketMeta.exchange)}` },
+      { "@type": "ListItem", position: 3, name: `${stockJsonLdTicker} – ${stock.name}`, item: `https://kenyafundfinder.com/stocks/${stock.symbol}` },
     ],
   } : null);
 
@@ -715,7 +725,13 @@ const StockDetailPage = () => {
             </div>
           </div>
 
-          {financialPeriods.length > 0 && <FinancialHistoryTables periods={financialPeriods} />}
+          {financialPeriods.length > 0 && (
+            <FinancialHistoryTables
+              periods={financialPeriods}
+              currencyCode={(s.currency || getEastAfricanMarketMeta(s.exchange).currency).toUpperCase()}
+              currencySymbol={ccy}
+            />
+          )}
 
           <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -776,7 +792,7 @@ const StockDetailPage = () => {
         </TabsContent>
 
         <TabsContent value="holders">
-          <StockHoldersTab stockId={s.id} />
+          <StockHoldersTab stockId={s.id} currencySymbol={ccy} />
         </TabsContent>
 
         {/* Historical Data Tab */}
@@ -1081,30 +1097,38 @@ const StockNewsTab = ({ stockId, symbol, name }: { stockId: string; symbol: stri
   );
 };
 
-const formatBillions = (value: number | null) => value == null ? "—" : `KSh ${(value / 1_000_000_000).toFixed(2)}B`;
+const formatBillions = (value: number | null, ccySym = "KSh") => value == null ? "—" : `${ccySym} ${(value / 1_000_000_000).toFixed(2)}B`;
 
-const FinancialHistoryTables = ({ periods }: { periods: FinancialPeriod[] }) => (
+const FinancialHistoryTables = ({
+  periods,
+  currencyCode = "KES",
+  currencySymbol = "KSh",
+}: {
+  periods: FinancialPeriod[];
+  currencyCode?: string;
+  currencySymbol?: string;
+}) => (
   <section className="space-y-4">
     <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">Income statement history</h3>
-        <span className="text-xs text-muted-foreground">KES · annual results</span>
+        <span className="text-xs text-muted-foreground">{currencyCode} · annual results</span>
       </div>
       <FinancialTable periods={periods} rows={[
-        ["Revenue", (p) => formatBillions(p.revenue)],
-        ["Operating expense", (p) => formatBillions(p.operating_expense)],
-        ["Net income", (p) => formatBillions(p.net_income)],
-        ["EPS", (p) => p.eps == null ? "—" : `KSh ${fmt(p.eps)}`],
+        ["Revenue", (p) => formatBillions(p.revenue, currencySymbol)],
+        ["Operating expense", (p) => formatBillions(p.operating_expense, currencySymbol)],
+        ["Net income", (p) => formatBillions(p.net_income, currencySymbol)],
+        ["EPS", (p) => p.eps == null ? "—" : `${currencySymbol} ${fmt(p.eps)}`],
         ["Net margin", (p) => p.net_margin == null ? "—" : `${fmt(p.net_margin)}%`],
-        ["Operating cash flow", (p) => formatBillions(p.operating_cash_flow)],
+        ["Operating cash flow", (p) => formatBillions(p.operating_cash_flow, currencySymbol)],
       ]} />
     </div>
     <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
       <h3 className="mb-4 text-sm font-semibold text-foreground">Balance sheet history</h3>
       <FinancialTable periods={periods} rows={[
-        ["Total assets", (p) => formatBillions(p.total_assets)],
-        ["Total liabilities", (p) => formatBillions(p.total_liabilities)],
-        ["Total equity", (p) => formatBillions(p.total_equity)],
+        ["Total assets", (p) => formatBillions(p.total_assets, currencySymbol)],
+        ["Total liabilities", (p) => formatBillions(p.total_liabilities, currencySymbol)],
+        ["Total equity", (p) => formatBillions(p.total_equity, currencySymbol)],
       ]} />
     </div>
   </section>
@@ -1133,7 +1157,7 @@ interface Holder {
   holding_value: number | null;
 }
 
-const StockHoldersTab = ({ stockId }: { stockId: string }) => {
+const StockHoldersTab = ({ stockId, currencySymbol = "KSh" }: { stockId: string; currencySymbol?: string }) => {
   const [holders, setHolders] = useState<Holder[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -1148,7 +1172,7 @@ const StockHoldersTab = ({ stockId }: { stockId: string }) => {
   const reportDate = new Date(holders[0].reported_as_of).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
   return <section className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
     <div className="mb-4"><h3 className="text-sm font-semibold">Major shareholders</h3><p className="mt-1 text-xs text-muted-foreground">Historical ownership snapshot reported as of {reportDate}; it is not live ownership data.</p></div>
-    <div className="overflow-x-auto"><table className="min-w-[720px] w-full text-sm"><thead className="border-b border-border text-xs text-muted-foreground"><tr><th className="px-2 py-2 text-left">#</th><th className="px-2 py-2 text-left">Shareholder</th><th className="px-2 py-2 text-right">Shares</th><th className="px-2 py-2 text-right">Ownership</th><th className="px-2 py-2 text-right">Holding value</th></tr></thead><tbody>{holders.map((holder) => <tr key={holder.id} className="border-b border-border/60 last:border-0"><td className="px-2 py-3 text-muted-foreground">{holder.holder_rank}</td><td className="px-2 py-3 font-medium">{holder.holder_name}</td><td className="px-2 py-3 text-right tabular-nums">{holder.shares.toLocaleString("en-KE")}</td><td className="px-2 py-3 text-right tabular-nums">{fmt(holder.ownership_percent)}%</td><td className="px-2 py-3 text-right font-semibold tabular-nums">{formatBillions(holder.holding_value)}</td></tr>)}</tbody></table></div>
+    <div className="overflow-x-auto"><table className="min-w-[720px] w-full text-sm"><thead className="border-b border-border text-xs text-muted-foreground"><tr><th className="px-2 py-2 text-left">#</th><th className="px-2 py-2 text-left">Shareholder</th><th className="px-2 py-2 text-right">Shares</th><th className="px-2 py-2 text-right">Ownership</th><th className="px-2 py-2 text-right">Holding value</th></tr></thead><tbody>{holders.map((holder) => <tr key={holder.id} className="border-b border-border/60 last:border-0"><td className="px-2 py-3 text-muted-foreground">{holder.holder_rank}</td><td className="px-2 py-3 font-medium">{holder.holder_name}</td><td className="px-2 py-3 text-right tabular-nums">{holder.shares.toLocaleString("en-KE")}</td><td className="px-2 py-3 text-right tabular-nums">{fmt(holder.ownership_percent)}%</td><td className="px-2 py-3 text-right font-semibold tabular-nums">{formatBillions(holder.holding_value, currencySymbol)}</td></tr>)}</tbody></table></div>
   </section>;
 };
 
@@ -1163,6 +1187,7 @@ const FinancialSummary = ({
   referenceMetrics: ReferenceMetrics | null;
   priceToBook: number | null;
 }) => {
+  const ccy = getStockCurrencySymbol(stock.currency);
   const hasReviewedStatement = Boolean(latestPeriod);
   const hasReferenceMetrics = Boolean(referenceMetrics);
   if (!hasReviewedStatement && !hasReferenceMetrics) {
@@ -1173,7 +1198,7 @@ const FinancialSummary = ({
           <Badge variant="secondary" className="shrink-0">Market data</Badge>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
-          <MiniStat label="Market Cap" value={fmtCap(stock.market_cap)} />
+          <MiniStat label="Market Cap" value={fmtCap(stock.market_cap, ccy)} />
           <MiniStat label="P/E Ratio" value={stock.pe_ratio == null ? "—" : `${fmt(stock.pe_ratio)}x`} />
           <MiniStat label="Dividend Yield" value={stock.dividend_yield == null ? "—" : `${fmt(stock.dividend_yield)}%`} />
           <MiniStat label="52W Position" value={stock.year_high ? `${fmt((stock.price / stock.year_high) * 100, 1)}%` : "—"} />
@@ -1189,11 +1214,11 @@ const FinancialSummary = ({
         {latestPeriod && <Badge variant="secondary">{latestPeriod.period_label}</Badge>}
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
-        <MiniStat label="Revenue" value={latestPeriod?.revenue == null ? "—" : formatBillions(latestPeriod.revenue)} />
-        <MiniStat label="Net Income" value={latestPeriod?.net_income == null ? "—" : formatBillions(latestPeriod.net_income)} />
-        <MiniStat label="EPS" value={latestPeriod?.eps == null ? "—" : `KSh ${fmt(latestPeriod.eps)}`} />
+        <MiniStat label="Revenue" value={latestPeriod?.revenue == null ? "—" : formatBillions(latestPeriod.revenue, ccy)} />
+        <MiniStat label="Net Income" value={latestPeriod?.net_income == null ? "—" : formatBillions(latestPeriod.net_income, ccy)} />
+        <MiniStat label="EPS" value={latestPeriod?.eps == null ? "—" : `${ccy} ${fmt(latestPeriod.eps)}`} />
         <MiniStat label="Net Margin" value={latestPeriod?.net_margin == null ? (referenceMetrics?.net_margin == null ? "—" : `${fmt(referenceMetrics.net_margin)}%`) : `${fmt(latestPeriod.net_margin)}%`} />
-        <MiniStat label="Book Value/Share" value={referenceMetrics?.book_value_per_share == null ? "—" : `KSh ${fmt(referenceMetrics.book_value_per_share)}`} />
+        <MiniStat label="Book Value/Share" value={referenceMetrics?.book_value_per_share == null ? "—" : `${ccy} ${fmt(referenceMetrics.book_value_per_share)}`} />
         <MiniStat label="Price-to-Book" value={priceToBook == null ? "—" : `${fmt(priceToBook)}x`} />
         <MiniStat label="Return on Equity" value={referenceMetrics?.roe == null ? "—" : `${fmt(referenceMetrics.roe)}%`} />
         <MiniStat label="Dividend Yield" value={stock.dividend_yield == null ? "—" : `${fmt(stock.dividend_yield)}%`} />
