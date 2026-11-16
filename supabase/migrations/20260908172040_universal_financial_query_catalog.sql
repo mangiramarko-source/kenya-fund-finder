@@ -223,9 +223,18 @@ begin
     updated_at = now();
 
   insert into public.financial_entity_aliases (entity_id, alias, alias_normalized, origin, is_approved)
-  select v_entity_id, value, public.normalize_financial_alias(value), 'catalog', true
-  from unnest(array[label_value, short_value, key_value, manager_value]) value
-  where value is not null and public.normalize_financial_alias(value) <> ''
+  select distinct on (src.norm_alias)
+    v_entity_id,
+    src.val,
+    src.norm_alias,
+    'catalog',
+    true
+  from (
+    select value as val, public.normalize_financial_alias(value) as norm_alias
+    from unnest(array[label_value, short_value, key_value, manager_value]) value
+  ) src
+  where src.val is not null and src.norm_alias <> ''
+  order by src.norm_alias, src.val
   on conflict (entity_id, alias_normalized) do update set alias = excluded.alias, is_approved = true;
 
   if manager_value is not null and trim(manager_value) <> '' then
