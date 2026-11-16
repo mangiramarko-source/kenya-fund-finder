@@ -5,7 +5,7 @@ import { MarketMoversCard } from "./MarketMoversCard";
 
 describe("MarketMoversCard", () => {
   it("renders default market movers with correct stock images when stocks are empty", () => {
-    render(
+    const { container } = render(
       <MemoryRouter>
         <MarketMoversCard stocks={[]} />
       </MemoryRouter>
@@ -19,7 +19,7 @@ describe("MarketMoversCard", () => {
     expect(screen.getByText("UMME")).toBeInTheDocument();
     expect(screen.getByText("KQ")).toBeInTheDocument();
 
-    const images = screen.getAllByRole("img");
+    const images = Array.from(container.querySelectorAll("img"));
     expect(images.length).toBe(6);
 
     const sources = images.map((img) => img.getAttribute("src"));

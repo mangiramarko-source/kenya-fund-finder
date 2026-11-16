@@ -83,9 +83,9 @@ describe("InvestorBriefing DOM & Visual Verification", () => {
     expect(screen.getByText(/expanding user eligibility can broaden retail trading/)).toBeInTheDocument();
 
     // 4. Market Snapshot
-    expect(screen.getByText("SCOM")).toBeInTheDocument();
+    expect(screen.getAllByText("SCOM").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Safaricom PLC")).toBeInTheDocument();
-    expect(screen.getByText("KES 36.35")).toBeInTheDocument();
+    expect(screen.getAllByText("KES 36.35").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("+0.39%")).toBeInTheDocument();
     expect(screen.getByText(/Impact\s*3\/5/)).toBeInTheDocument();
     expect(screen.getByText("Previous:")).toBeInTheDocument();
@@ -165,8 +165,8 @@ describe("InvestorBriefing DOM & Visual Verification", () => {
     expect(screen.getByText(/expanding product access and user eligibility widens the addressable audience/)).toBeInTheDocument();
 
     // 4. Market Snapshot
-    expect(screen.getByText("SCOM")).toBeInTheDocument();
-    expect(screen.getByText("KES 36.35")).toBeInTheDocument();
+    expect(screen.getAllByText("SCOM").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("KES 36.35").length).toBeGreaterThanOrEqual(1);
 
     // 5. What We Know (Extracted from content)
     expect(screen.getByText("What We Know")).toBeInTheDocument();

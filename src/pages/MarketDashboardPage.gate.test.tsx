@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import MarketDashboardPage from "./MarketDashboardPage";
@@ -43,6 +44,19 @@ vi.mock("@/components/calculator/MiniCurrencyConverter", () => ({
   default: () => <div data-testid="mini-converter">Converter</div>,
 }));
 
+function renderMarketDashboard() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <MarketDashboardPage />
+      </MemoryRouter>
+    </QueryClientProvider>
+  );
+}
+
 describe("MarketDashboardPage Rule of 3 Gating", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -52,11 +66,7 @@ describe("MarketDashboardPage Rule of 3 Gating", () => {
     mockUseAuth.mockReturnValue({ user: null, loading: false });
     mockIsBotOrPrerender.mockReturnValue(false);
 
-    render(
-      <MemoryRouter>
-        <MarketDashboardPage />
-      </MemoryRouter>
-    );
+    renderMarketDashboard();
 
     // First 3 currencies visible
     expect(screen.getByText("USD")).toBeDefined();
@@ -86,11 +96,7 @@ describe("MarketDashboardPage Rule of 3 Gating", () => {
     });
     mockIsBotOrPrerender.mockReturnValue(false);
 
-    render(
-      <MemoryRouter>
-        <MarketDashboardPage />
-      </MemoryRouter>
-    );
+    renderMarketDashboard();
 
     // All rates visible
     expect(screen.getByText("ZAR")).toBeDefined();

@@ -31,10 +31,13 @@ describe("SEO growth content", () => {
     expect(schemas.map((s) => s["@type"])).toEqual(["Dataset", "ItemList", "FAQPage", "BreadcrumbList"]);
   });
   it("never presents a unit price as a percentage or adds tax estimates to it", () => {
-    const html = mmfHubSeo([{ ...fund, annual_yield: 100, yield_unit: "USD" }]).contentHtml;
-    expect(html).toContain("100 USD");
+    const html = mmfHubSeo([{ ...fund, annual_yield: 100, yield_unit: "KES" }]).contentHtml;
+    expect(html).toContain("KES 100 (NAV Price)");
     expect(html).not.toContain("85%");
     expect(html).not.toContain("100%");
+    const usdHtml = mmfHubSeo([{ ...fund, annual_yield: 5.5, yield_unit: "USD" }]).contentHtml;
+    expect(usdHtml).toContain("5.5% p.a. (USD)");
+    expect(usdHtml).not.toContain("4.68%");
   });
   it("handles missing data, filters other fund types, and escapes untrusted fields", () => {
     expect(metric(null)).toBe("Unavailable");

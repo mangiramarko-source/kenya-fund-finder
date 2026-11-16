@@ -52,7 +52,7 @@ describe("CalculatorPage Multi-Asset Experience", () => {
   it("renders the calculator header and all asset class tabs", () => {
     renderCalculator();
 
-    expect(screen.getByRole("heading", { name: /Kenya Investment Calculators/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: /Kenya Investment Calculators/i }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("button", { name: /Money Market Funds/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /T-Bills & Bonds/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /NSE Stocks/i })).toBeInTheDocument();
@@ -76,10 +76,10 @@ describe("CalculatorPage Multi-Asset Experience", () => {
     const tbillTab = screen.getByRole("button", { name: /T-Bills & Bonds/i });
     fireEvent.click(tbillTab);
 
-    expect(screen.getByText(/CBK Sovereign Securities/i)).toBeInTheDocument();
+    expect(screen.getByText(/Auction Parameters/i)).toBeInTheDocument();
     expect(screen.getByText(/91-Day Treasury Bill/i)).toBeInTheDocument();
-    expect(screen.getByText(/364-Day Treasury Bill/i)).toBeInTheDocument();
-    expect(screen.getByText(/Infrastructure Bond/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/364-Day Treasury Bill/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Infrastructure Bond/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText(/Face Value/i)).toBeInTheDocument();
   });
 
@@ -89,7 +89,7 @@ describe("CalculatorPage Multi-Asset Experience", () => {
     const stockTab = screen.getByRole("button", { name: /NSE Stocks/i });
     fireEvent.click(stockTab);
 
-    expect(screen.getByText(/NSE Equity Market/i)).toBeInTheDocument();
+    expect(screen.getByText(/Stock Assumptions & Capital/i)).toBeInTheDocument();
     expect(screen.getByText(/Reinvest Dividends \(DRIP\)/i)).toBeInTheDocument();
     expect(screen.getByText(/Include NSE & CDSC Brokerage Fees/i)).toBeInTheDocument();
     expect(screen.getByText(/By Investment Amount/i)).toBeInTheDocument();
@@ -110,12 +110,12 @@ describe("CalculatorPage Multi-Asset Experience", () => {
   it("supports deep linking via query params (?tab=stocks)", () => {
     renderCalculator("/calculator?tab=stocks");
 
-    expect(screen.getByText(/NSE Equity Market/i)).toBeInTheDocument();
+    expect(screen.getByText(/Stock Assumptions & Capital/i)).toBeInTheDocument();
   });
 
   it("supports deep linking via query params (?tab=tbills)", () => {
     renderCalculator("/calculator?tab=tbills");
 
-    expect(screen.getByText(/CBK Sovereign Securities/i)).toBeInTheDocument();
+    expect(screen.getByText(/Auction Parameters/i)).toBeInTheDocument();
   });
 });

@@ -60,50 +60,6 @@ interface CommentItem {
   userLiked?: boolean;
 }
 
-const NewsArticlePage = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
-  const isGated = !authLoading && !user && !isBotOrPrerender();
-  const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
-  
-  const navState = location.state as {
-    article?: NewsFromDB;
-    stock?: any;
-    feedItem?: any;
-    focusAnalysis?: boolean;
-  } | null;
-
-  const { toast } = useToast();
-  const [article, setArticle] = useState<NewsFromDB | null>(() => navState?.article || null);
-  const [loading, setLoading] = useState(() => !navState?.article);
-  const [related, setRelated] = useState<NewsFromDB[]>([]);
-  const [relatedStock, setRelatedStock] = useState<PublicStock | null>(() => {
-    if (!navState?.stock) return null;
-    return {
-      ...navState.stock,
-      sector: navState.stock.sector ?? null,
-      day_change_percent: navState.stock.changePercent ?? navState.stock.day_change_percent ?? 0,
-      previous_price: navState.stock.previousPrice ?? navState.stock.previous_price ?? null,
-      pe_ratio: navState.stock.peRatio ?? navState.stock.pe_ratio ?? null,
-      dividend_yield: navState.stock.dividendYield ?? navState.stock.dividend_yield ?? null,
-      year_low: navState.stock.yearLow ?? navState.stock.year_low ?? null,
-      year_high: navState.stock.yearHigh ?? navState.stock.year_high ?? null,
-      market_cap: navState.stock.marketCap ?? navState.stock.market_cap ?? null,
-    } as PublicStock;
-  });
-  const [relatedMmf, setRelatedMmf] = useState<any | null>(null);
-  const [relatedFx, setRelatedFx] = useState<any | null>(null);
-  const [relatedCommodity, setRelatedCommodity] = useState<any | null>(null);
-  const [stockLogoError, setStockLogoError] = useState(false);
-  const [sourceLogoError, setSourceLogoError] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
-  const [reposted, setReposted] = useState(false);
-  const [repostsCount, setRepostsCount] = useState(0);
-  const [bookmarksCount, setBookmarksCount] = useState(0);
-  const [newCommentInput, setNewCommentInput] = useState("");
-
 const educationalTips = [
   { 
     title: "Dividend Yield", 
@@ -315,13 +271,13 @@ function getSyntheticArticle(id: string, allowGenericFallback = false): NewsFrom
 function getCandidateStocks(networkStocks: PublicStock[] = []): PublicStock[] {
   if (networkStocks.length > 0) return networkStocks;
   const cached = stockCache.loadStocks()?.stocks;
-  if (cached && cached.length > 0) return cached as PublicStock[];
-  return (FALLBACK_KENYAN_STOCKS as any[]) as PublicStock[];
+  if (cached && cached.length > 0) return cached as unknown as PublicStock[];
+  return (FALLBACK_KENYAN_STOCKS as unknown[]) as PublicStock[];
 }
 
 function resolveStockForArticle(
   targetArticle: NewsFromDB,
-  candidateStocks: any[]
+  candidateStocks: PublicStock[]
 ): PublicStock | null {
   if (targetArticle.related_stock_id) {
     const direct = candidateStocks.find((s) => s.id === targetArticle.related_stock_id);
@@ -332,18 +288,76 @@ function resolveStockForArticle(
   return null;
 }
 
+type RelatedMarketAsset = {
+  id?: string;
+  slug?: string;
+  name?: string;
+  pair?: string;
+  symbol?: string;
+  annualYield?: number;
+  yield?: number;
+  rate?: number;
+  price?: number;
+  unit?: string;
+  changePercent?: number;
+};
+
+const NewsArticlePage = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
+  const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
+  
+  const navState = location.state as {
+    article?: NewsFromDB;
+    stock?: Record<string, unknown> & Partial<PublicStock>;
+    feedItem?: Record<string, unknown>;
+    focusAnalysis?: boolean;
+  } | null;
+
+  const { toast } = useToast();
+  const [article, setArticle] = useState<NewsFromDB | null>(() => navState?.article || null);
+  const [loading, setLoading] = useState(() => !navState?.article);
+  const [related, setRelated] = useState<NewsFromDB[]>([]);
+  const [relatedStock, setRelatedStock] = useState<PublicStock | null>(() => {
+    if (!navState?.stock) return null;
+    const rawStock = navState.stock as Record<string, unknown>;
+    return {
+      ...navState.stock,
+      sector: (rawStock.sector as string | null) ?? null,
+      day_change_percent: Number(rawStock.changePercent ?? rawStock.day_change_percent ?? 0),
+      previous_price: (rawStock.previousPrice ?? rawStock.previous_price ?? null) as number | null,
+      pe_ratio: (rawStock.peRatio ?? rawStock.pe_ratio ?? null) as number | null,
+      dividend_yield: (rawStock.dividendYield ?? rawStock.dividend_yield ?? null) as number | null,
+      year_low: (rawStock.yearLow ?? rawStock.year_low ?? null) as number | null,
+      year_high: (rawStock.yearHigh ?? rawStock.year_high ?? null) as number | null,
+      market_cap: (rawStock.marketCap ?? rawStock.market_cap ?? null) as number | null,
+    } as PublicStock;
+  });
+  const [relatedMmf, setRelatedMmf] = useState<RelatedMarketAsset | null>(null);
+  const [relatedFx, setRelatedFx] = useState<RelatedMarketAsset | null>(null);
+  const [relatedCommodity, setRelatedCommodity] = useState<RelatedMarketAsset | null>(null);
+  const [stockLogoError, setStockLogoError] = useState(false);
+  const [sourceLogoError, setSourceLogoError] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [reposted, setReposted] = useState(false);
+  const [repostsCount, setRepostsCount] = useState(0);
+  const [bookmarksCount, setBookmarksCount] = useState(0);
+  const [newCommentInput, setNewCommentInput] = useState("");
+
   // Rule 3: Reliable mobile scroll to 5-pillar analysis when requested via hash or nav state
   useEffect(() => {
     const shouldFocusAnalysis =
       location.hash === "#5-pillar-analysis" ||
-      Boolean((location.state as any)?.focusAnalysis);
+      Boolean((location.state as { focusAnalysis?: boolean } | null)?.focusAnalysis);
 
     if (!shouldFocusAnalysis) return;
 
-    let rafId: number;
     let timerId: ReturnType<typeof setTimeout>;
 
-    rafId = requestAnimationFrame(() => {
+    const rafId = requestAnimationFrame(() => {
       timerId = setTimeout(() => {
         const el = document.getElementById("5-pillar-analysis");
         if (el) {
@@ -362,7 +376,7 @@ function resolveStockForArticle(
   useEffect(() => {
     const shouldFocusAnalysis =
       location.hash === "#5-pillar-analysis" ||
-      Boolean((location.state as any)?.focusAnalysis);
+      Boolean((location.state as { focusAnalysis?: boolean } | null)?.focusAnalysis);
 
     if (shouldFocusAnalysis) return;
 
@@ -404,17 +418,19 @@ function resolveStockForArticle(
       const presentation = getNewsPresentation(currentArticle);
       Promise.all([
         fetchFunds().catch(() => []),
-        supabase.from("exchange_rates_public" as any).select("*"),
-        supabase.from("commodities_public" as any).select("*"),
+        supabase.from("exchange_rates_public" as never).select("*"),
+        supabase.from("commodities_public" as never).select("*"),
       ])
         .then(([fundRows, fxRes, commodityRes]) => {
-          const fxRates = ((fxRes as any)?.data || []).map((rate: any) => ({
+          const fxRows = ((fxRes as { data?: Record<string, unknown>[] } | null)?.data || []);
+          const fxRates = fxRows.map((rate) => ({
             ...rate,
             rate: Number(rate.rate) || 0,
             previous_rate: rate.previous_rate == null ? null : Number(rate.previous_rate),
             day_change_percent: rate.day_change_percent == null ? null : Number(rate.day_change_percent),
           }));
-          const commodities = ((commodityRes as any)?.data || []).map((commodity: any) => ({
+          const commRows = ((commodityRes as { data?: Record<string, unknown>[] } | null)?.data || []);
+          const commodities = commRows.map((commodity) => ({
             ...commodity,
             price: Number(commodity.price) || 0,
             previous_price: commodity.previous_price == null ? null : Number(commodity.previous_price),
@@ -424,12 +440,12 @@ function resolveStockForArticle(
             presentation.title,
             presentation.body,
             fundRows,
-            fxRates,
-            commodities,
+            fxRates as never,
+            commodities as never,
           );
-          setRelatedMmf(marketLinks.relatedMmf);
-          setRelatedFx(marketLinks.relatedFx);
-          setRelatedCommodity(marketLinks.relatedCommodity);
+          setRelatedMmf(marketLinks.relatedMmf as RelatedMarketAsset | null);
+          setRelatedFx(marketLinks.relatedFx as RelatedMarketAsset | null);
+          setRelatedCommodity(marketLinks.relatedCommodity as RelatedMarketAsset | null);
         })
         .catch(() => {});
 
@@ -548,12 +564,12 @@ function resolveStockForArticle(
         }
         setLoading(false);
       });
-  }, [id]);
+  }, [id, navState?.article, navState?.stock]);
 
   useEffect(() => {
     const shouldFocusAnalysis =
       location.hash === "#5-pillar-analysis" ||
-      Boolean((location.state as any)?.focusAnalysis);
+      Boolean((location.state as { focusAnalysis?: boolean } | null)?.focusAnalysis);
 
     if (!loading && article && !shouldFocusAnalysis) {
       window.scrollTo(0, 0);
@@ -779,7 +795,7 @@ function resolveStockForArticle(
                 {/* Related Asset Metrics Pill */}
                 {relatedMmf && (
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${(relatedMmf.changePercent ?? 0) >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
-                    {(relatedMmf.annualYield ?? (relatedMmf as any).yield ?? 0).toFixed(2)}%
+                    {(relatedMmf.annualYield ?? relatedMmf.yield ?? 0).toFixed(2)}%
                   </span>
                 )}
                 {relatedFx && (

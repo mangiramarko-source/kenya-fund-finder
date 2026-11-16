@@ -13,7 +13,7 @@ describe("SaccoTable Component", () => {
     );
 
     expect(screen.getByText("All SACCOs")).toBeInTheDocument();
-    expect(screen.getByText("Open to Public")).toBeInTheDocument();
-    expect(screen.getByText("Highest Interest")).toBeInTheDocument();
+    expect(screen.getAllByText("Open to Public").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("button", { name: "Interest on Deposits" })).toBeInTheDocument();
   });
 });

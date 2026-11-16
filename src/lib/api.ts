@@ -301,13 +301,13 @@ const PUBLIC_STOCK_COLUMNS = [
   "day_high",
 ];
 
-function normalizePublicStock(stock: any): PublicStock {
+function normalizePublicStock(stock: Record<string, unknown>): PublicStock {
   return {
-    id: stock.id,
-    symbol: stock.symbol,
-    name: stock.name,
-    sector: stock.sector ?? null,
-    logo_url: stock.logo_url ?? null,
+    id: String(stock.id ?? ""),
+    symbol: String(stock.symbol ?? ""),
+    name: String(stock.name ?? ""),
+    sector: (stock.sector as string | null) ?? null,
+    logo_url: (stock.logo_url as string | null) ?? null,
     price: Number(stock.price) || 0,
     previous_price: stock.previous_price == null ? null : Number(stock.previous_price),
     day_change: stock.day_change == null ? null : Number(stock.day_change),
@@ -343,10 +343,10 @@ const FUND_COLUMNS = [
   "is_published", "logo_url", "updated_at",
 ];
 
-const normalizeFund = (f: any): FundFromDB => ({
-  ...f,
-  fund_type: (f.fund_type || "money_market") as FundType,
-  yield_unit: f.yield_unit || "%",
+const normalizeFund = (f: Record<string, unknown>): FundFromDB => ({
+  ...(f as unknown as FundFromDB),
+  fund_type: ((f.fund_type as string) || "money_market") as FundType,
+  yield_unit: (f.yield_unit as string) || "%",
   annual_yield: Number(f.annual_yield),
   daily_yield: Number(f.daily_yield),
   seven_day_yield: Number(f.seven_day_yield),
@@ -358,7 +358,7 @@ const normalizeFund = (f: any): FundFromDB => ({
 export async function fetchFunds(): Promise<FundFromDB[]> {
   // 1. Routed through the public-data gateway (rate-limited, paginated server-side).
   try {
-    const { data } = await fetchPublicData<any>("funds", {
+    const { data } = await fetchPublicData<Record<string, unknown>>("funds", {
       select: FUND_COLUMNS,
       order: "annual_yield.desc",
       limit: 200,
@@ -379,18 +379,20 @@ export async function fetchFunds(): Promise<FundFromDB[]> {
       .order("annual_yield", { ascending: false })
       .limit(200);
     if (!error && Array.isArray(data) && data.length > 0) {
-      return data.map(normalizeFund);
+      return (data as unknown as Record<string, unknown>[]).map(normalizeFund);
     }
   } catch (dbErr) {
     console.warn("Direct funds table fallback failed", dbErr);
   }
 
   // 3. Bundled real funds fallback (guarantees UI never breaks)
-  return FALLBACK_KENYAN_FUNDS.filter((f) => f.is_published !== false).map(normalizeFund);
+  return FALLBACK_KENYAN_FUNDS.filter((f) => f.is_published !== false).map(
+    (f) => normalizeFund(f as unknown as Record<string, unknown>)
+  );
 }
 
 export async function fetchFundBySlug(slug: string): Promise<FundFromDB | null> {
-  const { data } = await fetchPublicData<any>("funds", {
+  const { data } = await fetchPublicData<Record<string, unknown>>("funds", {
     select: FUND_COLUMNS,
     filters: { slug },
     limit: 1,
@@ -408,26 +410,26 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
   return (data || []).map((y) => ({ month: y.month, yield: Number(y.yield) }));
 }
 
-export function mapNewsArticle(d: any): NewsFromDB {
-  const parsed_ai_analysis = parseNewsAiAnalysis(d.ai_insight);
+export function mapNewsArticle(d: Record<string, unknown>): NewsFromDB {
+  const parsed_ai_analysis = parseNewsAiAnalysis(d.ai_insight as string | null);
   return {
-    id: d.id,
-    title: d.title,
-    summary: d.summary,
-    content: d.content || null,
-    source: d.source,
-    date_published: d.date_published,
-    source_published_at: d.source_published_at || null,
-    created_at: d.created_at,
-    url: d.url || null,
-    category: d.category,
-    read_time: d.read_time,
-    is_featured: d.is_featured,
-    status: d.status,
-    image_url: d.image_url || null,
-    video_url: d.video_url || parsed_ai_analysis?.video_url || null,
-    related_stock_id: d.related_stock_id || null,
-    ai_insight: d.ai_insight || null,
+    id: String(d.id ?? ""),
+    title: String(d.title ?? ""),
+    summary: String(d.summary ?? ""),
+    content: (d.content as string | null) || null,
+    source: (d.source as string | null) ?? null,
+    date_published: String(d.date_published ?? ""),
+    source_published_at: (d.source_published_at as string | null) || null,
+    created_at: (d.created_at as string | undefined),
+    url: (d.url as string | null) || null,
+    category: String(d.category ?? ""),
+    read_time: (d.read_time as string | null) ?? null,
+    is_featured: Boolean(d.is_featured),
+    status: String(d.status ?? "published"),
+    image_url: (d.image_url as string | null) || null,
+    video_url: (d.video_url as string | null) || parsed_ai_analysis?.video_url || null,
+    related_stock_id: (d.related_stock_id as string | null) || null,
+    ai_insight: (d.ai_insight as string | null) || null,
     parsed_ai_analysis,
   };
 }
@@ -499,7 +501,7 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
 
 export async function fetchPublicStockById(id: string): Promise<PublicStock | null> {
   const { data, error } = await supabase
-    .from("stocks_public" as any)
+    .from("stocks_public" as never)
     .select(PUBLIC_STOCK_COLUMNS.join(", "))
     .eq("id", id)
     .maybeSingle();
@@ -507,7 +509,7 @@ export async function fetchPublicStockById(id: string): Promise<PublicStock | nu
   if (error) throw error;
   if (!data) return null;
 
-  return normalizePublicStock(data);
+  return normalizePublicStock(data as unknown as Record<string, unknown>);
 }
 
 export async function enrichArticleLive(articleId: string): Promise<string> {
@@ -529,37 +531,39 @@ export async function fetchRelatedNews(category: string, excludeId: string, limi
     .order("created_at", { ascending: false })
     .limit(Math.max(limit * 4, limit));
   if (error) throw error;
-  return (data || []).filter((d: any) => isIndexableNewsArticle(d)).slice(0, limit).map(mapNewsArticle);
+  return (data || [])
+    .filter((d) => isIndexableNewsArticle(d))
+    .slice(0, limit)
+    .map((d) => mapNewsArticle(d as unknown as Record<string, unknown>));
 }
 
 /** Lightweight news preview fetch (no `content` body) for homepage/sidebar lists. */
 export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
   // Reuse the early prefetch kicked off in index.html for the default limit (4).
   // This avoids waiting for the JS bundle to parse before the request begins.
-  const prefetched = (typeof window !== "undefined")
-    ? (window as any).__newsPreviewPromise
-    : null;
+  const win = typeof window !== "undefined" ? (window as Window & { __newsPreviewPromise?: Promise<unknown> | null }) : null;
+  const prefetched = win?.__newsPreviewPromise ?? null;
   if (prefetched && limit === 4) {
     try {
       const data = await prefetched;
       // Consume the prefetch only once.
-      try { (window as any).__newsPreviewPromise = null; } catch { /* no-op */ }
+      try { if (win) win.__newsPreviewPromise = null; } catch { /* no-op */ }
       if (Array.isArray(data) && data.length > 0) {
-        return data.map((d: any) => ({
-          id: d.id,
-          title: d.title,
-          summary: d.summary,
+        return (data as Record<string, unknown>[]).map((d) => ({
+          id: String(d.id ?? ""),
+          title: String(d.title ?? ""),
+          summary: String(d.summary ?? ""),
           content: null,
-          source: d.source,
-          date_published: d.date_published,
-          source_published_at: d.source_published_at || null,
-          created_at: d.created_at,
-          url: d.url,
-          category: d.category,
-          read_time: d.read_time,
-          is_featured: d.is_featured,
-          status: d.status,
-          image_url: d.image_url || null,
+          source: (d.source as string | null) ?? null,
+          date_published: String(d.date_published ?? ""),
+          source_published_at: (d.source_published_at as string | null) || null,
+          created_at: d.created_at as string | undefined,
+          url: (d.url as string | null) ?? null,
+          category: String(d.category ?? ""),
+          read_time: (d.read_time as string | null) ?? null,
+          is_featured: Boolean(d.is_featured),
+          status: String(d.status ?? "published"),
+          image_url: (d.image_url as string | null) || null,
         }));
       }
     } catch { /* fall through to normal fetch */ }
@@ -876,15 +880,15 @@ export async function fetchStockLinkedNews(limit: number = 40): Promise<NewsFrom
 
 export async function fetchPublicStocks(exchange = "NSE"): Promise<PublicStock[]> {
   try {
-    const { data } = await fetchPublicData<any>("stocks", {
+    const { data } = await fetchPublicData<Record<string, unknown>>("stocks", {
       select: PUBLIC_STOCK_COLUMNS,
       order: "sort_order.asc",
       filters: { exchange },
       limit: 100,
     });
 
-    return ((data as any[]) || [])
-      .filter((s) => (s.exchange || "NSE").toUpperCase() === exchange.toUpperCase() && (exchange !== "NSE" || !/^(USE|DSE|RSE)-/i.test(String(s.symbol || ""))))
+    return (data || [])
+      .filter((s) => String(s.exchange || "NSE").toUpperCase() === exchange.toUpperCase() && (exchange !== "NSE" || !/^(USE|DSE|RSE)-/i.test(String(s.symbol || ""))))
       .map(normalizePublicStock);
   } catch (err) {
     console.warn("fetchPublicStocks gateway fetch failed, trying direct table fallback", err);
@@ -892,12 +896,12 @@ export async function fetchPublicStocks(exchange = "NSE"): Promise<PublicStock[]
       const { data, error } = await supabase
         .from("stocks")
         .select(PUBLIC_STOCK_COLUMNS.join(", "))
-        .eq("exchange" as any, exchange)
+        .eq("exchange" as never, exchange)
         .order("sort_order");
 
       if (error) throw error;
 
-      return ((data as any[]) || []).map(normalizePublicStock);
+      return ((data as unknown as Record<string, unknown>[]) || []).map(normalizePublicStock);
     } catch {
       return [];
     }
@@ -908,9 +912,9 @@ export async function fetchPublicStocks(exchange = "NSE"): Promise<PublicStock[]
  *  bulk_sync writes a snapshot dated today carrying the NEW yields, which matches the
  *  current fund value and would produce a 0 delta. We skip that and return the prior. */
 export async function fetchLatestSnapshots(): Promise<YieldSnapshot[]> {
-  let rows: any[] = [];
+  let rows: YieldSnapshot[] = [];
   try {
-    const { data } = await fetchPublicData<any>("fund-snapshots", {
+    const { data } = await fetchPublicData<YieldSnapshot>("fund-snapshots", {
       select: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
       order: "snapshot_date.desc",
       days: 90,
@@ -931,14 +935,14 @@ export async function fetchLatestSnapshots(): Promise<YieldSnapshot[]> {
         .order("snapshot_date", { ascending: false })
         .limit(2000);
       if (!error && Array.isArray(data)) {
-        rows = data;
+        rows = data as unknown as YieldSnapshot[];
       }
     } catch (dbErr) {
       console.warn("Direct fund_yield_snapshots query failed", dbErr);
     }
   }
 
-  const buckets = new Map<string, any[]>();
+  const buckets = new Map<string, YieldSnapshot[]>();
   for (const row of rows) {
     const arr = buckets.get(row.fund_id) ?? [];
     if (arr.length < 2) arr.push(row);
@@ -975,9 +979,9 @@ export async function fetchFundSnapshots(fundId: string): Promise<YieldSnapshot[
 
 /** Fetch recent yield snapshots for all funds (for sparklines) — last 365 days */
 export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnapshot[]>> {
-  let rows: any[] = [];
+  let rows: YieldSnapshot[] = [];
   try {
-    const { data } = await fetchPublicData<any>("fund-snapshots", {
+    const { data } = await fetchPublicData<YieldSnapshot>("fund-snapshots", {
       select: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
       order: "snapshot_date.desc",
       days: 365,
@@ -1000,7 +1004,7 @@ export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnaps
         .order("snapshot_date", { ascending: false })
         .limit(2000);
       if (!error && Array.isArray(data)) {
-        rows = data;
+        rows = data as unknown as YieldSnapshot[];
       }
     } catch (dbErr) {
       console.warn("Direct fund_yield_snapshots sparkline query failed", dbErr);

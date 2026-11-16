@@ -79,7 +79,7 @@ const AlertsPage = () => {
 
     const fetchAssets = async () => {
       let options: AssetOption[] = [];
-      const { data } = await supabase.from("stocks").select("id, name, symbol, price").eq("is_active", true).eq("exchange" as any, "NSE").order("name");
+      const { data } = await supabase.from("stocks").select("id, name, symbol, price").eq("is_active", true).eq("exchange" as never, "NSE").order("name");
       options = (data || []).map((s) => ({ id: s.id, name: `${s.name} (${s.symbol})`, currentValue: Number(s.price), unit: "KES" }));
       setAssetOptions(options);
       setLoadingAssets(false);
@@ -117,6 +117,35 @@ const AlertsPage = () => {
       setSelectedAssetId("");
     }
   };
+
+  const enrichedAlerts = useMemo(() => {
+    return alerts.map((alert) => {
+      const parsed = resolveAlertAsset(alert, stocks, rates, commodities);
+      const isHit = isAlertTriggered(alert, parsed.currentPrice);
+      const progress = calculateAlertProgress(alert, parsed.currentPrice, isHit);
+      const distance = calculateAlertDistance(alert, parsed.currentPrice, isHit);
+      return {
+        ...alert,
+        _parsed: parsed,
+        _isHit: isHit,
+        _progress: progress,
+        _distance: distance,
+      };
+    });
+  }, [alerts, stocks, rates, commodities]);
+
+  const activeAlerts = useMemo(
+    () => enrichedAlerts.filter((a) => a.is_active && !a._isHit && !a.is_triggered),
+    [enrichedAlerts]
+  );
+  const triggeredAlerts = useMemo(
+    () => enrichedAlerts.filter((a) => a._isHit || a.is_triggered),
+    [enrichedAlerts]
+  );
+  const pausedAlerts = useMemo(
+    () => enrichedAlerts.filter((a) => !a.is_active && !a._isHit && !a.is_triggered),
+    [enrichedAlerts]
+  );
 
   if (!user) {
     return (
@@ -260,35 +289,6 @@ const AlertsPage = () => {
     );
   }
 
-  const enrichedAlerts = useMemo(() => {
-    return alerts.map((alert) => {
-      const parsed = resolveAlertAsset(alert, stocks, rates, commodities);
-      const isHit = isAlertTriggered(alert, parsed.currentPrice);
-      const progress = calculateAlertProgress(alert, parsed.currentPrice, isHit);
-      const distance = calculateAlertDistance(alert, parsed.currentPrice, isHit);
-      return {
-        ...alert,
-        _parsed: parsed,
-        _isHit: isHit,
-        _progress: progress,
-        _distance: distance,
-      };
-    });
-  }, [alerts, stocks, rates, commodities]);
-
-  const activeAlerts = useMemo(
-    () => enrichedAlerts.filter((a) => a.is_active && !a._isHit && !a.is_triggered),
-    [enrichedAlerts]
-  );
-  const triggeredAlerts = useMemo(
-    () => enrichedAlerts.filter((a) => a._isHit || a.is_triggered),
-    [enrichedAlerts]
-  );
-  const pausedAlerts = useMemo(
-    () => enrichedAlerts.filter((a) => !a.is_active && !a._isHit && !a.is_triggered),
-    [enrichedAlerts]
-  );
-
   const matchesAlertQuery = (alert: (typeof enrichedAlerts)[number]) =>
     !alertQuery.trim() ||
     `${alert.asset_name} ${alert.asset_type} ${alert._parsed.symbol}`
@@ -330,7 +330,7 @@ const AlertsPage = () => {
     }
   };
 
-  const tabs: { key: TabKey; label: string; count: number; icon: any }[] = [
+  const tabs: { key: TabKey; label: string; count: number; icon: React.ElementType }[] = [
     { key: "active", label: "Active", count: activeAlerts.length, icon: Bell },
     { key: "triggered", label: "Triggered", count: triggeredAlerts.length, icon: CheckCircle },
     { key: "paused", label: "Paused", count: pausedAlerts.length, icon: BellOff },
@@ -816,7 +816,7 @@ const AlertCard = ({
 const EmptyState = ({
   icon: Icon, title, description, onCta, ctaLabel,
 }: {
-  icon: any; title: string; description: string; onCta?: () => void; ctaLabel?: string;
+  icon: React.ElementType; title: string; description: string; onCta?: () => void; ctaLabel?: string;
 }) => (
   <div className="text-center py-12 px-4 rounded-xl border border-dashed border-border bg-card/40">
     <Icon className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />

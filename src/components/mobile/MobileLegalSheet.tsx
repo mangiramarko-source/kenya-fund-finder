@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   Sheet,
@@ -45,12 +45,15 @@ export default function MobileLegalSheet({
   const isControlled = controlledOpen !== undefined;
   const isOpen = isControlled ? controlledOpen : internalOpen;
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!isControlled) {
-      setInternalOpen(nextOpen);
-    }
-    setControlledOpen?.(nextOpen);
-  };
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(nextOpen);
+      }
+      setControlledOpen?.(nextOpen);
+    },
+    [isControlled, setControlledOpen]
+  );
 
   useEffect(() => {
     const handleOpenEvent = () => {
@@ -61,7 +64,7 @@ export default function MobileLegalSheet({
     return () => {
       window.removeEventListener(KFF_OPEN_LEGAL_SHEET_EVENT, handleOpenEvent);
     };
-  }, []);
+  }, [handleOpenChange]);
 
   const close = () => handleOpenChange(false);
   useAndroidBackClose(isOpen, close, "mobile-legal-sheet");

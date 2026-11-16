@@ -319,7 +319,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
   }, [stocks]);
 
   useJsonLd(stocksJsonLd);
-  const [marketHistory, setMarketHistory] = useState<any[]>(initialPageMemory?.marketHistory ?? []);
+  const [marketHistory, setMarketHistory] = useState<Record<string, unknown>[]>(initialPageMemory?.marketHistory ?? []);
   const [loading, setLoading] = useState(false);
   const [marketHistoryReady, setMarketHistoryReady] = useState(true);
   const [sparklineHistoryReady, setSparklineHistoryReady] = useState(true);
@@ -354,11 +354,11 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
       if (fetchingStocks || disposed) return;
       fetchingStocks = true;
       try {
-        let fetchedData: any[] = [];
+        let fetchedData: Record<string, unknown>[] = [];
 
         // 1. Primary: Edge function gateway
         try {
-          const { data } = await fetchPublicData<any>("stocks", {
+          const { data } = await fetchPublicData<Record<string, unknown>>("stocks", {
             select: [
               "id", "symbol", "exchange", "exchange_ticker", "currency", "country_code",
               "name", "sector", "price", "previous_price",
@@ -370,7 +370,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
             limit: 200,
           });
           if (Array.isArray(data) && data.length > 0) {
-            fetchedData = data.filter((s: any) => (s.exchange || "NSE").toUpperCase() === "NSE" && !/^(USE|DSE|RSE)-/i.test(String(s.symbol || "")));
+            fetchedData = data.filter((s) => String(s.exchange || "NSE").toUpperCase() === "NSE" && !/^(USE|DSE|RSE)-/i.test(String(s.symbol || "")));
           }
         } catch (gwErr) {
           console.warn("fetchPublicData gateway failed, trying direct table fallback:", gwErr);
@@ -382,11 +382,11 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
             const { data, error } = await supabase
               .from("stocks")
               .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, logo_url, updated_at")
-              .eq("exchange" as any, "NSE")
+              .eq("exchange" as never, "NSE")
               .order("sort_order", { ascending: true })
               .limit(200);
             if (!error && Array.isArray(data) && data.length > 0) {
-              fetchedData = data;
+              fetchedData = data as unknown as Record<string, unknown>[];
             }
           } catch (dbErr) {
             console.warn("Direct stocks query failed:", dbErr);
@@ -397,9 +397,9 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
         if (fetchedData.length === 0) {
           const cached = stockCache.loadStocks();
           if (cached?.stocks && cached.stocks.length > 0) {
-            fetchedData = cached.stocks;
+            fetchedData = cached.stocks as unknown as Record<string, unknown>[];
           } else {
-            fetchedData = FALLBACK_KENYAN_STOCKS;
+            fetchedData = FALLBACK_KENYAN_STOCKS as unknown as Record<string, unknown>[];
           }
         }
 
@@ -419,11 +419,11 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     const fetchMarketHistory = async () => {
       try {
         const { data } = await supabase
-          .from("market_summary_history" as any)
+          .from("market_summary_history" as never)
           .select("*")
           .order("date", { ascending: true })
           .limit(30);
-        if (data) setMarketHistory(data);
+        if (data) setMarketHistory(data as unknown as Record<string, unknown>[]);
       } catch (e) {
         console.error("Failed to load market history", e);
       } finally {
@@ -451,7 +451,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     let cancelled = false;
     const fetchAllHistory = async () => {
       try {
-        const { data } = await fetchPublicData<any>("stock-history-bulk", {
+        const { data } = await fetchPublicData<{ stock_id: string; price: number | string; snapshot_date: string }>("stock-history-bulk", {
           select: ["stock_id", "price", "snapshot_date"],
           order: "snapshot_date.desc",
           days: 30,
@@ -459,7 +459,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
         });
         if (Array.isArray(data)) {
           const grouped: Record<string, PriceHistory[]> = {};
-          data.forEach((d: any) => {
+          data.forEach((d) => {
             const sid = d.stock_id;
             if (!grouped[sid]) grouped[sid] = [];
             grouped[sid].push({ snapshot_date: d.snapshot_date, price: Number(d.price) });
@@ -491,7 +491,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     if (!history[stockId]) {
       setHistoryLoading(stockId);
       try {
-        const { data } = await fetchPublicData<any>("stock-history", {
+        const { data } = await fetchPublicData<{ price: number | string; snapshot_date: string }>("stock-history", {
           select: ["price", "snapshot_date"],
           id: stockId,
           days: 90,
@@ -500,7 +500,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
         });
         setHistory((prev) => ({
           ...prev,
-          [stockId]: data.map((d: any) => ({ snapshot_date: d.snapshot_date, price: Number(d.price) })),
+          [stockId]: data.map((d) => ({ snapshot_date: d.snapshot_date, price: Number(d.price) })),
         }));
       } catch (e) {
         console.error("Failed to load stock history", e);

@@ -70,7 +70,7 @@ interface NormalizedSocialPost {
   text: string;
   createdAt?: string;
   imageUrl?: string | null;
-  rawItem?: Record<string, any>;
+  rawItem?: Record<string, unknown>;
 }
 
 interface RewrittenPost {
@@ -495,7 +495,7 @@ Deno.serve(async (req) => {
       }
 
       // Build clean title — prefer link headline if available, otherwise first sentence/line
-      const previewTitle = (post.rawItem?.previewTitle || "").trim();
+      const previewTitle = String(post.rawItem?.previewTitle || "").trim();
       const cleanText = post.text
         .replace(/https?:\/\/\S+/g, "")
         .replace(/[#@]\w+/g, "")
