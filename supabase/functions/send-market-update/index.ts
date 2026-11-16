@@ -273,14 +273,15 @@ async function fetchUserWatchlistAssets(supabase: SupabaseClient, userId: string
   if (stockIds.length > 0) {
     const { data: stocks } = await supabase
       .from("stocks")
-      .select("name, symbol, price, day_change, day_change_percent, sector")
+      .select("name, symbol, price, day_change, day_change_percent, sector, currency")
       .in("id", stockIds);
-    stockAssets = ((stocks || []) as StockAssetRow[]).map((stock) => {
+    stockAssets = ((stocks || []) as Array<StockAssetRow & { currency?: string | null }>).map((stock) => {
       const chg = formatChange(Number(stock.day_change_percent), "%");
+      const currencyCode = stock.currency || "KES";
       return {
         name: stock.name,
         category: `${stock.symbol} · ${stock.sector}`,
-        value: `KES ${Number(stock.price).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        value: `${currencyCode} ${Number(stock.price).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         change: chg.text,
         changeColor: chg.color,
         changeBg: chg.bg,

@@ -79,7 +79,7 @@ const AlertsPage = () => {
 
     const fetchAssets = async () => {
       let options: AssetOption[] = [];
-      const { data } = await supabase.from("stocks").select("id, name, symbol, price").eq("is_active", true).order("name");
+      const { data } = await supabase.from("stocks").select("id, name, symbol, price").eq("is_active", true).eq("exchange" as any, "NSE").order("name");
       options = (data || []).map((s) => ({ id: s.id, name: `${s.name} (${s.symbol})`, currentValue: Number(s.price), unit: "KES" }));
       setAssetOptions(options);
       setLoadingAssets(false);

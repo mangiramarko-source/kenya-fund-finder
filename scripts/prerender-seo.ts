@@ -125,7 +125,15 @@ async function supaSelect<T>(resource: string, query: string): Promise<T[]> {
 }
 
 async function publicStocks<T>(): Promise<T[]> {
-  return seoPublicData<T>("stocks", "symbol,name,sector,price,day_change,day_change_percent,volume,market_cap,pe_ratio,dividend_yield,year_high,year_low,updated_at,provider_updated_at,quote_source,company_summary,official_website", "sort_order.asc");
+  const rows = await seoPublicData<T & { exchange?: string | null }>(
+    "stocks",
+    "symbol,name,sector,price,day_change,day_change_percent,volume,market_cap,pe_ratio,dividend_yield,year_high,year_low,updated_at,provider_updated_at,quote_source,company_summary,official_website",
+    "sort_order.asc",
+    { exchange: "NSE" },
+  );
+  return rows.filter(
+    (r) => (!r.exchange || r.exchange.toUpperCase() === "NSE") && !/^(USE|DSE|RSE)-/i.test(String((r as any).symbol || "")),
+  );
 }
 
 function validSegment(value: string | null): value is string {
@@ -196,7 +204,7 @@ function staticRoutes(): SeoPageDefinition[] {
         '<section><h2>Compare Kenyan investment options</h2><p>Review published yields, fees, minimum deposits and withdrawal periods on the <a href="/funds">fund directory</a>, compare guaranteed returns on <a href="/savings">Bank Fixed Deposits & SACCOs</a>, compare selected products side by side with the <a href="/compare">fund comparison tool</a>, estimate possible returns using the <a href="/calculator">investment calculator</a>, and use the <a href="/checklist">fund checklist</a> when evaluating an option.</p></section>',
         '<section><h2>Follow markets and rates</h2><p>Explore <a href="/stocks">Nairobi Securities Exchange stocks</a>, <a href="/treasury">Kenya Treasury bills and bonds</a>, <a href="/savings">bank fixed deposits & regulated SACCO rates</a>, <a href="/rates">foreign exchange rates</a>, <a href="/commodities">commodity prices</a>, or open the combined <a href="/markets">markets dashboard</a>.</p></section>',
         '<section><h2>Learn before you invest</h2><p>Read current <a href="/news">Kenyan market news</a>, browse plain-language answers in the <a href="/learn">investing learning centre</a>, or follow the practical guide on <a href="/learn/how-to-invest-in-money-market-funds-kenya">how to invest in a Kenyan money market fund</a>. Verify product details with the fund manager and the relevant regulator before investing.</p></section>',
-        '<section><h2>About and policies</h2><p>Learn <a href="/page/about">about Kenya Fund Finder</a>, <a href="/page/contact">contact the team</a>, and review the <a href="/privacy">privacy policy</a> and <a href="/terms">terms of use</a>.</p></section>',
+        '<section><h2>About and policies</h2><p>Learn <a href="/page/about">about Kenya Fund Finder</a>, <a href="/page/contact">contact the team</a>, and review the <a href="/privacy">privacy policy</a>, <a href="/terms">terms of use</a>, and <a href="/delete-account">account &amp; data deletion policy</a>.</p></section>',
       ].join(""),
       jsonLd: [{ "@context": "https://schema.org", "@type": "WebPage", name: "Kenya Fund Finder Market Overview", url: canonicalUrl("/") }, { "@context": "https://schema.org", "@type": "Organization", name: "Kenya Fund Finder", url: SEO_SITE_URL, logo: `${SEO_SITE_URL}/apple-touch-icon.png` }],
     },
@@ -360,6 +368,45 @@ function staticRoutes(): SeoPageDefinition[] {
           { name: "Treasury Bills & Bonds", path: "/treasury" },
         ]),
       ],
+    },
+    {
+      path: "/privacy",
+      title: "Privacy Policy | Kenya Fund Finder",
+      description: "Privacy Policy for Kenya Fund Finder (operated by Elyon Innovation LTD), compliant with the Kenya Data Protection Act, 2019 (KDPA Sections 33, 48 & 49), Samsung Galaxy Store, and Google Play Developer Policies.",
+      heading: "Privacy Policy",
+      contentHtml: [
+        paragraph("Kenya Fund Finder is owned and operated by Elyon Innovation LTD, a company incorporated in the Republic of Kenya. We act as the data controller in compliance with the Kenya Data Protection Act, 2019 (KDPA)."),
+        '<section><h2>Information We Collect</h2><p>We process account and OAuth identity credentials (email, Google OAuth, and Microsoft OAuth profile metadata via Supabase), sanitized avatar uploads, saved watchlists, simulated portfolios, Web Push notification subscriptions, and anonymized AI Lab query resolution telemetry. We do not collect bank account numbers, M-Pesa PINs, payment card details, or brokerage credentials.</p></section>',
+        '<section><h2>Cross-Border Data Transfers (KDPA 2019, Sections 48 &amp; 49)</h2><p>Personal data and technical telemetry are processed on encrypted cloud infrastructure outside the Republic of Kenya (within the European Union and the United States) operated by vetted sub-processors including Supabase, Vercel, PostHog (EU Cloud), Sentry, and Cloudflare under Standard Contractual Clauses (SCCs), Data Processing Agreements (DPAs), TLS/AES-256 encryption, and informed user consent in compliance with Sections 48 and 49 of the Kenya Data Protection Act, 2019.</p></section>',
+        '<section><h2>Age Restriction (18+) &amp; Data Deletion</h2><p>Pursuant to Section 33 of the Kenya Data Protection Act, 2019, the Platform is intended exclusively for adults aged 18 years and older. You can permanently delete your account and personal data at any time via <a href="/delete-account">Account &amp; Data Deletion (/delete-account)</a> or by contacting <a href="mailto:kenyafundfinder@outlook.com">kenyafundfinder@outlook.com</a>.</p></section>',
+        '<p><a href="/">Home</a> · <a href="/terms">Terms of Use</a> · <a href="/delete-account">Delete Account</a> · <a href="/page/contact">Contact Us</a></p>',
+      ].join(""),
+      jsonLd: { "@context": "https://schema.org", "@type": "WebPage", name: "Privacy Policy", url: canonicalUrl("/privacy") },
+    },
+    {
+      path: "/terms",
+      title: "Terms of Use | Kenya Fund Finder",
+      description: "Terms of Use and regulatory disclosures for Kenya Fund Finder (operated by Elyon Innovation LTD) covering CMA unit trusts, NSE equities, CBK government securities and banks, SASRA SACCOs, and AI Lab disclaimers.",
+      heading: "Terms of Use",
+      contentHtml: [
+        paragraph("By using Kenya Fund Finder, operated by Elyon Innovation LTD (Republic of Kenya), you agree to these Terms of Use. Users must be at least 18 years old."),
+        '<section><h2>Nature of the Platform &amp; Non-Lender / Non-Broker Declaration</h2><p>Kenya Fund Finder is strictly an independent, read-only financial market data and educational comparison platform covering CMA-regulated Unit Trusts and Money Market Funds, NSE listed equities, CBK Treasury Bills/Bonds, commercial bank fixed deposits, FX rates, and SASRA-regulated DT-SACCOs. The Platform does not offer personal loans, credit facilities, banking, or brokerage services, does not hold client funds or execute trades, and does not provide personalized investment or tax advice.</p></section>',
+        '<section><h2>Calculators &amp; AI Lab Disclaimers</h2><p>All calculators, simulated portfolios, and AI Lab automated educational explanations are illustrative scenarios only and may contain errors. Verify all published figures, fees, and 15% withholding tax terms directly with the licensed institution or a qualified advisor.</p></section>',
+        '<p><a href="/">Home</a> · <a href="/privacy">Privacy Policy</a> · <a href="/delete-account">Account &amp; Data Deletion</a> · <a href="/page/financial-disclaimer">Financial Disclaimer</a></p>',
+      ].join(""),
+      jsonLd: { "@context": "https://schema.org", "@type": "WebPage", name: "Terms of Use", url: canonicalUrl("/terms") },
+    },
+    {
+      path: "/delete-account",
+      title: "Request Account & Data Deletion | Kenya Fund Finder",
+      description: "Permanently delete your Kenya Fund Finder account and personal data instantly in-app or via email request in compliance with Samsung Galaxy Store, Google Play, and the Kenya Data Protection Act, 2019.",
+      heading: "Request Account & Data Deletion",
+      contentHtml: [
+        paragraph("At Kenya Fund Finder (operated by Elyon Innovation LTD), you have the right under Samsung Galaxy Store policies, Google Play Developer Policy, and the Kenya Data Protection Act (2019) to request permanent deletion of your account and all associated personal data at any time without fee."),
+        '<section><h2>How to Delete Your Account</h2><p>Method 1 (Instant In-App): Sign in at <a href="/profile">My Profile</a> and click Delete Account in the Danger Zone to immediately purge your account, avatar, portfolio, watchlists, and alerts. Method 2 (No App Needed): Email <a href="mailto:kenyafundfinder@outlook.com">kenyafundfinder@outlook.com</a> from your registered email address; manual requests are completed within 30 days.</p></section>',
+        '<p><a href="/">Home</a> · <a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Use</a></p>',
+      ].join(""),
+      jsonLd: { "@context": "https://schema.org", "@type": "WebPage", name: "Request Account & Data Deletion", url: canonicalUrl("/delete-account") },
     },
   ];
 }
@@ -834,10 +881,19 @@ function outputPath(routePath: string): string {
   return join(DIST_DIR, `${relative}.html`);
 }
 
+const DIRECTORY_INDEX_ROUTES = new Set(["/privacy", "/terms", "/delete-account"]);
+
 function writePage(template: string, page: SeoPageDefinition): void {
+  const rendered = renderSeoHtml(template, page);
   const filePath = outputPath(page.path);
   mkdirSync(dirname(filePath), { recursive: true });
-  writeFileSync(filePath, renderSeoHtml(template, page));
+  writeFileSync(filePath, rendered);
+
+  if (DIRECTORY_INDEX_ROUTES.has(page.path)) {
+    const dirIndexPath = join(DIST_DIR, page.path.replace(/^\//, ""), "index.html");
+    mkdirSync(dirname(dirIndexPath), { recursive: true });
+    writeFileSync(dirIndexPath, rendered);
+  }
 }
 
 async function loadDynamicPages(): Promise<SeoPageDefinition[]> {
@@ -910,7 +966,7 @@ async function loadDynamicPages(): Promise<SeoPageDefinition[]> {
     ...funds.map(fund => fundPage(fund, funds)),
     ...news.map(newsPage),
     ...sitePages
-      .filter((page) => ["privacy", "terms"].includes(page.slug || "") || isIndexableSitePageSlug(page.slug))
+      .filter((page) => isIndexableSitePageSlug(page.slug))
       .map(contentPage),
   ].filter((page): page is SeoPageDefinition => Boolean(page));
 }

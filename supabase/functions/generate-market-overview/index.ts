@@ -85,7 +85,7 @@ Deno.serve(async (request) => {
 
   try {
     const [stocksResult, fxResult, commodityResult, treasuryResult, fundSnapshotResult, newsResult] = await Promise.all([
-      supabase.from("stocks").select("id,symbol,name,price,previous_price,updated_at,is_active").eq("is_active", true),
+      supabase.from("stocks").select("id,symbol,name,price,previous_price,updated_at,is_active").eq("is_active", true).eq("exchange", "NSE"),
       supabase.from("exchange_rates").select("id,currency_code,currency_name,rate,previous_rate,updated_at,is_active").eq("is_active", true).in("currency_code", ["USD", "EUR", "GBP"]),
       supabase.from("commodities").select("id,name,symbol,price,previous_price,unit,updated_at,is_active").eq("is_active", true).order("sort_order").limit(2),
       supabase.from("treasury_bill_auctions").select("tenor_days,auction_date,accepted_average_rate,previous_rate,retrieved_at").order("auction_date", { ascending: false }).limit(3),

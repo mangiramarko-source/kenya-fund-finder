@@ -100,7 +100,8 @@ Deno.serve(async (req) => {
     // 2) Fetch available stocks to map against
     const { data: stocks, error: stocksErr } = await supabase
       .from("stocks")
-      .select("id, symbol, name, sector, price, pe_ratio, dividend_yield, year_low, year_high, market_cap");
+      .select("id, symbol, name, sector, price, pe_ratio, dividend_yield, year_low, year_high, market_cap")
+      .eq("exchange", "NSE");
       
     if (stocksErr) throw stocksErr;
 

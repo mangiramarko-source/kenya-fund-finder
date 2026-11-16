@@ -7,7 +7,14 @@ import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
-import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
+import {
+  getStockCurrencyLabel,
+  getStockCurrencySymbol,
+  getStockExchangeLabel,
+  normalizeStock,
+  stockCache,
+  type CachedStock,
+} from "@/lib/stockCache";
 import { formatMarketDate, formatMarketDateTime, decodeHtmlEntities } from "@/lib/utils";
 import {
   downsampleStockHistory,
@@ -92,12 +99,12 @@ const LONG_STOCK_RANGES_ENABLED = import.meta.env.VITE_STOCK_LONG_RANGES_ENABLED
 const longHistoryRanges = new Set<StockHistoryRange>(["1Y", "5Y", "10Y", "15Y"]);
 const visibleHistoryRanges = STOCK_HISTORY_RANGES.filter((range) => LONG_STOCK_RANGES_ENABLED || !longHistoryRanges.has(range));
 
-const fmtCap = (mc: number | null) => {
+const fmtCap = (mc: number | null, ccySym = "KSh") => {
   if (mc == null) return "—";
-  if (mc >= 1e12) return `KSh ${(mc / 1e12).toFixed(2)}T`;
-  if (mc >= 1e9) return `KSh ${(mc / 1e9).toFixed(2)}B`;
-  if (mc >= 1e6) return `KSh ${(mc / 1e6).toFixed(0)}M`;
-  return `KSh ${mc.toLocaleString()}`;
+  if (mc >= 1e12) return `${ccySym} ${(mc / 1e12).toFixed(2)}T`;
+  if (mc >= 1e9) return `${ccySym} ${(mc / 1e9).toFixed(2)}B`;
+  if (mc >= 1e6) return `${ccySym} ${(mc / 1e6).toFixed(0)}M`;
+  return `${ccySym} ${mc.toLocaleString()}`;
 };
 
 const StockDetailPage = () => {
@@ -108,12 +115,12 @@ const StockDetailPage = () => {
   const { toast } = useToast();
   const { isFavourite, toggle: toggleFav } = useAssetWatchlist("stock");
 
-  const [stock, setStock] = useState<Stock | null>(() => stockCache.loadStocks()?.stocks.find(
-    (item) => item.symbol.toUpperCase() === symbol?.toUpperCase(),
-  ) ?? null);
-  const [loading, setLoading] = useState(() => !stockCache.loadStocks()?.stocks.some(
-    (item) => item.symbol.toUpperCase() === symbol?.toUpperCase(),
-  ));
+  const [stock, setStock] = useState<Stock | null>(() =>
+    symbol ? stockCache.findStockBySymbol(symbol) : null,
+  );
+  const [loading, setLoading] = useState(() =>
+    symbol ? !stockCache.findStockBySymbol(symbol) : true,
+  );
   const [loadError, setLoadError] = useState(false);
   const [history, setHistory] = useState<PriceHistory[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -132,19 +139,24 @@ const StockDetailPage = () => {
 
   const stockSeoTitle = useMemo(() => {
     if (!stock) return "Stock Detail | Kenya Fund Finder";
-    const priceLabel = Number.isFinite(stock.price) && stock.price > 0 ? ` (KSh ${stock.price.toLocaleString("en-KE", { maximumFractionDigits: 2 })})` : "";
-    return `${stock.symbol} Share Price Today${priceLabel} – ${stock.name} NSE Stock`;
+    const ccy = getStockCurrencySymbol(stock.currency);
+    const exCode = stock.exchange || "NSE";
+    const priceLabel = Number.isFinite(stock.price) && stock.price > 0 ? ` (${ccy} ${stock.price.toLocaleString("en-KE", { maximumFractionDigits: 2 })})` : "";
+    return `${stock.exchange_ticker || stock.symbol} Share Price Today${priceLabel} – ${stock.name} ${exCode} Stock`;
   }, [stock]);
 
   const stockSeoDescription = useMemo(() => {
     if (!stock) return "";
+    const ccy = getStockCurrencySymbol(stock.currency);
+    const exLabel = getStockExchangeLabel(stock.exchange);
+    const exCode = stock.exchange || "NSE";
     const parts = [
-      `${stock.name} (${stock.symbol}) share price on the Nairobi Securities Exchange (NSE) is KSh ${stock.price.toLocaleString("en-KE", { maximumFractionDigits: 2 })}`,
+      `${stock.name} (${stock.exchange_ticker || stock.symbol}) share price on the ${exLabel} is ${ccy} ${stock.price.toLocaleString("en-KE", { maximumFractionDigits: 2 })}`,
     ];
     if (stock.dividend_yield != null) parts.push(`dividend yield ${stock.dividend_yield}%`);
     if (stock.pe_ratio != null) parts.push(`P/E ${stock.pe_ratio}`);
-    if (stock.market_cap != null) parts.push(`market cap ${fmtCap(stock.market_cap)}`);
-    return `${parts.join(", ")}. View live NSE stock chart, financials, and disclosures.`;
+    if (stock.market_cap != null) parts.push(`market cap ${fmtCap(stock.market_cap, ccy)}`);
+    return `${parts.join(", ")}. View live ${exCode} stock chart, financials, and disclosures.`;
   }, [stock]);
 
   useDocumentTitle(
@@ -212,9 +224,7 @@ const StockDetailPage = () => {
 
   useEffect(() => {
     if (!symbol) return;
-    const cached = stockCache.loadStocks()?.stocks.find(
-      (item) => item.symbol.toUpperCase() === symbol.toUpperCase(),
-    );
+    const cached = stockCache.findStockBySymbol(symbol);
     const fetchStock = async () => {
       // Cached values may seed the request, but never unlock the initial page.
       setLoading(true);
@@ -223,7 +233,8 @@ const StockDetailPage = () => {
       try {
         const { data } = await fetchPublicData<any>("stocks", {
           select: [
-            "id", "symbol", "name", "sector", "price", "previous_price",
+            "id", "symbol", "exchange", "exchange_ticker", "currency", "country_code",
+            "name", "sector", "price", "previous_price",
             "day_change", "day_change_percent", "volume", "market_cap",
             "pe_ratio", "dividend_yield", "year_high", "year_low", "logo_url", "updated_at",
             "company_summary", "official_website", "headquarters", "telephone", "day_low", "day_high",
@@ -403,6 +414,11 @@ const StockDetailPage = () => {
   }
 
   const s = stock;
+  const ccy = getStockCurrencySymbol(s.currency);
+  const ccyLabel = getStockCurrencyLabel(s.currency);
+  const exLabel = getStockExchangeLabel(s.exchange);
+  const exCode = s.exchange || "NSE";
+  const displayTicker = s.exchange_ticker || s.symbol;
   const yearRange = s.year_low != null && s.year_high != null;
   const pricePos = yearRange ? ((s.price - s.year_low!) / (s.year_high! - s.year_low!)) * 100 : 0;
   const isUp = s.day_change > 0;
@@ -462,14 +478,14 @@ const StockDetailPage = () => {
             <StockLogo symbol={s.symbol} name={s.name} logoUrl={s.logo_url} />
             <div className="min-w-0">
               <h1 className="truncate text-2xl font-black tracking-tight text-foreground">{s.name}</h1>
-              <p className="mt-0.5 text-sm text-muted-foreground">NASE:{s.symbol} · Stock Report</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Market Cap {fmtCap(s.market_cap)}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">{exCode}:{displayTicker} · Stock Report</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Market Cap {fmtCap(s.market_cap, ccy)}</p>
             </div>
           </div>
 
           <div className="my-4 grid grid-cols-2 gap-2">
             <div className="[&_button]:h-10 [&_button]:w-full [&_button]:rounded-full [&_button]:border-foreground [&_button]:bg-foreground [&_button]:px-3 [&_button]:text-xs [&_button]:font-semibold [&_button]:text-background [&_svg]:h-4 [&_svg]:w-4">
-              <CreateAlertDialog assetType="stock" assetId={s.id} assetName={`${s.symbol} - ${s.name}`} currentPrice={s.price} unit="KSh" />
+              <CreateAlertDialog assetType="stock" assetId={s.id} assetName={`${s.symbol} - ${s.name}`} currentPrice={s.price} unit={ccy} />
             </div>
             {user ? (
               <button onClick={() => toggleFav(s.id, `${s.symbol} - ${s.name}`)} className="flex h-10 items-center justify-center gap-2 rounded-full border border-border bg-card px-3 text-xs font-semibold text-foreground">
@@ -483,7 +499,7 @@ const StockDetailPage = () => {
 
           <div className="py-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Last Price · {formatMarketDate(s.updated_at, "en-KE", { day: "numeric", month: "short", year: "numeric" })} · {formatMarketDateTime(s.updated_at, "en-KE", { hour: "numeric", minute: "2-digit", hour12: true })}</p>
-            <p className="mt-3 text-[42px] font-black leading-none tracking-tight text-foreground tabular-nums">KSh {fmt(s.price)}</p>
+            <p className="mt-3 text-[42px] font-black leading-none tracking-tight text-foreground tabular-nums">{ccy} {fmt(s.price)}</p>
             <div className="mt-1 flex items-center gap-2">
               {isUp && <TrendingUp className="h-4 w-4 text-emerald-500" />}
               {isDown && <TrendingDown className="h-4 w-4 text-destructive" />}
@@ -491,16 +507,16 @@ const StockDetailPage = () => {
               <span className={`text-sm font-bold tabular-nums ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>{isUp ? "+" : ""}{fmt(s.day_change)} ({isUp ? "+" : ""}{fmt(s.day_change_percent)}%)</span>
             </div>
           </div>
-          <p className="mt-4 text-xs text-muted-foreground">Nairobi Securities Exchange · Company financials</p>
+          <p className="mt-4 text-xs text-muted-foreground">{exLabel} · Company financials</p>
         </div>
 
         <div className="hidden md:flex md:items-start md:justify-between md:gap-4">
           <div>
-            <div className="mb-1 flex items-center gap-3"><div className="text-3xl font-bold text-foreground">{s.symbol}</div><Badge variant="secondary" className="text-xs">{s.sector}</Badge>{user && <button onClick={() => toggleFav(s.id, `${s.symbol} - ${s.name}`)} className="rounded-lg p-1.5 transition-colors hover:bg-muted"><Star className={`h-5 w-5 ${isFavourite(s.id) ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`} /></button>}</div>
+            <div className="mb-1 flex items-center gap-3"><div className="text-3xl font-bold text-foreground">{displayTicker}</div><Badge variant="secondary" className="text-xs">{s.sector}</Badge>{user && <button onClick={() => toggleFav(s.id, `${s.symbol} - ${s.name}`)} className="rounded-lg p-1.5 transition-colors hover:bg-muted"><Star className={`h-5 w-5 ${isFavourite(s.id) ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`} /></button>}</div>
             <p className="text-sm text-muted-foreground">{s.name}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Nairobi Securities Exchange · Last updated: {formatMarketDateTime(s.updated_at)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{exLabel} · Last updated: {formatMarketDateTime(s.updated_at)}</p>
           </div>
-          <div className="text-right"><p className="text-4xl font-bold text-foreground tabular-nums">KSh {fmt(s.price)}</p><div className="mt-1 flex items-center justify-end gap-2">{isUp ? <TrendingUp className="h-4 w-4 text-emerald-500" /> : isDown ? <TrendingDown className="h-4 w-4 text-destructive" /> : <Minus className="h-4 w-4 text-muted-foreground" />}<span className={`text-sm font-semibold tabular-nums ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>{isUp ? "+" : ""}{fmt(s.day_change)} ({isUp ? "+" : ""}{fmt(s.day_change_percent)}%)</span></div><CreateAlertDialog assetType="stock" assetId={s.id} assetName={`${s.symbol} - ${s.name}`} currentPrice={s.price} unit="KSh" /></div>
+          <div className="text-right"><p className="text-4xl font-bold text-foreground tabular-nums">{ccy} {fmt(s.price)}</p><div className="mt-1 flex items-center justify-end gap-2">{isUp ? <TrendingUp className="h-4 w-4 text-emerald-500" /> : isDown ? <TrendingDown className="h-4 w-4 text-destructive" /> : <Minus className="h-4 w-4 text-muted-foreground" />}<span className={`text-sm font-semibold tabular-nums ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>{isUp ? "+" : ""}{fmt(s.day_change)} ({isUp ? "+" : ""}{fmt(s.day_change_percent)}%)</span></div><CreateAlertDialog assetType="stock" assetId={s.id} assetName={`${s.symbol} - ${s.name}`} currentPrice={s.price} unit={ccy} /></div>
         </div>
       </div>
 
@@ -596,7 +612,7 @@ const StockDetailPage = () => {
                       fontSize: "12px",
                     }}
                     labelFormatter={(v) => formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
-                    formatter={(value: number) => [`KSh ${fmt(value)}`, "Price"]}
+                    formatter={(value: number) => [`${ccy} ${fmt(value)}`, "Price"]}
                   />
                   <Area type="monotone" dataKey="price" stroke={isUp ? "hsl(152 60% 42%)" : "hsl(var(--destructive))"} strokeWidth={2} fill="url(#priceGradient)" />
                 </AreaChart>
@@ -606,9 +622,9 @@ const StockDetailPage = () => {
 
             {priceStats && (
               <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
-                <MiniStat label="Period High" value={`KSh ${fmt(priceStats.high)}`} />
-                <MiniStat label="Period Low" value={`KSh ${fmt(priceStats.low)}`} />
-                <MiniStat label="Average" value={`KSh ${fmt(priceStats.avg)}`} desktopOnly />
+                <MiniStat label="Period High" value={`${ccy} ${fmt(priceStats.high)}`} />
+                <MiniStat label="Period Low" value={`${ccy} ${fmt(priceStats.low)}`} />
+                <MiniStat label="Average" value={`${ccy} ${fmt(priceStats.avg)}`} desktopOnly />
                 <MiniStat label="Change" value={`${priceStats.change > 0 ? "+" : ""}${fmt(priceStats.change)}`} color={priceStats.change >= 0 ? "text-emerald-500" : "text-destructive"} desktopOnly />
                 <MiniStat label="Change %" value={`${priceStats.changePct > 0 ? "+" : ""}${fmt(priceStats.changePct)}%`} color={priceStats.changePct >= 0 ? "text-emerald-500" : "text-destructive"} desktopOnly />
               </div>
@@ -617,9 +633,9 @@ const StockDetailPage = () => {
 
           {/* Key Stats Grid */}
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
-            <StatCard icon={<DollarSign className="h-4 w-4 text-emerald-500" />} label="Price" value={`KSh ${fmt(s.price)}`} />
+            <StatCard icon={<DollarSign className="h-4 w-4 text-emerald-500" />} label="Price" value={`${ccy} ${fmt(s.price)}`} />
             <StatCard icon={<Activity className="h-4 w-4 text-primary" />} label="Volume" value={fmtVol(s.volume)} />
-            <StatCard icon={<Building2 className="h-4 w-4 text-muted-foreground" />} label="Market Cap" value={fmtCap(s.market_cap)} />
+            <StatCard icon={<Building2 className="h-4 w-4 text-muted-foreground" />} label="Market Cap" value={fmtCap(s.market_cap, ccy)} />
             <StatCard icon={<TrendingUp className="h-4 w-4 text-emerald-500" />} label="Div Yield" value={s.dividend_yield != null ? `${fmt(s.dividend_yield)}%` : "—"} />
           </div>
 
@@ -641,7 +657,7 @@ const StockDetailPage = () => {
             <div className="rounded-[18px] border border-border bg-card p-4 shadow-[0_6px_18px_hsl(var(--foreground)/0.05)] md:rounded-xl md:shadow-none">
               <p className="mb-3 text-sm font-bold text-foreground md:text-sm md:font-semibold">52-Week Range</p>
               <div className="flex items-center gap-2.5">
-                <span className="w-16 text-right text-[11px] tabular-nums text-muted-foreground md:w-20 md:text-xs">KSh {fmt(s.year_low!)}</span>
+                <span className="w-16 text-right text-[11px] tabular-nums text-muted-foreground md:w-20 md:text-xs">{ccy} {fmt(s.year_low!)}</span>
                 <div className="relative h-2 flex-1 rounded-full bg-muted md:h-3">
                   <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-destructive via-yellow-500 to-emerald-500 rounded-full" style={{ width: "100%" }} />
                   <div
@@ -649,16 +665,16 @@ const StockDetailPage = () => {
                     style={{ left: `${Math.min(Math.max(pricePos, 0), 100)}%`, transform: "translate(-50%, -50%)" }}
                   />
                 </div>
-                <span className="w-16 text-[11px] tabular-nums text-muted-foreground md:w-20 md:text-xs">KSh {fmt(s.year_high!)}</span>
+                <span className="w-16 text-[11px] tabular-nums text-muted-foreground md:w-20 md:text-xs">{ccy} {fmt(s.year_high!)}</span>
               </div>
-              <p className="mt-3 text-center text-xs text-muted-foreground md:mt-2">Current: KSh {fmt(s.price)} · <strong className="text-foreground">{fmt(((s.price - s.year_low!) / s.year_low!) * 100, 1)}%</strong> above the 52-week low</p>
+              <p className="mt-3 text-center text-xs text-muted-foreground md:mt-2">Current: {ccy} {fmt(s.price)} · <strong className="text-foreground">{fmt(((s.price - s.year_low!) / s.year_low!) * 100, 1)}%</strong> above the 52-week low</p>
             </div>
           )}
 
           {yearRange && (
             <aside className="relative overflow-hidden rounded-[18px] border border-border bg-card px-4 py-3 pr-24 md:rounded-xl md:pr-32" aria-label="52-week range context">
               <p className="text-sm font-semibold text-foreground">Kora’s range note</p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">At KSh {fmt(s.price)}, {s.symbol} is {fmt(((s.price - s.year_low!) / s.year_low!) * 100, 1)}% above its 52-week low. This is price context, not a prediction.</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">At {ccy} {fmt(s.price)}, {displayTicker} is {fmt(((s.price - s.year_low!) / s.year_low!) * 100, 1)}% above its 52-week low. This is price context, not a prediction.</p>
               <KoraIllustration pose="insight" className="absolute bottom-0 right-0 h-24 w-28 md:h-28 md:w-36" />
             </aside>
           )}
@@ -667,7 +683,7 @@ const StockDetailPage = () => {
 
           <StockAboutCard
             companyName={s.name}
-            symbol={s.symbol}
+            symbol={displayTicker}
             sector={s.sector}
             summary={s.company_summary}
             officialWebsite={s.official_website}
@@ -683,16 +699,16 @@ const StockDetailPage = () => {
               <DollarSign className="h-4 w-4 text-emerald-500" /> Key Financial Metrics
             </h3>
             <div className="divide-y divide-border">
-              <FinRow label="Current Price" value={`KSh ${fmt(s.price)}`} />
-              <FinRow label="Previous Close" value={s.previous_price != null ? `KSh ${fmt(s.previous_price)}` : "—"} />
-              <FinRow label="Day Change" value={`${s.day_change > 0 ? "+" : ""}KSh ${fmt(s.day_change)}`} color={isUp ? "text-emerald-500" : isDown ? "text-destructive" : undefined} />
+              <FinRow label="Current Price" value={`${ccy} ${fmt(s.price)}`} />
+              <FinRow label="Previous Close" value={s.previous_price != null ? `${ccy} ${fmt(s.previous_price)}` : "—"} />
+              <FinRow label="Day Change" value={`${s.day_change > 0 ? "+" : ""}${ccy} ${fmt(s.day_change)}`} color={isUp ? "text-emerald-500" : isDown ? "text-destructive" : undefined} />
               <FinRow label="Day Change %" value={`${s.day_change_percent > 0 ? "+" : ""}${fmt(s.day_change_percent)}%`} color={isUp ? "text-emerald-500" : isDown ? "text-destructive" : undefined} />
               <FinRow label="Volume" value={fmtVol(s.volume)} />
-              <FinRow label="Market Capitalization" value={fmtCap(s.market_cap)} />
+              <FinRow label="Market Capitalization" value={fmtCap(s.market_cap, ccy)} />
               <FinRow label="P/E Ratio" value={s.pe_ratio != null ? fmt(s.pe_ratio) : "—"} />
               <FinRow label="Dividend Yield" value={s.dividend_yield != null ? `${fmt(s.dividend_yield)}%` : "—"} />
-              <FinRow label="52-Week High" value={s.year_high != null ? `KSh ${fmt(s.year_high)}` : "—"} />
-              <FinRow label="52-Week Low" value={s.year_low != null ? `KSh ${fmt(s.year_low)}` : "—"} />
+              <FinRow label="52-Week High" value={s.year_high != null ? `${ccy} ${fmt(s.year_high)}` : "—"} />
+              <FinRow label="52-Week Low" value={s.year_low != null ? `${ccy} ${fmt(s.year_low)}` : "—"} />
             </div>
           </div>
 
@@ -705,8 +721,8 @@ const StockDetailPage = () => {
             <div className="divide-y divide-border">
               <FinRow label="Company" value={s.name} />
               <FinRow label="Sector" value={s.sector} />
-              <FinRow label="Exchange" value="Nairobi Securities Exchange (NSE)" />
-              <FinRow label="Currency" value="Kenyan Shilling (KSh)" />
+              <FinRow label="Exchange" value={exLabel} />
+              <FinRow label="Currency" value={ccyLabel} />
             </div>
           </div>
         </TabsContent>
@@ -716,11 +732,11 @@ const StockDetailPage = () => {
           <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
             <h3 className="text-sm font-semibold text-foreground mb-4">Trading Statistics</h3>
             <div className="divide-y divide-border">
-              <FinRow label="Current Price" value={`KSh ${fmt(s.price)}`} />
-              <FinRow label="Day Range" value={s.day_low != null && s.day_high != null ? `KSh ${fmt(s.day_low)} – KSh ${fmt(s.day_high)}` : "—"} />
-              <FinRow label="52-Week Range" value={yearRange ? `KSh ${fmt(s.year_low!)} – KSh ${fmt(s.year_high!)}` : "—"} />
+              <FinRow label="Current Price" value={`${ccy} ${fmt(s.price)}`} />
+              <FinRow label="Day Range" value={s.day_low != null && s.day_high != null ? `${ccy} ${fmt(s.day_low)} – ${ccy} ${fmt(s.day_high)}` : "—"} />
+              <FinRow label="52-Week Range" value={yearRange ? `${ccy} ${fmt(s.year_low!)} – ${ccy} ${fmt(s.year_high!)}` : "—"} />
               <FinRow label="Volume" value={s.volume.toLocaleString()} />
-              <FinRow label="Market Cap" value={fmtCap(s.market_cap)} />
+              <FinRow label="Market Cap" value={fmtCap(s.market_cap, ccy)} />
             </div>
           </div>
 
@@ -731,7 +747,7 @@ const StockDetailPage = () => {
               <FinRow label="Dividend Yield (TTM)" value={s.dividend_yield != null ? `${fmt(s.dividend_yield)}%` : "N/A"} />
               <FinRow label="Price-to-52W-High" value={s.year_high != null ? `${fmt((s.price / s.year_high) * 100)}%` : "N/A"} />
               <FinRow label="Price-to-52W-Low" value={s.year_low != null ? `${fmt((s.price / s.year_low) * 100)}%` : "N/A"} />
-              <FinRow label="Book Value per Share" value={referenceMetrics?.book_value_per_share != null ? `KSh ${fmt(referenceMetrics.book_value_per_share)}` : "—"} />
+              <FinRow label="Book Value per Share" value={referenceMetrics?.book_value_per_share != null ? `${ccy} ${fmt(referenceMetrics.book_value_per_share)}` : "—"} />
               <FinRow label="Price-to-Book" value={referenceMetrics?.book_value_per_share ? `${fmt(s.price / referenceMetrics.book_value_per_share)}x` : "—"} />
               <FinRow label="Return on Equity" value={referenceMetrics?.roe != null ? `${fmt(referenceMetrics.roe)}%` : "—"} />
               <FinRow label="Net Margin" value={referenceMetrics?.net_margin != null ? `${fmt(referenceMetrics.net_margin)}%` : "—"} />
@@ -744,13 +760,13 @@ const StockDetailPage = () => {
             <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
               <h3 className="text-sm font-semibold text-foreground mb-4">Historical Performance ({range})</h3>
               <div className="divide-y divide-border">
-                <FinRow label="Period Start Price" value={filteredHistory.length > 0 ? `KSh ${fmt(filteredHistory[0].price)}` : "—"} />
-                <FinRow label="Period End Price" value={filteredHistory.length > 0 ? `KSh ${fmt(filteredHistory[filteredHistory.length - 1].price)}` : "—"} />
-                <FinRow label="Period Change" value={`${priceStats.change > 0 ? "+" : ""}KSh ${fmt(priceStats.change)}`} color={priceStats.change >= 0 ? "text-emerald-500" : "text-destructive"} />
+                <FinRow label="Period Start Price" value={filteredHistory.length > 0 ? `${ccy} ${fmt(filteredHistory[0].price)}` : "—"} />
+                <FinRow label="Period End Price" value={filteredHistory.length > 0 ? `${ccy} ${fmt(filteredHistory[filteredHistory.length - 1].price)}` : "—"} />
+                <FinRow label="Period Change" value={`${priceStats.change > 0 ? "+" : ""}${ccy} ${fmt(priceStats.change)}`} color={priceStats.change >= 0 ? "text-emerald-500" : "text-destructive"} />
                 <FinRow label="Period Change %" value={`${priceStats.changePct > 0 ? "+" : ""}${fmt(priceStats.changePct)}%`} color={priceStats.changePct >= 0 ? "text-emerald-500" : "text-destructive"} />
-                <FinRow label="Period High" value={`KSh ${fmt(priceStats.high)}`} />
-                <FinRow label="Period Low" value={`KSh ${fmt(priceStats.low)}`} />
-                <FinRow label="Period Average" value={`KSh ${fmt(priceStats.avg)}`} />
+                <FinRow label="Period High" value={`${ccy} ${fmt(priceStats.high)}`} />
+                <FinRow label="Period Low" value={`${ccy} ${fmt(priceStats.low)}`} />
+                <FinRow label="Period Average" value={`${ccy} ${fmt(priceStats.avg)}`} />
               </div>
             </div>
           )}
@@ -801,7 +817,7 @@ const StockDetailPage = () => {
                   <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
                     <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
                       <th className="text-left px-4 py-2.5 font-semibold">Date</th>
-                      <th className="text-right px-4 py-2.5 font-semibold">Price (KSh)</th>
+                      <th className="text-right px-4 py-2.5 font-semibold">Price ({ccy})</th>
                       <th className="text-right px-4 py-2.5 font-semibold">Change</th>
                       <th className="text-right px-4 py-2.5 font-semibold">Change %</th>
                     </tr>

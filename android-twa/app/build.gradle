@@ -1,0 +1,73 @@
+plugins {
+    id 'com.android.application'
+}
+
+def keystorePropsFile = rootProject.file("keystore/keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+
+def resolvedStoreFile = System.getenv("KFF_KEYSTORE_PATH") ?: keystoreProps['storeFile']
+def resolvedStorePassword = System.getenv("KFF_KEYSTORE_PASSWORD") ?: keystoreProps['storePassword']
+def resolvedKeyAlias = System.getenv("KFF_KEY_ALIAS") ?: keystoreProps['keyAlias'] ?: "kff-release"
+def resolvedKeyPassword = System.getenv("KFF_KEY_PASSWORD") ?: keystoreProps['keyPassword'] ?: resolvedStorePassword
+
+android {
+    namespace 'com.kenyafundfinder.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.kenyafundfinder.app"
+        minSdk 24
+        targetSdk 35
+        versionCode 120
+        versionName "1.2.0"
+    }
+
+    signingConfigs {
+        release {
+            if (resolvedStoreFile) {
+                storeFile file(resolvedStoreFile)
+                storeType(System.getenv("KFF_KEYSTORE_TYPE") ?: keystoreProps['storeType'] ?: "PKCS12")
+                storePassword resolvedStorePassword
+                keyAlias resolvedKeyAlias
+                keyPassword resolvedKeyPassword
+                enableV1Signing true
+                enableV2Signing true
+                enableV3Signing true
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources false
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.allTasks.any { it.name.toLowerCase().contains("release") }) {
+        if (!resolvedStoreFile || !file(resolvedStoreFile).exists() || !resolvedStorePassword) {
+            throw new GradleException(
+                "[FAIL-CLOSED] Release signing keystore is missing! " +
+                "Provide android-twa/keystore/keystore.properties or KFF_KEYSTORE_PATH / KFF_KEYSTORE_PASSWORD " +
+                "so the APK matches SHA-256 F5:A4:80:E5:1E:D3:AB:BE:74:86:AC:37:0F:2F:80:03:80:06:2B:C3:52:6E:58:22:5A:EA:9B:33:E7:03:91:08."
+            )
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+}

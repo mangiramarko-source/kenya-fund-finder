@@ -874,21 +874,25 @@ export async function fetchStockLinkedNews(limit: number = 40): Promise<NewsFrom
   }
 }
 
-export async function fetchPublicStocks(): Promise<PublicStock[]> {
+export async function fetchPublicStocks(exchange = "NSE"): Promise<PublicStock[]> {
   try {
     const { data } = await fetchPublicData<any>("stocks", {
       select: PUBLIC_STOCK_COLUMNS,
       order: "sort_order.asc",
+      filters: { exchange },
       limit: 100,
     });
 
-    return ((data as any[]) || []).map(normalizePublicStock);
+    return ((data as any[]) || [])
+      .filter((s) => (s.exchange || "NSE").toUpperCase() === exchange.toUpperCase() && (exchange !== "NSE" || !/^(USE|DSE|RSE)-/i.test(String(s.symbol || ""))))
+      .map(normalizePublicStock);
   } catch (err) {
     console.warn("fetchPublicStocks gateway fetch failed, trying direct table fallback", err);
     try {
       const { data, error } = await supabase
         .from("stocks")
         .select(PUBLIC_STOCK_COLUMNS.join(", "))
+        .eq("exchange" as any, exchange)
         .order("sort_order");
 
       if (error) throw error;

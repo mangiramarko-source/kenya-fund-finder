@@ -1,4 +1,4 @@
-export type QuoteSource = "rapidapi" | "nse";
+export type QuoteSource = "rapidapi" | "nse" | "mansa";
 export type StockQuote = {
   price: number;
   previousPrice: number;
@@ -10,6 +10,11 @@ export type StockQuote = {
   // Provider/cache update time, never an exchange trade timestamp.
   providerUpdatedAt: string | null;
   quoteSource: QuoteSource | null;
+  marketCap?: number | null;
+  peRatio?: number | null;
+  dividendYield?: number | null;
+  dayHigh?: number | null;
+  dayLow?: number | null;
 };
 
 type RapidApiQuote = StockQuote & { isin: string | null };

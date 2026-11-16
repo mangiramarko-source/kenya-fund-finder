@@ -18,7 +18,10 @@ import {
   FileText,
   Lock,
   ExternalLink,
+  Trash2,
+  Sparkles,
 } from "lucide-react";
+import { useAndroidBackClose } from "@/hooks/useAndroidBackClose";
 
 export const KFF_OPEN_LEGAL_SHEET_EVENT = "kff_open_legal_sheet";
 
@@ -61,6 +64,7 @@ export default function MobileLegalSheet({
   }, []);
 
   const close = () => handleOpenChange(false);
+  useAndroidBackClose(isOpen, close, "mobile-legal-sheet");
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
@@ -102,29 +106,29 @@ export default function MobileLegalSheet({
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3.5">
-          {/* Card 1: Not Investment Advice */}
+          {/* Card 1: Not Investment Advice & Non-Lender Declaration */}
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3.5">
             <div className="flex items-center gap-2 mb-1.5">
               <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
               <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">
-                General Information Only
+                General Information Only · Non-Lender &amp; Non-Broker
               </h4>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Kenya Fund Finder provides market intelligence, data tracking, and comparison tools for educational and informational purposes only. We are not a fund manager, broker-dealer, investment advisor, or bank. We do not hold client money or execute trades. Nothing on this platform constitutes personalized financial, tax, or investment advice.
+              Kenya Fund Finder provides read-only market intelligence, data tracking, and comparison tools for educational and informational purposes only. We do <strong>not</strong> offer personal loans, credit facilities, banking, or brokerage services, and we do not hold client money or execute trades. Nothing on this platform constitutes personalized financial, tax, or investment advice.
             </p>
           </div>
 
-          {/* Card 2: CMA Regulation */}
+          {/* Card 2: Multi-Regulator Coverage */}
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3.5">
             <div className="flex items-center gap-2 mb-1.5">
               <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">
-                CMA-Regulated Unit Trusts
+                CMA-Regulated Unit Trusts, NSE, CBK &amp; SASRA Data
               </h4>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              All Collective Investment Schemes (Unit Trusts) profiled on this platform are registered and regulated by the Capital Markets Authority (CMA) of Kenya under the Capital Markets Act (Cap 485A). Listing or comparison does not imply an endorsement or recommendation by the CMA or Kenya Fund Finder.
+              Collective Investment Schemes (Unit Trusts &amp; MMFs) profiled on this platform are regulated by the Capital Markets Authority (CMA) of Kenya; listed equities trade on the Nairobi Securities Exchange (NSE); Treasury Bills/Bonds and commercial banks are regulated by the Central Bank of Kenya (CBK); and DT-SACCOs are regulated by SASRA. Listing or comparison does not imply an endorsement by any regulator or Kenya Fund Finder.
             </p>
           </div>
 
@@ -133,24 +137,24 @@ export default function MobileLegalSheet({
             <div className="flex items-center gap-2 mb-1.5">
               <Percent className="h-4 w-4 text-blue-500 shrink-0" />
               <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">
-                Gross Yields & 15% Withholding Tax
+                Gross Yields &amp; 15% Withholding Tax
               </h4>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Annualized yields (e.g. Money Market Funds) represent gross annual effective yields before deduction of 15% statutory Withholding Tax (WHT) applicable to Kenyan individual residents. Past performance is not indicative of future returns. Unit prices and daily yields fluctuate with prevailing macroeconomic and interest rate conditions.
+              Annualized yields (e.g. Money Market Funds and T-Bills) represent gross annual effective yields before deduction of 15% statutory Withholding Tax (WHT) applicable to Kenyan individual residents unless labeled otherwise. Past performance is not indicative of future returns.
             </p>
           </div>
 
-          {/* Card 4: Independent Due Diligence */}
+          {/* Card 4: AI Assistant & Independent Due Diligence */}
           <div className="rounded-2xl border border-border bg-card/60 p-3.5">
             <div className="flex items-center gap-2 mb-1.5">
-              <FileCheck2 className="h-4 w-4 text-purple-500 shrink-0" />
+              <Sparkles className="h-4 w-4 text-purple-500 shrink-0" />
               <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">
-                Verification & Due Diligence
+                AI Lab &amp; Independent Due Diligence
               </h4>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Please review the fund's official Information Memorandum / Fact Sheet and verify all details with the licensed fund manager or an independent qualified financial advisor before committing capital.
+              AI Lab explanations and calculator projections are automated educational scenarios that may contain errors. Always review the official Information Memorandum / Fact Sheet and verify all details with the licensed institution or an independent qualified financial advisor before committing capital.
             </p>
           </div>
 
@@ -176,6 +180,15 @@ export default function MobileLegalSheet({
               >
                 <Lock className="h-4 w-4 text-slate-400 shrink-0" />
                 <span className="flex-1 text-xs font-semibold text-foreground">Privacy Policy</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+              </Link>
+              <Link
+                to="/delete-account"
+                onClick={close}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-muted/60 transition-colors"
+              >
+                <Trash2 className="h-4 w-4 text-destructive shrink-0" />
+                <span className="flex-1 text-xs font-semibold text-foreground">Account &amp; Data Deletion</span>
                 <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
               </Link>
               <Link

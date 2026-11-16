@@ -154,6 +154,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
         .from("stocks")
         .select("id, symbol, name, price, day_change_percent")
         .eq("is_active", true)
+        .eq("exchange" as any, "NSE")
         .order("symbol")
         .then(({ data }) => setStocks((data || []) as StockRow[]));
     }

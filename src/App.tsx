@@ -70,6 +70,8 @@ const AdminLoginPage = lazyWithRetry(() => import("./pages/AdminLoginPage"), "Ad
 const AdminPage = lazyWithRetry(() => import("./pages/AdminPage"), "AdminPage");
 const ProfilePage = lazyWithRetry(() => import("./pages/ProfilePage"), "ProfilePage");
 const DeleteAccountPage = lazyWithRetry(() => import("./pages/DeleteAccountPage"), "DeleteAccountPage");
+const PrivacyPolicyPage = lazyWithRetry(() => import("./pages/PrivacyPolicyPage"), "PrivacyPolicyPage");
+const TermsOfUsePage = lazyWithRetry(() => import("./pages/TermsOfUsePage"), "TermsOfUsePage");
 const SitePage = lazyWithRetry(() => import("./pages/SitePage"), "SitePage");
 const RatesPage = lazyWithRetry(() => import("./pages/RatesPage"), "RatesPage");
 const CommoditiesPage = lazyWithRetry(() => import("./pages/CommoditiesPage"), "CommoditiesPage");
@@ -170,10 +172,12 @@ const App = () => (
                     <Route path="/news/:id" element={<NewsArticlePage />} />
                     <Route path="/learn" element={<LearnPage />} />
                     <Route path="/learn/how-to-invest-in-money-market-funds-kenya" element={<MmfGuidePage />} />
-                    <Route path="/privacy" element={<SitePage />} />
+                    <Route path="/privacy" element={<PrivacyPolicyPage />} />
                     <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
-                    <Route path="/terms" element={<SitePage />} />
+                    <Route path="/page/privacy" element={<Navigate to="/privacy" replace />} />
+                    <Route path="/terms" element={<TermsOfUsePage />} />
                     <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
+                    <Route path="/page/terms" element={<Navigate to="/terms" replace />} />
                     <Route path="/contact" element={<Navigate to="/page/contact" replace />} />
                     <Route path="/about" element={<Navigate to="/page/about" replace />} />
                     <Route path="/auth" element={<AuthPage />} />

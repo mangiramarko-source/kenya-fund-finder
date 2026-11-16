@@ -37,6 +37,9 @@ import { useToast } from "@/hooks/use-toast";
 interface StockRow {
   id: string;
   symbol: string;
+  exchange?: string | null;
+  exchange_ticker?: string | null;
+  currency?: string | null;
   name: string;
   sector: string;
   price: number;
@@ -77,10 +80,13 @@ interface SyncLog {
 interface StockInspectionRow {
   id: string;
   symbol: string;
+  exchange?: string;
+  exchange_ticker?: string;
+  currency?: string;
   name: string;
   is_active: boolean;
   status: "unchanged" | "would_update" | "drift_blocked" | "cached" | "missing" | "unpriced_or_new";
-  quote_source: "rapidapi" | "nse" | "cache" | null;
+  quote_source: "rapidapi" | "nse" | "mansa" | "cache" | null;
   source_price: number | null;
   source_previous_price: number | null;
   source_day_change: number | null;
@@ -178,6 +184,9 @@ function providerBadge(source: StockInspectionRow["quote_source"]) {
   if (source === "nse") {
     return <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20">NSE XHR</Badge>;
   }
+  if (source === "mansa") {
+    return <Badge variant="outline" className="text-violet-600 border-violet-200 bg-violet-50/50 dark:bg-violet-950/20">Mansa API</Badge>;
+  }
   if (source === "cache") {
     return <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50/50 dark:bg-amber-950/20">DB Cache</Badge>;
   }
@@ -192,6 +201,7 @@ const AdminStocksInspector = () => {
   const [liveStatus, setLiveStatus] = useState<LiveStatus | null>(null);
   const [logs, setLogs] = useState<SyncLog[]>([]);
   const [search, setSearch] = useState("");
+  const [exchangeFilter, setExchangeFilter] = useState<"ALL" | "NSE" | "USE" | "DSE" | "RSE">("ALL");
   const [onlyStale, setOnlyStale] = useState(false);
   const [onlyInactive, setOnlyInactive] = useState(false);
   const [allowHighDrift, setAllowHighDrift] = useState(false);
@@ -205,7 +215,7 @@ const AdminStocksInspector = () => {
     const [stocksRes, statusRes, logRes] = await Promise.all([
       supabase
         .from("stocks")
-        .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, pe_ratio, year_high, year_low, is_active, updated_at, provider_updated_at, quote_source")
+        .select("id, symbol, exchange, exchange_ticker, currency, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, pe_ratio, year_high, year_low, is_active, updated_at, provider_updated_at, quote_source")
         .order("symbol", { ascending: true }),
       supabase
         .from("section_live_status")
@@ -257,6 +267,8 @@ const AdminStocksInspector = () => {
     const { data, error } = await supabase.functions.invoke("fetch-market-data", {
       body: {
         fetch_type: "stocks",
+        force_mansa: true,
+        ...(exchangeFilter !== "ALL" ? { exchanges: [exchangeFilter] } : {}),
         ...(mode === "dry" ? { dry_run: true } : {}),
         ...(allowHighDrift ? { allow_high_drift: true } : {}),
       },
@@ -309,12 +321,13 @@ const AdminStocksInspector = () => {
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     return enriched.filter((s) => {
+      if (exchangeFilter !== "ALL" && (s.exchange || "NSE").toUpperCase() !== exchangeFilter) return false;
       if (onlyStale && (!s.is_active || (s.staleDays ?? 99) <= 1)) return false;
       if (onlyInactive && s.is_active) return false;
       if (!q) return true;
       return s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.sector.toLowerCase().includes(q);
     });
-  }, [enriched, search, onlyStale, onlyInactive]);
+  }, [enriched, exchangeFilter, search, onlyStale, onlyInactive]);
 
   const activeCount = enriched.filter((s) => s.is_active).length;
   const inactiveCount = enriched.length - activeCount;
@@ -545,7 +558,10 @@ const AdminStocksInspector = () => {
                   {inspectionSummary.rows.map((r) => (
                     <tr key={r.symbol} className="border-t hover:bg-muted/30">
                       <td className="py-1.5 pr-3">
-                        <div className="font-semibold">{r.symbol}</div>
+                        <div className="font-semibold flex items-center gap-1.5">
+                          <span>{r.symbol}</span>
+                          <Badge variant="outline" className="text-[10px] px-1 py-0">{r.exchange || "NSE"}</Badge>
+                        </div>
                         <div className="text-xs text-muted-foreground truncate max-w-[180px]">{r.name}</div>
                       </td>
                       <td className="pr-3">{providerBadge(r.quote_source)}</td>
@@ -553,10 +569,10 @@ const AdminStocksInspector = () => {
                         <Badge className={STATUS_STYLES[r.status]}>{r.status.replace(/_/g, " ")}</Badge>
                       </td>
                       <td className="pr-3 text-right tabular-nums font-mono">
-                        {r.source_price != null ? `KES ${r.source_price.toFixed(2)}` : "—"}
+                        {r.source_price != null ? `${r.currency || "KES"} ${r.source_price.toFixed(2)}` : "—"}
                       </td>
                       <td className="pr-3 text-right tabular-nums font-mono text-muted-foreground">
-                        {r.db_price != null ? `KES ${r.db_price.toFixed(2)}` : "—"}
+                        {r.db_price != null ? `${r.currency || "KES"} ${r.db_price.toFixed(2)}` : "—"}
                       </td>
                       <td className="pr-3 text-right tabular-nums">
                         {r.drift_pct != null ? (
@@ -667,6 +683,22 @@ const AdminStocksInspector = () => {
             <p className="text-xs text-muted-foreground mt-0.5">Toggle active state or inspect individual price freshness</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center rounded-md border p-0.5 bg-muted/40">
+              {(["ALL", "NSE", "USE", "DSE", "RSE"] as const).map((ex) => (
+                <button
+                  key={ex}
+                  type="button"
+                  onClick={() => setExchangeFilter(ex)}
+                  className={`px-2 py-1 text-xs font-semibold rounded transition-colors ${
+                    exchangeFilter === ex
+                      ? "bg-background text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {ex}
+                </button>
+              ))}
+            </div>
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -720,12 +752,13 @@ const AdminStocksInspector = () => {
                         <Link to={`/stocks/${s.symbol}`} className="hover:underline flex items-center gap-1" target="_blank">
                           {s.symbol} <ExternalLink className="h-3 w-3 text-muted-foreground" />
                         </Link>
+                        <Badge variant="outline" className="text-[10px] px-1 py-0">{s.exchange || "NSE"}</Badge>
                       </div>
                       <div className="text-xs text-muted-foreground truncate max-w-[200px]">{s.name}</div>
                     </td>
                     <td className="pr-3 text-xs text-muted-foreground">{s.sector}</td>
                     <td className="pr-3 text-right tabular-nums font-mono font-medium">
-                      KES {Number(s.price).toFixed(2)}
+                      {s.currency || "KES"} {Number(s.price).toFixed(2)}
                     </td>
                     <td className="pr-3 text-right tabular-nums text-xs">
                       <span className={s.day_change > 0 ? "text-emerald-600" : s.day_change < 0 ? "text-destructive" : "text-muted-foreground"}>

@@ -1,0 +1,69 @@
+name: Build Signed Samsung Galaxy Store TWA APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+
+      - name: Fail-Closed Keystore Decode & SHA-256 Verification
+        env:
+          KFF_KEYSTORE_BASE64: ${{ secrets.KFF_KEYSTORE_BASE64 }}
+          KFF_KEYSTORE_PASSWORD: ${{ secrets.KFF_KEYSTORE_PASSWORD }}
+          EXPECTED_SHA256: "F5:A4:80:E5:1E:D3:AB:BE:74:86:AC:37:0F:2F:80:03:80:06:2B:C3:52:6E:58:22:5A:EA:9B:33:E7:03:91:08"
+        run: |
+          if [ -z "$KFF_KEYSTORE_BASE64" ] || [ -z "$KFF_KEYSTORE_PASSWORD" ]; then
+            echo "❌ [FAIL-CLOSED] Missing KFF_KEYSTORE_BASE64 or KFF_KEYSTORE_PASSWORD GitHub Secret."
+            echo "Refusing to build an unsigned or mismatched APK."
+            exit 1
+          fi
+          mkdir -p android-twa/keystore
+          echo "$KFF_KEYSTORE_BASE64" | base64 --decode > android-twa/keystore/kff-release-key.p12
+          ACTUAL_SHA256=$(keytool -list -v -keystore android-twa/keystore/kff-release-key.p12 -storetype PKCS12 -storepass "$KFF_KEYSTORE_PASSWORD" -alias kff-release | grep -i "SHA256:" | awk '{print $2}')
+          if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "❌ [FAIL-CLOSED] Keystore SHA-256 ($ACTUAL_SHA256) does not match assetlinks.json ($EXPECTED_SHA256)!"
+            exit 1
+          fi
+          echo "✅ Verified keystore SHA-256 matches assetlinks.json: $ACTUAL_SHA256"
+
+      - name: Build Signed Release APK & AAB
+        working-directory: android-twa
+        env:
+          KFF_KEYSTORE_PATH: keystore/kff-release-key.p12
+          KFF_KEYSTORE_TYPE: PKCS12
+          KFF_KEYSTORE_PASSWORD: ${{ secrets.KFF_KEYSTORE_PASSWORD }}
+          KFF_KEY_ALIAS: kff-release
+          KFF_KEY_PASSWORD: ${{ secrets.KFF_KEYSTORE_PASSWORD }}
+        run: |
+          gradle assembleRelease bundleRelease --no-daemon
+
+      - name: Verify Signed APK Certificate with apksigner
+        run: |
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$APKSIGNER" verify --verbose --print-certs android-twa/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload Samsung Galaxy Store Release APK & AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: kenya-fund-finder-samsung-release
+          path: |
+            android-twa/app/build/outputs/apk/release/*.apk
+            android-twa/app/build/outputs/bundle/release/*.aab

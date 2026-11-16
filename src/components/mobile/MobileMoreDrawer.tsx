@@ -25,8 +25,10 @@ import {
   ShieldAlert,
   FileText,
   Lock,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAndroidBackClose } from "@/hooks/useAndroidBackClose";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { sanitizeAvatarUrl } from "@/lib/safeImageUpload";
 import { getStoredTheme, saveTheme } from "@/lib/themeStorage";
@@ -63,6 +65,7 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
   };
 
   const close = () => onOpenChange(false);
+  useAndroidBackClose(open, close, "mobile-more-drawer");
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
   const avatarUrl = sanitizeAvatarUrl(user?.user_metadata?.avatar_url);
@@ -301,6 +304,16 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
               >
                 <Lock className="h-4 w-4 text-slate-400 shrink-0" />
                 <span className="flex-1 text-sm font-semibold text-foreground">Privacy Policy</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+              </Link>
+
+              <Link
+                to="/delete-account"
+                onClick={close}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-muted/60 transition-colors"
+              >
+                <Trash2 className="h-4 w-4 text-destructive shrink-0" />
+                <span className="flex-1 text-sm font-semibold text-foreground">Account &amp; Data Deletion</span>
                 <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
               </Link>
             </div>

@@ -1,11 +1,14 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.kenyafundfinder.app",
       "sha256_cert_fingerprints": [
-        "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+        "F5:A4:80:E5:1E:D3:AB:BE:74:86:AC:37:0F:2F:80:03:80:06:2B:C3:52:6E:58:22:5A:EA:9B:33:E7:03:91:08"
       ]
     }
   }

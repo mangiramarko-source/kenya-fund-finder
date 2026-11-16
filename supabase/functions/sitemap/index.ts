@@ -32,11 +32,12 @@ Deno.serve(async () => {
     .select("slug, updated_at")
     .eq("is_published", true);
 
-  // Fetch active stocks
+  // Fetch active NSE stocks
   const { data: stocks } = await supabase
     .from("stocks")
     .select("symbol, updated_at")
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .eq("exchange", "NSE");
 
   // Fetch published news
   const { data: news } = await supabase

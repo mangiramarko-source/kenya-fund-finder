@@ -1,0 +1,70 @@
+{
+  "packageId": "com.kenyafundfinder.app",
+  "host": "kenyafundfinder.com",
+  "name": "Kenya Fund Finder",
+  "launcherName": "KFF",
+  "display": "standalone",
+  "themeColor": "#09090b",
+  "themeColorDark": "#09090b",
+  "navigationColor": "#09090b",
+  "navigationColorDark": "#09090b",
+  "navigationDividerColor": "#09090b",
+  "navigationDividerColorDark": "#09090b",
+  "backgroundColor": "#09090b",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://kenyafundfinder.com/icon-512.png",
+  "maskableIconUrl": "https://kenyafundfinder.com/icon-512-maskable.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./keystore/kff-release-key.p12",
+    "alias": "kff-release"
+  },
+  "appVersionName": "1.2.0",
+  "appVersionCode": 120,
+  "shortcuts": [
+    {
+      "name": "Money Market Funds",
+      "shortName": "MMFs",
+      "url": "https://kenyafundfinder.com/funds",
+      "chosenIconUrl": "https://kenyafundfinder.com/icon-192.png"
+    },
+    {
+      "name": "NSE Stocks",
+      "shortName": "Stocks",
+      "url": "https://kenyafundfinder.com/stocks",
+      "chosenIconUrl": "https://kenyafundfinder.com/icon-192.png"
+    },
+    {
+      "name": "T-Bills & Savings",
+      "shortName": "Savings",
+      "url": "https://kenyafundfinder.com/savings",
+      "chosenIconUrl": "https://kenyafundfinder.com/icon-192.png"
+    },
+    {
+      "name": "My Portfolio",
+      "shortName": "Portfolio",
+      "url": "https://kenyafundfinder.com/portfolio",
+      "chosenIconUrl": "https://kenyafundfinder.com/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://kenyafundfinder.com/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": false,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://kenyafundfinder.com/",
+  "minSdkVersion": 24,
+  "orientation": "portrait-primary",
+  "fingerprints": [
+    {
+      "name": "kff-release",
+      "value": "F5:A4:80:E5:1E:D3:AB:BE:74:86:AC:37:0F:2F:80:03:80:06:2B:C3:52:6E:58:22:5A:EA:9B:33:E7:03:91:08"
+    }
+  ]
+}

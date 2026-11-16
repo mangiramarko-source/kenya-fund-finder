@@ -360,15 +360,17 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
         try {
           const { data } = await fetchPublicData<any>("stocks", {
             select: [
-              "id", "symbol", "name", "sector", "price", "previous_price",
+              "id", "symbol", "exchange", "exchange_ticker", "currency", "country_code",
+              "name", "sector", "price", "previous_price",
               "day_change", "day_change_percent", "volume", "market_cap",
               "year_high", "year_low", "pe_ratio", "dividend_yield", "logo_url", "updated_at",
             ],
+            filters: { exchange: "NSE" },
             order: "sort_order.asc",
             limit: 200,
           });
           if (Array.isArray(data) && data.length > 0) {
-            fetchedData = data;
+            fetchedData = data.filter((s: any) => (s.exchange || "NSE").toUpperCase() === "NSE" && !/^(USE|DSE|RSE)-/i.test(String(s.symbol || "")));
           }
         } catch (gwErr) {
           console.warn("fetchPublicData gateway failed, trying direct table fallback:", gwErr);
@@ -380,6 +382,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
             const { data, error } = await supabase
               .from("stocks")
               .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, logo_url, updated_at")
+              .eq("exchange" as any, "NSE")
               .order("sort_order", { ascending: true })
               .limit(200);
             if (!error && Array.isArray(data) && data.length > 0) {

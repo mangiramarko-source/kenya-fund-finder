@@ -23,8 +23,8 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 const DEFAULT_DISCLAIMER = [
-  "Important Disclaimer: This platform provides information only and does not constitute investment advice. Past performance is not indicative of future results. All investments carry risk. Please consult with a qualified financial advisor before making any investment decisions.",
-  "All funds listed are regulated by the Capital Markets Authority (CMA) of Kenya. Yields shown are gross annual effective yields before 15% withholding tax. Data may not reflect real-time values.",
+  "Important Disclaimer: This platform provides read-only market information and educational comparison tools only and does not constitute investment, financial, or tax advice. Kenya Fund Finder does not offer personal loans, credit facilities, banking, or brokerage services. Past performance is not indicative of future results. All investments carry risk. Please consult with a qualified licensed financial advisor before making any investment decisions.",
+  "Unit trust funds listed are regulated by the Capital Markets Authority (CMA) of Kenya, listed equities trade on the Nairobi Securities Exchange (NSE), government securities and commercial banks are regulated by the Central Bank of Kenya (CBK), and DT-SACCOs are regulated by SASRA. Yields shown are gross annual effective yields before 15% withholding tax unless stated otherwise. Data may not reflect real-time executable values.",
 ];
 
 const Footer = forwardRef<HTMLElement>((_, ref) => {
@@ -115,6 +115,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
               <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms of Use</Link></li>
+              <li><Link to="/delete-account" className="hover:text-foreground transition-colors">Account &amp; Data Deletion</Link></li>
               <li><Link to="/page/editorial-standards" className="hover:text-foreground transition-colors">Editorial standards</Link></li>
               <li><Link to="/page/market-data-methodology" className="hover:text-foreground transition-colors">Data methodology</Link></li>
               <li><Link to="/page/source-policy" className="hover:text-foreground transition-colors">Sources</Link></li>

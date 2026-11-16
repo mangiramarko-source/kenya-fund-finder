@@ -82,3 +82,17 @@ Sentry.init({
 installConsentScriptGuard();
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+// Register the Service Worker after initial load so /offline.html is precached
+// for TWA / PWA offline launches while keeping push notification support ready.
+if (
+  typeof window !== "undefined" &&
+  "serviceWorker" in navigator &&
+  (import.meta.env.PROD || window.location.hostname === "localhost")
+) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/kff-notifications-sw.js").catch(() => {
+      // Non-fatal in restricted browser environments
+    });
+  });
+}

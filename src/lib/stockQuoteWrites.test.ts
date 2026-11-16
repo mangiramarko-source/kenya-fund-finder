@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { persistStockQuote } from "../../supabase/functions/fetch-market-data/stock-writes";
+import { insertNewMansaStock, persistStockQuote } from "../../supabase/functions/fetch-market-data/stock-writes";
 import type { StockQuote } from "../../supabase/functions/fetch-market-data/stock-quotes";
+import type { MansaStockQuote } from "../../supabase/functions/fetch-market-data/mansa-stocks";
 
 const quote: StockQuote = {
   price: 37.85, previousPrice: 37.05, dayChange: 0.8, dayChangePct: 2.16, volume: 37145213,
@@ -83,5 +84,62 @@ describe("confirmed stock writes", () => {
     const ops = operations();
     await persistStockQuote("stock-id", { ...quote, volume: 0 }, range, ops, now);
     expect(ops.updateStock.mock.calls[0][1]).not.toHaveProperty("volume");
+  });
+
+  it("inserts a newly discovered regional Mansa stock and writes its initial history snapshot", async () => {
+    const ops = {
+      ...operations(),
+      insertStock: vi.fn().mockResolvedValue({ data: { id: "new-use-id" }, error: null }),
+    };
+    const mansaQuote: MansaStockQuote = {
+      symbol: "USE-AIRTEL_UGANDA",
+      exchange: "USE",
+      exchangeTicker: "AIRTEL_UGANDA",
+      name: "Airtel Uganda PLC",
+      sector: "Telecommunications",
+      currency: "UGX",
+      countryCode: "UG",
+      price: 95,
+      previousPrice: 95,
+      dayChange: 0,
+      dayChangePct: 0,
+      volume: 120000,
+      marketCap: 3800000000000,
+      peRatio: 12.4,
+      dividendYield: 5.2,
+      yearHigh: 100,
+      yearLow: 70,
+      dayHigh: 96,
+      dayLow: 94,
+      source: "primary",
+      asOfDate: "2026-11-16",
+      providerUpdatedAt: "2026-11-16T10:00:00.000Z",
+      quoteSource: "mansa",
+    };
+
+    const result = await insertNewMansaStock(mansaQuote, 1001, ops, now);
+    expect(result).toEqual({
+      stockId: "new-use-id",
+      stockWritten: true,
+      historyWritten: true,
+      errors: [],
+    });
+    expect(ops.insertStock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        symbol: "USE-AIRTEL_UGANDA",
+        exchange: "USE",
+        exchange_ticker: "AIRTEL_UGANDA",
+        currency: "UGX",
+        country_code: "UG",
+        sector: "Telecommunications",
+        quote_source: "mansa",
+        sort_order: 1001,
+      }),
+    );
+    expect(ops.upsertHistory).toHaveBeenCalledWith({
+      stock_id: "new-use-id",
+      price: 95,
+      snapshot_date: "2026-11-16",
+    });
   });
 });

@@ -35,3 +35,13 @@ posthog-self-driving-report.md
 __pycache__/
 *.py[cod]
 data_pipeline/venv/
+
+# Android TWA build & signing secrets
+android-twa/keystore/
+android-twa/.gradle/
+android-twa/build/
+android-twa/app/build/
+android-twa/local.properties
+*.jks
+*.p12
+*.keystore

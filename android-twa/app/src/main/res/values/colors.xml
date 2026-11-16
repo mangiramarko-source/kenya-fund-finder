@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#09090B</color>
+    <color name="colorPrimaryDark">#09090B</color>
+    <color name="navigationColor">#09090B</color>
+    <color name="navigationColorDark">#09090B</color>
+    <color name="navigationDividerColor">#09090B</color>
+    <color name="navigationDividerColorDark">#09090B</color>
+    <color name="backgroundColor">#09090B</color>
+</resources>

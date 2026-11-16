@@ -6,8 +6,16 @@ import {
   getSupabaseSecretKey,
 } from "../_shared/supabase-keys.ts";
 import { evaluateStockQuoteDrift, matchRapidApiStocks, parseRapidApiStockResponse, type QuoteSource, type StockQuote } from "./stock-quotes.ts";
-import { persistStockQuote, type StockWriteOperations } from "./stock-writes.ts";
+import { insertNewMansaStock, persistStockQuote, type StockWriteOperations } from "./stock-writes.ts";
 import { fetchNseSector, parseNseQuoteRows, parseNseSnapshotDate, summarizeNseFallback } from "./nse-fallback.ts";
+import {
+  EAST_AFRICAN_EXCHANGE_META,
+  EAST_AFRICAN_EXCHANGES,
+  fetchMansaExchangeStocks,
+  shouldSkipMansaExchangeRefresh,
+  type EastAfricanExchange,
+  type MansaStockQuote,
+} from "./mansa-stocks.ts";
 import {
   fetchSerrariAllFundsData,
   getVerifiedSourceGroups,
@@ -255,6 +263,11 @@ function normalizeText(value: string) {
 type StockCacheRow = {
   id: string;
   symbol: string;
+  exchange?: string | null;
+  exchange_ticker?: string | null;
+  currency?: string | null;
+  country_code?: string | null;
+  sector?: string | null;
   name?: string;
   is_active?: boolean;
   price: number;
@@ -273,6 +286,8 @@ type StockCacheRow = {
 
 type StockDataResult = {
   quotes: Map<string, StockQuote>;
+  mansaQuotes: Map<string, MansaStockQuote>;
+  fetchedMansaExchanges: Set<EastAfricanExchange>;
   source: "primary" | "secondary" | "cache" | "mixed";
   fallback: boolean;
   cacheTimestamp: string | null;
@@ -453,51 +468,153 @@ function getQuoteSource(quotes: Map<string, StockQuote>) {
   return "cache" as const;
 }
 
-async function getStockData(stockRows: StockCacheRow[]): Promise<StockDataResult> {
+async function getStockData(
+  stockRows: StockCacheRow[],
+  options: {
+    requestedExchanges: EastAfricanExchange[];
+    forceMansa: boolean;
+    includeMansaNseFallback: boolean;
+    dryRun: boolean;
+    nowMs: number;
+  },
+): Promise<StockDataResult> {
   const quotes = new Map<string, StockQuote>();
+  const mansaQuotes = new Map<string, MansaStockQuote>();
+  const fetchedMansaExchanges = new Set<EastAfricanExchange>();
   const notes: string[] = [];
   let fallbackDiagnostics: StockDataResult["fallbackDiagnostics"] = null;
   const cachedQuotes = buildCachedStockQuotes(stockRows);
   const cacheTimestamp = getLatestCacheTimestamp(stockRows);
-  const stockSymbols = stockRows
-    .map((row) => (row.symbol || "").toUpperCase())
-    .filter(Boolean);
 
-  const rapidApiKey = Deno.env.get("RAPIDAPI_KEY");
-  if (rapidApiKey) {
-    const primary = await fetchRapidApiStockQuotes(rapidApiKey, stockSymbols);
-    notes.push(primary.note);
-    primary.quotes.forEach((quote, symbol) => quotes.set(symbol, quote));
-  } else {
-    notes.push("Primary API key missing");
-  }
+  const requestedSet = new Set<EastAfricanExchange>(options.requestedExchanges);
+  const mansaApiKey = Deno.env.get("MANSA_API_KEY");
 
-  const missingAfterPrimary = stockSymbols.filter((symbol) => !quotes.has(symbol));
-  if (missingAfterPrimary.length > 0) {
-    const secondary = await fetchNseXhrStockQuotes();
-    notes.push(secondary.note);
-    fallbackDiagnostics = secondary.diagnostics;
+  // ── 3a. Kenyan NSE Stocks (RapidAPI primary, NSE XHR secondary, opt-in Mansa fallback) ──
+  if (requestedSet.has("NSE")) {
+    const nseSymbols = stockRows
+      .filter((row) => (row.exchange || "NSE").toUpperCase() === "NSE")
+      .map((row) => (row.symbol || "").toUpperCase())
+      .filter(Boolean);
 
-    for (const symbol of missingAfterPrimary) {
-      const quote = secondary.quotes.get(symbol);
-      if (quote) {
-        quotes.set(symbol, quote);
+    const rapidApiKey = Deno.env.get("RAPIDAPI_KEY");
+    if (rapidApiKey) {
+      const primary = await fetchRapidApiStockQuotes(rapidApiKey, nseSymbols);
+      notes.push(primary.note);
+      primary.quotes.forEach((quote, symbol) => quotes.set(symbol, quote));
+    } else {
+      notes.push("Primary API key missing");
+    }
+
+    const missingAfterPrimary = nseSymbols.filter((symbol) => !quotes.has(symbol));
+    if (missingAfterPrimary.length > 0) {
+      const secondary = await fetchNseXhrStockQuotes();
+      notes.push(secondary.note);
+      fallbackDiagnostics = secondary.diagnostics;
+
+      for (const symbol of missingAfterPrimary) {
+        const quote = secondary.quotes.get(symbol);
+        if (quote) {
+          quotes.set(symbol, quote);
+        }
       }
+    }
+
+    const missingAfterSecondary = nseSymbols.filter((symbol) => !quotes.has(symbol));
+    if (missingAfterSecondary.length > 0 && options.includeMansaNseFallback && mansaApiKey) {
+      try {
+        const mansaNse = await fetchMansaExchangeStocks(mansaApiKey, "NSE");
+        fetchedMansaExchanges.add("NSE");
+        let filled = 0;
+        for (const symbol of missingAfterSecondary) {
+          const mq = mansaNse.quotes.get(symbol);
+          if (mq) {
+            quotes.set(symbol, mq);
+            mansaQuotes.set(symbol, mq);
+            filled++;
+          }
+        }
+        notes.push(`Mansa NSE fallback: returned ${mansaNse.diagnostics.returned} rows, filled ${filled} missing NSE symbols`);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        notes.push(`Mansa NSE fallback failed: ${msg}`);
+      }
+    }
+
+    const stillMissingNse = nseSymbols.filter((symbol) => !quotes.has(symbol));
+    let nseCacheHits = 0;
+    for (const symbol of stillMissingNse) {
+      const cached = cachedQuotes.get(symbol);
+      if (!cached) continue;
+      quotes.set(symbol, cached);
+      nseCacheHits++;
+    }
+    if (nseCacheHits > 0) {
+      notes.push(`Cache supplied ${nseCacheHits} NSE stocks${cacheTimestamp ? ` from ${cacheTimestamp}` : ""}`);
     }
   }
 
-  const missingAfterSecondary = stockSymbols.filter((symbol) => !quotes.has(symbol));
-  let cacheHits = 0;
+  // ── 3b. Regional East African Exchanges (USE, DSE, RSE via Mansa API) ──
+  const regionalExchanges = options.requestedExchanges.filter(
+    (ex): ex is EastAfricanExchange => ex !== "NSE",
+  );
 
-  for (const symbol of missingAfterSecondary) {
-    const cached = cachedQuotes.get(symbol);
-    if (!cached) continue;
-    quotes.set(symbol, cached);
-    cacheHits++;
-  }
+  for (const exchange of regionalExchanges) {
+    const exchangeRows = stockRows.filter(
+      (row) => (row.exchange || "NSE").toUpperCase() === exchange,
+    );
+    const exchangeSymbols = exchangeRows
+      .map((row) => (row.symbol || "").toUpperCase())
+      .filter(Boolean);
 
-  if (cacheHits > 0) {
-    notes.push(`Cache supplied ${cacheHits} stocks${cacheTimestamp ? ` from ${cacheTimestamp}` : ""}`);
+    if (!mansaApiKey) {
+      notes.push(`Mansa ${exchange}: MANSA_API_KEY missing`);
+      for (const sym of exchangeSymbols) {
+        const cached = cachedQuotes.get(sym);
+        if (cached) quotes.set(sym, cached);
+      }
+      continue;
+    }
+
+    if (!options.forceMansa && !options.dryRun) {
+      const throttle = shouldSkipMansaExchangeRefresh(stockRows, exchange, options.nowMs, 90);
+      if (throttle.skip) {
+        let cachedCount = 0;
+        for (const sym of exchangeSymbols) {
+          const cached = cachedQuotes.get(sym);
+          if (cached) {
+            quotes.set(sym, cached);
+            cachedCount++;
+          }
+        }
+        notes.push(
+          `Mansa ${exchange}: skipped (synced ${throttle.ageMinutes}m ago < 90m quota guard), serving ${cachedCount} cached stocks`,
+        );
+        continue;
+      }
+    }
+
+    try {
+      const mansaRes = await fetchMansaExchangeStocks(mansaApiKey, exchange);
+      fetchedMansaExchanges.add(exchange);
+      mansaRes.quotes.forEach((mq, symbol) => {
+        quotes.set(symbol, mq);
+        mansaQuotes.set(symbol, mq);
+      });
+      notes.push(
+        `Mansa ${exchange}: returned ${mansaRes.diagnostics.returned} rows, accepted ${mansaRes.diagnostics.accepted} equities${
+          mansaRes.diagnostics.filtered_bonds_count > 0
+            ? `, filtered ${mansaRes.diagnostics.filtered_bonds_count} bonds (${mansaRes.diagnostics.filtered_bonds.join(", ")})`
+            : ""
+        }`,
+      );
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      notes.push(`Mansa ${exchange} failed: ${msg}`);
+      for (const sym of exchangeSymbols) {
+        const cached = cachedQuotes.get(sym);
+        if (cached) quotes.set(sym, cached);
+      }
+    }
   }
 
   if (quotes.size === 0 && cachedQuotes.size > 0) {
@@ -507,6 +624,8 @@ async function getStockData(stockRows: StockCacheRow[]): Promise<StockDataResult
 
   return {
     quotes,
+    mansaQuotes,
+    fetchedMansaExchanges,
     source: getQuoteSource(quotes),
     fallback: Array.from(quotes.values()).some((quote) => quote.source === "cache"),
     cacheTimestamp,
@@ -750,17 +869,36 @@ Deno.serve(async (req) => {
     }
     } // end shouldFetchCommodities
 
-    // ── 3. Fetch Kenyan stock prices (RapidAPI primary, official NSE fallback) ──
+    // ── 3. Fetch East African stock prices (NSE via RapidAPI/NSE XHR; USE, DSE, RSE via Mansa API) ──
     if (shouldFetchStocks) {
+    const rawExchangesParam = Array.isArray((body as Record<string, unknown>)?.exchanges)
+      ? ((body as Record<string, unknown>).exchanges as unknown[])
+      : null;
+    const requestedExchanges: EastAfricanExchange[] = rawExchangesParam
+      ? rawExchangesParam
+          .map((item) => String(item || "").trim().toUpperCase())
+          .filter((item): item is EastAfricanExchange =>
+            (EAST_AFRICAN_EXCHANGES as readonly string[]).includes(item)
+          )
+      : [...EAST_AFRICAN_EXCHANGES];
+    const effectiveExchanges: EastAfricanExchange[] =
+      requestedExchanges.length > 0 ? requestedExchanges : [...EAST_AFRICAN_EXCHANGES];
+    const forceMansa = Boolean((body as Record<string, unknown>)?.force_mansa);
+    const includeMansaNseFallback = Boolean((body as Record<string, unknown>)?.include_mansa_nse_fallback);
+
     const { data: stockRowsData, error: stocksReadError } = await supabase
       .from("stocks")
-      .select("id, symbol, name, price, previous_price, day_change, day_change_percent, volume, market_cap, pe_ratio, year_high, year_low, updated_at, provider_updated_at, quote_source, is_active");
+      .select("id, symbol, exchange, exchange_ticker, currency, country_code, sector, name, price, previous_price, day_change, day_change_percent, volume, market_cap, pe_ratio, year_high, year_low, updated_at, provider_updated_at, quote_source, is_active");
     if (stocksReadError) throw new Error(`Stock read failed: ${stocksReadError.code}`);
 
-    const stockRows = stockRowsData || [];
+    const allStockRows = (stockRowsData || []) as StockCacheRow[];
+    const stockRows = allStockRows.filter((row) =>
+      effectiveExchanges.includes(((row.exchange || "NSE").toUpperCase() as EastAfricanExchange))
+    );
 
-    if (stockRows.length > 0) {
+    if (allStockRows.length > 0 || effectiveExchanges.some((ex) => ex !== "NSE")) {
       let stocksUpdated = 0;
+      let stocksInserted = 0;
       let historyUpdated = 0;
       let skippedDriftCount = 0;
       const successfulStockIds = new Set<string>();
@@ -769,15 +907,27 @@ Deno.serve(async (req) => {
         updateStock: (id, patch) => supabase.from("stocks").update(patch).eq("id", id).select("id").maybeSingle(),
         upsertHistory: (row) => supabase.from("stock_price_history")
           .upsert(row, { onConflict: "stock_id,snapshot_date" }).select("id").maybeSingle(),
+        insertStock: (row) => supabase.from("stocks").insert(row).select("id").maybeSingle(),
       };
-      const stockData = await getStockData(stockRows as StockCacheRow[]);
+      const stockData = await getStockData(stockRows, {
+        requestedExchanges: effectiveExchanges,
+        forceMansa,
+        includeMansaNseFallback,
+        dryRun,
+        nowMs: Date.now(),
+      });
       const fallbackCount = Array.from(stockData.quotes.values()).filter((quote) => quote.source === "cache").length;
       const freshCount = stockData.quotes.size - fallbackCount;
 
       results.push(...stockData.notes);
 
+      const existingSymbols = new Set(allStockRows.map((r) => (r.symbol || "").toUpperCase()));
+      const newlyDiscoveredMansaQuotes = Array.from(stockData.mansaQuotes.values()).filter(
+        (mq) => mq.exchange !== "NSE" && !existingSymbols.has(mq.symbol.toUpperCase()),
+      );
+
       if (dryRun) {
-        const inspectionRows = stockRows.map((row) => {
+        const existingInspectionRows = stockRows.map((row) => {
           const sym = (row.symbol || "").toUpperCase();
           const quote = stockData.quotes.get(sym);
           const hasQuote = Boolean(quote && typeof quote.price === "number" && Number.isFinite(quote.price) && quote.price > 0);
@@ -794,7 +944,11 @@ Deno.serve(async (req) => {
           return {
             id: row.id,
             symbol: sym,
+            exchange: (row.exchange || "NSE").toUpperCase(),
+            exchange_ticker: row.exchange_ticker || sym,
+            currency: row.currency || "KES",
             name: row.name,
+            sector: row.sector || "Other",
             is_active: row.is_active,
             status,
             quote_source: quote?.quoteSource ?? (isCached ? "cache" : null),
@@ -813,6 +967,33 @@ Deno.serve(async (req) => {
           };
         });
 
+        const newMansaInspectionRows = newlyDiscoveredMansaQuotes.map((mq) => ({
+          id: `new:${mq.symbol}`,
+          symbol: mq.symbol,
+          exchange: mq.exchange,
+          exchange_ticker: mq.exchangeTicker,
+          currency: mq.currency,
+          name: mq.name,
+          sector: mq.sector,
+          is_active: true,
+          status: "unpriced_or_new" as const,
+          quote_source: "mansa" as const,
+          source_price: mq.price,
+          source_previous_price: mq.previousPrice,
+          source_day_change: mq.dayChange,
+          source_day_change_percent: mq.dayChangePct,
+          source_volume: mq.volume,
+          db_price: null,
+          db_day_change: null,
+          db_day_change_percent: null,
+          db_volume: null,
+          drift_pct: null,
+          provider_updated_at: mq.providerUpdatedAt,
+          db_updated_at: observedAt,
+        }));
+
+        const inspectionRows = [...existingInspectionRows, ...newMansaInspectionRows];
+
         const missingFromSource = stockRows
           .filter((row) => {
             const sym = (row.symbol || "").toUpperCase();
@@ -821,6 +1002,7 @@ Deno.serve(async (req) => {
           })
           .map((row) => ({
             symbol: row.symbol,
+            exchange: (row.exchange || "NSE").toUpperCase(),
             name: row.name,
             is_active: row.is_active,
             db_price: row.price,
@@ -849,9 +1031,10 @@ Deno.serve(async (req) => {
         };
 
         results.push(
-          `Stocks dry run: ${inspectionRows.length} stocks inspected (${summary.would_update} would update, ${summary.unchanged} unchanged, ${summary.drift_blocked} drift blocked, ${summary.cached} cached, ${summary.missing} missing)`,
+          `Stocks dry run: ${inspectionRows.length} stocks inspected (${summary.would_update} would update, ${summary.unpriced_or_new} new/unpriced, ${summary.unchanged} unchanged, ${summary.drift_blocked} drift blocked, ${summary.cached} cached, ${summary.missing} missing)`,
         );
       } else {
+        const syncNowIso = new Date().toISOString();
         // Fetch 52-week price history for year_high/year_low calculation
         const oneYearAgo = new Date();
         oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
@@ -914,7 +1097,7 @@ Deno.serve(async (req) => {
               yearLow = yearLow ? Math.min(yearLow, quote.price) : quote.price;
             }
 
-            const written = await persistStockQuote(row.id, quote, { yearHigh, yearLow }, stockWriter);
+            const written = await persistStockQuote(row.id, quote, { yearHigh, yearLow }, stockWriter, syncNowIso);
             if (written.stockWritten) {
               stocksUpdated++;
               successfulStockIds.add(row.id);
@@ -928,13 +1111,56 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Calculate Market Aggregates for today
-        if (stocksUpdated > 0 || fallbackCount > 0) {
-          const summaryRows = targetStockRows.map((row) => {
+        // Auto-seed newly discovered regional stocks (USE, DSE, RSE) from Mansa API
+        if (newlyDiscoveredMansaQuotes.length > 0) {
+          const countByExchange = new Map<EastAfricanExchange, number>();
+          for (const row of allStockRows) {
+            const ex = ((row.exchange || "NSE").toUpperCase() as EastAfricanExchange);
+            countByExchange.set(ex, (countByExchange.get(ex) ?? 0) + 1);
+          }
+
+          for (const mq of newlyDiscoveredMansaQuotes) {
+            const idx = (countByExchange.get(mq.exchange) ?? 0) + 1;
+            countByExchange.set(mq.exchange, idx);
+            const sortOrder = EAST_AFRICAN_EXCHANGE_META[mq.exchange].baseSortOrder + idx;
+            const inserted = await insertNewMansaStock(mq, sortOrder, stockWriter, syncNowIso);
+            if (inserted.stockWritten && inserted.stockId) {
+              stocksInserted++;
+              stocksUpdated++;
+              successfulStockIds.add(inserted.stockId);
+              recordQuote("stock", inserted.stockId, mq.price);
+            }
+            if (inserted.historyWritten) historyUpdated++;
+            for (const failure of inserted.errors) {
+              writeFailures.push({ symbol: mq.symbol, ...failure });
+              console.error("[fetch-market-data] Regional stock insert failed", { symbol: mq.symbol, ...failure });
+            }
+          }
+          if (stocksInserted > 0) {
+            results.push(`Mansa regional auto-seed: inserted ${stocksInserted} new stocks`);
+          }
+        }
+
+        // Ensure wall-clock updated_at is stamped for any fetched Mansa exchange even if rows were skipped
+        for (const fetchedEx of stockData.fetchedMansaExchanges) {
+          if (fetchedEx === "NSE") continue;
+          await supabase
+            .from("stocks")
+            .update({ updated_at: syncNowIso, quote_source: "mansa" })
+            .eq("exchange", fetchedEx)
+            .eq("is_active", true);
+        }
+
+        // Calculate Kenyan NSE Market Aggregates for today (strictly NSE/KES only)
+        const nseTargetRows = targetStockRows.filter(
+          (row) => (row.exchange || "NSE").toUpperCase() === "NSE",
+        );
+        if (nseTargetRows.length > 0 && (stocksUpdated > 0 || fallbackCount > 0)) {
+          const summaryRows = nseTargetRows.map((row) => {
             const sym = (row.symbol || "").toUpperCase();
             const quote = stockData.quotes.get(sym);
             return {
-              dayChange: successfulStockIds.has(row.id) ? quote!.dayChange : row.day_change,
+              dayChange: successfulStockIds.has(row.id) && quote ? quote.dayChange : row.day_change,
               marketCap: row.market_cap,
               peRatio: row.pe_ratio,
             };

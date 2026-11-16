@@ -2,7 +2,9 @@
   "short_name": "KFF",
   "name": "Kenya Fund Finder",
   "id": "com.kenyafundfinder.app",
-  "description": "Compare CMA-regulated unit trusts, NSE stocks, FX rates, and commodities in Kenya.",
+  "description": "Compare CMA-regulated Money Market Funds, unit trusts, NSE stocks, CBK Treasury bills/bonds, bank deposits, SACCOs, FX rates, and commodities in Kenya.",
+  "lang": "en-KE",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icon-192.png?v=20261111",
@@ -34,11 +36,86 @@
       "sizes": "any"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/images/store/01-market-overview.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Kenya Market Overview, MMF Yields, NSE Stocks & Breaking News"
+    },
+    {
+      "src": "/images/store/02-mmf-yields.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Compare 40 CMA-Regulated Money Market Funds in Kenya (KES & USD)"
+    },
+    {
+      "src": "/images/store/03-nse-stocks.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Track Live Nairobi Securities Exchange (NSE) Share Prices & Dividends"
+    },
+    {
+      "src": "/images/store/04-savings-tbills.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Compare CBK Treasury Bills, Infrastructure Bonds, Bank Deposits & SACCOs"
+    },
+    {
+      "src": "/images/store/05-portfolio-tracker.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Simulated Multi-Asset Portfolio & Price Alert Watchlists"
+    },
+    {
+      "src": "/images/store/06-return-calculator.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "MMF & Fixed-Income Return Calculator After 15% Withholding Tax"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Money Market Funds",
+      "short_name": "MMFs",
+      "description": "Compare KES & USD Money Market Fund daily and annual yields",
+      "url": "/funds",
+      "icons": [{ "src": "/icon-192.png?v=20261111", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "NSE Stocks",
+      "short_name": "Stocks",
+      "description": "Track Nairobi Securities Exchange share prices and charts",
+      "url": "/stocks",
+      "icons": [{ "src": "/icon-192.png?v=20261111", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "T-Bills & Savings",
+      "short_name": "Savings",
+      "description": "Compare CBK Treasury Bills, Bank Fixed Deposits & SACCO rates",
+      "url": "/savings",
+      "icons": [{ "src": "/icon-192.png?v=20261111", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "My Portfolio",
+      "short_name": "Portfolio",
+      "description": "View your tracked Kenyan investments and watchlists",
+      "url": "/portfolio",
+      "icons": [{ "src": "/icon-192.png?v=20261111", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
   "start_url": "/",
   "background_color": "#09090b",
   "theme_color": "#09090b",
   "display": "standalone",
   "orientation": "portrait-primary",
   "scope": "/",
+  "prefer_related_applications": false,
   "categories": ["finance", "business"]
 }

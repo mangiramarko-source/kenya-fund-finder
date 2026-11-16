@@ -75,7 +75,8 @@ const RESOURCES: Record<string, ResourceDef> = {
     kind: "list",
     view: "stocks_public",
     columns: [
-      "id", "symbol", "name", "sector", "price", "previous_price",
+      "id", "symbol", "exchange", "exchange_ticker", "currency", "country_code",
+      "name", "sector", "price", "previous_price",
       "day_change", "day_change_percent", "volume", "market_cap",
       "pe_ratio", "dividend_yield", "year_high", "year_low", "day_low", "day_high",
       "sort_order", "updated_at", "provider_updated_at", "quote_source", "logo_url",
@@ -83,7 +84,7 @@ const RESOURCES: Record<string, ResourceDef> = {
     ],
     orderable: ["sort_order", "symbol", "price", "day_change_percent", "updated_at"],
     defaultOrder: "sort_order.asc",
-    filterable: ["symbol", "sector"],
+    filterable: ["symbol", "sector", "exchange", "country_code", "currency"],
     cacheSeconds: 60,
   },
   rates: {

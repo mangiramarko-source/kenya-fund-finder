@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Kenya Fund Finder</string>
+    <string name="launcher_name" translatable="false">KFF</string>
+    <string name="host_name" translatable="false">kenyafundfinder.com</string>
+    <string name="launch_url" translatable="false">https://kenyafundfinder.com/</string>
+    <string name="web_manifest_url" translatable="false">https://kenyafundfinder.com/manifest.json</string>
+    <string name="generator_app" translatable="false">bubblewrap-cli</string>
+    <string name="fallback_type" translatable="false">customtabs</string>
+    <string name="orientation" translatable="false">portrait-primary</string>
+    <string name="provider_authority" translatable="false">com.kenyafundfinder.app.fileprovider</string>
+    <string name="asset_statements" translatable="false">[{
+        \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+        \"target\": {
+            \"namespace\": \"web\",
+            \"site\": \"https://kenyafundfinder.com\"
+        }
+    }]</string>
+</resources>

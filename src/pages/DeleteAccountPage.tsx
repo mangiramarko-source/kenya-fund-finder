@@ -14,7 +14,7 @@ export default function DeleteAccountPage() {
       </div>
 
       <p className="text-sm text-muted-foreground mb-8">
-        Last updated: October 2026 | Compliant with Google Play Developer Policy & Kenya Data Protection Act (KDPA 2019)
+        Last updated: November 2026 | Compliant with Samsung Galaxy Store, Google Play Developer Policy, Apple App Store &amp; Kenya Data Protection Act (KDPA 2019)
       </p>
 
       <div className="prose prose-sm dark:prose-invert max-w-none space-y-6">
@@ -22,7 +22,7 @@ export default function DeleteAccountPage() {
           <h2 className="text-lg font-semibold mb-2">1. Overview</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
             At Kenya Fund Finder (operated by <strong>Elyon Innovation LTD</strong>), we respect your right to control your personal data.
-            Under Google Play Developer Policy and the Kenya Data Protection Act (2019), you have the right to request the permanent deletion of your account and all associated personal records at any time without fee.
+            Under Samsung Galaxy Store policies, Google Play Developer Policy, and the Kenya Data Protection Act (2019), you have the right to request the permanent deletion of your account and all associated personal records at any time without fee.
           </p>
         </section>
 

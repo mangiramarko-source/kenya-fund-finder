@@ -85,7 +85,7 @@ export function useMarketData() {
       const [ratesRes, commoditiesRes, stocksRes] = await Promise.all([
         fetchPublicData<ExchangeRate>("rates", { limit: 200 }),
         fetchPublicData<Commodity>("commodities", { limit: 200 }),
-        fetchPublicData<Stock>("stocks", { limit: 500 }),
+        fetchPublicData<Stock>("stocks", { limit: 500, filters: { exchange: "NSE" } }),
       ]);
       setRates(
         ((ratesRes.data || []).map((r) => ({

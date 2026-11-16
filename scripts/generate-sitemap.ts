@@ -52,6 +52,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/checklist", changefreq: "monthly", priority: "0.6" },
   { path: "/privacy", changefreq: "yearly", priority: "0.3" },
   { path: "/terms", changefreq: "yearly", priority: "0.3" },
+  { path: "/delete-account", changefreq: "yearly", priority: "0.3" },
 ];
 
 async function supaSelect<T>(path: string): Promise<T[]> {
@@ -73,7 +74,15 @@ async function supaSelect<T>(path: string): Promise<T[]> {
 // gateway. This avoids relying on direct table/view grants during static SEO
 // generation while keeping the query restricted to public fields.
 async function publicStocks<T>(select: string): Promise<T[]> {
-  return seoPublicData<T>("stocks", select, "symbol.asc");
+  const rows = await seoPublicData<T & { symbol?: string; exchange?: string | null }>(
+    "stocks",
+    select,
+    "symbol.asc",
+    { exchange: "NSE" },
+  );
+  return rows.filter(
+    (r) => (!r.exchange || r.exchange.toUpperCase() === "NSE") && !/^(USE|DSE|RSE)-/i.test(String(r.symbol || "")),
+  );
 }
 
 let fetchedNewsRows: NewsSitemapRow[] = [];
