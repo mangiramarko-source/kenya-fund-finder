@@ -94,7 +94,7 @@ const CookieConsent = () => {
   return (
     <aside
       aria-label="Cookie and Privacy Consent"
-      className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-[420px] z-50 animate-in fade-in slide-in-from-bottom-3 duration-300 pointer-events-auto"
+      className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-[420px] z-50 animate-in fade-in slide-in-from-bottom-3 duration-300 pointer-events-auto"
     >
       <div className="relative rounded-2xl bg-card/95 dark:bg-[#131316]/95 backdrop-blur-xl border border-border/80 dark:border-white/10 p-4 sm:p-5 shadow-2xl flex flex-col gap-3">
         {!showSettings ? (

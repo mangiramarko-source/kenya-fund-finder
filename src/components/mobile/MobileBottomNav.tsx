@@ -163,14 +163,14 @@ export default function MobileBottomNav() {
     <>
       <nav
         aria-label="Mobile Bottom Navigation"
-        className="pointer-events-none fixed inset-x-2.5 bottom-[max(0.65rem,env(safe-area-inset-bottom))] z-50 md:hidden min-[390px]:inset-x-3"
+        className="pointer-events-none fixed inset-x-2 bottom-[max(0.6rem,env(safe-area-inset-bottom))] z-50 md:hidden"
       >
-        <div className="mx-auto flex max-w-md items-center gap-1.5 min-[390px]:gap-2">
+        <div className="mx-auto flex max-w-lg items-center gap-1.5">
           {/* Primary 5-tab floating glass pill: zero outer padding so links own the full hit area */}
           <div
             data-testid="mobile-nav-pill"
             className={cn(
-              "pointer-events-auto flex h-[56px] min-w-0 flex-1 touch-none items-center rounded-full min-[390px]:h-[60px]",
+              "pointer-events-auto flex h-[64px] min-w-0 flex-1 touch-none items-center rounded-full min-[390px]:h-[68px]",
               DOCK_GLASS_SURFACE
             )}
           >
@@ -201,19 +201,19 @@ export default function MobileBottomNav() {
             }}
             aria-label="Open more tools and markets menu"
             className={cn(
-              "group pointer-events-auto relative flex h-[56px] w-[56px] shrink-0 touch-none select-none items-center justify-center rounded-full transition-transform duration-150 active:scale-95 min-[390px]:h-[60px] min-[390px]:w-[60px]",
+              "group pointer-events-auto relative flex h-[64px] w-[64px] shrink-0 touch-none select-none items-center justify-center rounded-full p-1 transition-transform duration-150 active:scale-95 min-[390px]:h-[68px] min-[390px]:w-[68px]",
               DOCK_GLASS_SURFACE
             )}
           >
             <div
               className={cn(
-                "flex h-[46px] w-[46px] flex-col items-center justify-center rounded-full transition-colors duration-150 min-[390px]:h-[50px] min-[390px]:w-[50px]",
+                "flex h-full w-full flex-col items-center justify-center rounded-full transition-colors duration-150",
                 moreOpen && "bg-foreground/[0.08] dark:bg-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
               )}
             >
               <MoreHorizontal
                 className={cn(
-                  "h-[18px] w-[18px] transition-colors",
+                  "h-[20px] w-[20px] transition-colors",
                   moreOpen
                     ? "stroke-[2.3] text-emerald-600 dark:text-emerald-400"
                     : "stroke-[1.9] text-zinc-950 dark:text-muted-foreground group-hover:text-foreground"
@@ -221,7 +221,7 @@ export default function MobileBottomNav() {
               />
               <span
                 className={cn(
-                  "mt-0.5 text-[9.5px] leading-tight tracking-tight transition-colors min-[380px]:text-[10px]",
+                  "mt-0.5 text-[10px] leading-tight tracking-tight transition-colors min-[390px]:text-[11px]",
                   moreOpen
                     ? "font-bold text-emerald-600 dark:text-emerald-400"
                     : "font-semibold text-zinc-950 dark:text-muted-foreground dark:font-medium group-hover:text-foreground"
@@ -273,17 +273,17 @@ function NavTab({
         }
         onActivate(to, false);
       }}
-      className="group flex h-full min-w-0 flex-1 touch-none select-none items-center justify-center py-1 px-0.5 first:pl-1 last:pr-1 focus-visible:outline-none"
+      className="group flex h-full min-w-0 flex-1 touch-none select-none items-center justify-center py-1 px-[1px] first:pl-1 last:pr-1 focus-visible:outline-none"
     >
       <span
         className={cn(
-          "flex h-full w-full flex-col items-center justify-center rounded-full px-0.5 transition-transform duration-150 group-active:scale-95",
+          "flex h-full w-full flex-col items-center justify-center rounded-full transition-transform duration-150 group-active:scale-95",
           isActive && "bg-foreground/[0.08] dark:bg-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
         )}
       >
         <Icon
           className={cn(
-            "h-[18px] w-[18px] transition-colors",
+            "h-[20px] w-[20px] transition-colors",
             isActive
               ? "stroke-[2.35] text-emerald-600 dark:text-emerald-400"
               : "stroke-[1.9] text-zinc-950 dark:text-muted-foreground group-hover:text-foreground"
@@ -291,7 +291,7 @@ function NavTab({
         />
         <span
           className={cn(
-            "mt-0.5 max-w-full truncate text-[9.5px] leading-tight tracking-tight transition-colors min-[380px]:text-[10px]",
+            "mt-0.5 max-w-full truncate text-[9.5px] leading-tight tracking-[-0.02em] transition-colors min-[375px]:text-[10.5px] min-[390px]:text-[11px]",
             isActive
               ? "font-bold text-emerald-600 dark:text-emerald-400"
               : "font-semibold text-zinc-950 dark:text-muted-foreground dark:font-medium group-hover:text-foreground"

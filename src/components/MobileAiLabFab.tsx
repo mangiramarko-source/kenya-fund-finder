@@ -12,7 +12,7 @@ const MobileAiLabFab = () => {
 
   if (isComparing) return null;
 
-  return <KoraAiLauncher onActivate={() => navigate("/ai-lab")} className="md:hidden fixed right-4 z-40 bottom-[calc(5.25rem+env(safe-area-inset-bottom))]" />;
+  return <KoraAiLauncher onActivate={() => navigate("/ai-lab")} className="md:hidden fixed right-4 z-40 bottom-[calc(5.75rem+env(safe-area-inset-bottom))]" />;
 };
 
 export default MobileAiLabFab;
