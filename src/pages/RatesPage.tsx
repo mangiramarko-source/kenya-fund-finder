@@ -195,10 +195,10 @@ const RatesPage = ({ initialTab }: RatesPageProps = {}) => {
   useEffect(() => {
     if (tabParam === "commodities" || tabParam === "commodity" || location.pathname === "/commodities") {
       setActiveTab("commodities");
-    } else if (tabParam === "fx" || tabParam === "rates") {
-      setActiveTab("fx");
+    } else {
+      setActiveTab(initialTab ?? "fx");
     }
-  }, [tabParam, location.pathname]);
+  }, [tabParam, location.pathname, initialTab]);
 
   const isCommodityTab = activeTab === "commodities" || location.pathname.startsWith("/commodities");
 
@@ -566,8 +566,8 @@ const RatesPage = ({ initialTab }: RatesPageProps = {}) => {
           </div>
         </div>
 
-        {/* Tab Switcher Pills */}
-        <div className="mb-5 flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+        {/* Desktop Tab Switcher Pills (Mobile uses top-left nav dropdown) */}
+        <div className="hidden md:flex mb-5 items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
           <button
             type="button"
             onClick={() => handleTabChange("fx")}

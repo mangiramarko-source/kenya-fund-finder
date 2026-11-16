@@ -12,6 +12,8 @@ import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
 import { FALLBACK_KENYAN_STOCKS } from "@/lib/stockDataFallback";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
+import { useSelectedStockExchange } from "@/lib/stockExchangeSelection";
+import DesktopCountryMarketStrip from "@/components/stocks/DesktopCountryMarketStrip";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
 import { useUniversalCompare } from "@/hooks/useUniversalCompare";
 import {
@@ -75,22 +77,22 @@ const formatVolume = (v: number) => {
   return String(v);
 };
 
-const formatMarketCap = (mc: number | null) => {
+const formatMarketCap = (mc: number | null, currencyCode = "KES") => {
   if (mc == null) return "—";
-  if (mc >= 1e12) return `KSh ${(mc / 1e12).toFixed(1)}T`;
-  if (mc >= 1e9) return `KSh ${(mc / 1e9).toFixed(1)}B`;
-  if (mc >= 1e6) return `KSh ${(mc / 1e6).toFixed(0)}M`;
-  return `KSh ${mc.toLocaleString()}`;
+  if (mc >= 1e12) return `${currencyCode} ${(mc / 1e12).toFixed(1)}T`;
+  if (mc >= 1e9) return `${currencyCode} ${(mc / 1e9).toFixed(1)}B`;
+  if (mc >= 1e6) return `${currencyCode} ${(mc / 1e6).toFixed(0)}M`;
+  return `${currencyCode} ${mc.toLocaleString()}`;
 };
 
-const getInitials = (name, symbol) => {
+const getInitials = (name: string, symbol: string) => {
   if (!name) return symbol.substring(0, 2);
   const parts = name.split(" ");
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return symbol.substring(0, 2).toUpperCase();
 };
 
-const getAvatarColor = (symbol) => {
+const getAvatarColor = (symbol: string) => {
   const colors = [
     "bg-blue-500", "bg-purple-500", "bg-pink-500", 
     "bg-indigo-500", "bg-rose-500", "bg-orange-500", 
@@ -102,7 +104,7 @@ const getAvatarColor = (symbol) => {
 };
 
 const StockLogoAvatar = ({ stock, size = 48 }: { stock: Stock; size?: number }) => {
-  const logoUrl = getStockLogoUrl(stock.symbol, stock.logo_url);
+  const logoUrl = getStockLogoUrl(stock.symbol, stock.logo_url, stock.name);
 
   return (
     <div
@@ -270,24 +272,35 @@ const ChangeCell = ({ change, pct }: { change: number; pct: number }) => {
 export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { selectedExchange, market, setSelectedExchange } = useSelectedStockExchange();
   useDocumentTitle(
-    "NSE Share Prices Today – Nairobi Securities Exchange Stocks (2026)",
-    "Track live Nairobi Securities Exchange (NSE) share prices today, daily gainers and losers, market cap, P/E ratios, and dividend yields for Safaricom (SCOM), Equity (EQTY), KCB, EABL, and all Kenyan listed stocks.",
-    {
-      title: "NSE Share Prices Today – Kenyan Stocks & Dividend Yields",
-      description: "Track Nairobi Securities Exchange (NSE) share prices, daily movement, volume, market cap, P/E ratios, and dividend yields in Kenya.",
-    },
+    selectedExchange === "NSE"
+      ? "NSE Share Prices Today – Nairobi Securities Exchange Stocks (2026)"
+      : `${market.countryName} Stocks (${market.exchange}) – Share Prices Today`,
+    selectedExchange === "NSE"
+      ? "Track live Nairobi Securities Exchange (NSE) share prices today, daily gainers and losers, market cap, P/E ratios, and dividend yields for Safaricom (SCOM), Equity (EQTY), KCB, EABL, and all Kenyan listed stocks."
+      : `Track live ${market.exchangeName} (${market.exchange}) share prices today, daily gainers and losers, market cap, P/E ratios, and dividend yields in ${market.currency}.`,
+    selectedExchange === "NSE"
+      ? {
+          title: "NSE Share Prices Today – Kenyan Stocks & Dividend Yields",
+          description: "Track Nairobi Securities Exchange (NSE) share prices, daily movement, volume, market cap, P/E ratios, and dividend yields in Kenya.",
+        }
+      : {
+          title: `${market.countryName} Stocks (${market.exchange}) – Live Prices in ${market.currency}`,
+          description: `Track ${market.exchangeName} (${market.exchange}) share prices, daily movement, volume, and market cap.`,
+        },
   );
 
   const { user, loading: authLoading } = useAuth();
   const isGated = !authLoading && !user && !isBotOrPrerender();
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
-  const [initialPageMemory] = useState(() => getMarketPageMemory<StocksPageMemory>("stocks"));
-  const [cachedStocks] = useState(() => stockCache.loadStocks());
+  const initialMemoryKey = `stocks:${selectedExchange}`;
+  const [initialPageMemory] = useState(() => getMarketPageMemory<StocksPageMemory>(initialMemoryKey));
   const [stocks, setStocks] = useState<Stock[]>(() => {
     if (initialPageMemory?.stocks && initialPageMemory.stocks.length > 0) return initialPageMemory.stocks;
-    if (cachedStocks?.stocks && cachedStocks.stocks.length > 0) return cachedStocks.stocks;
-    return FALLBACK_KENYAN_STOCKS;
+    const cached = stockCache.loadStocks(selectedExchange);
+    if (cached?.stocks && cached.stocks.length > 0) return cached.stocks;
+    return selectedExchange === "NSE" ? FALLBACK_KENYAN_STOCKS : [];
   });
 
   const stocksJsonLd = useMemo(() => {
@@ -320,7 +333,12 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
 
   useJsonLd(stocksJsonLd);
   const [marketHistory, setMarketHistory] = useState<Record<string, unknown>[]>(initialPageMemory?.marketHistory ?? []);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => {
+    const cached = stockCache.loadStocks(selectedExchange);
+    const mem = getMarketPageMemory<StocksPageMemory>(`stocks:${selectedExchange}`);
+    if (mem?.stocks?.length || cached?.stocks?.length) return false;
+    return selectedExchange !== "NSE";
+  });
   const [marketHistoryReady, setMarketHistoryReady] = useState(true);
   const [sparklineHistoryReady, setSparklineHistoryReady] = useState(true);
   const [search, setSearch] = useState("");
@@ -348,6 +366,28 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
   }, [desktopDemo, isMobile, navigate]);
 
   useEffect(() => {
+    // Reset filters cleanly when switching country
+    setSector("All");
+    setMobileMovement("all");
+    setSearch("");
+    setExpanded(null);
+
+    const mem = getMarketPageMemory<StocksPageMemory>(`stocks:${selectedExchange}`);
+    const cached = stockCache.loadStocks(selectedExchange);
+    if (mem?.stocks && mem.stocks.length > 0) {
+      setStocks(mem.stocks);
+      setLoading(false);
+    } else if (cached?.stocks && cached.stocks.length > 0) {
+      setStocks(cached.stocks);
+      setLoading(false);
+    } else if (selectedExchange === "NSE") {
+      setStocks(FALLBACK_KENYAN_STOCKS);
+      setLoading(false);
+    } else {
+      setStocks([]);
+      setLoading(true);
+    }
+
     let fetchingStocks = false;
     let disposed = false;
     const fetchStocks = async () => {
@@ -365,12 +405,15 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
               "day_change", "day_change_percent", "volume", "market_cap",
               "year_high", "year_low", "pe_ratio", "dividend_yield", "logo_url", "updated_at",
             ],
-            filters: { exchange: "NSE" },
+            filters: { exchange: selectedExchange },
             order: "sort_order.asc",
             limit: 200,
           });
           if (Array.isArray(data) && data.length > 0) {
-            fetchedData = data.filter((s) => String(s.exchange || "NSE").toUpperCase() === "NSE" && !/^(USE|DSE|RSE)-/i.test(String(s.symbol || "")));
+            fetchedData = data.filter(
+              (s) => String(s.exchange || "NSE").toUpperCase() === selectedExchange &&
+                (selectedExchange !== "NSE" || !/^(USE|DSE|RSE)-/i.test(String(s.symbol || ""))),
+            );
           }
         } catch (gwErr) {
           console.warn("fetchPublicData gateway failed, trying direct table fallback:", gwErr);
@@ -381,8 +424,8 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
           try {
             const { data, error } = await supabase
               .from("stocks")
-              .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, logo_url, updated_at")
-              .eq("exchange" as never, "NSE")
+              .select("id, symbol, exchange, exchange_ticker, currency, country_code, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, logo_url, updated_at")
+              .eq("exchange", selectedExchange)
               .order("sort_order", { ascending: true })
               .limit(200);
             if (!error && Array.isArray(data) && data.length > 0) {
@@ -395,19 +438,22 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
 
         // 3. Cached or curated fallback if offline
         if (fetchedData.length === 0) {
-          const cached = stockCache.loadStocks();
-          if (cached?.stocks && cached.stocks.length > 0) {
-            fetchedData = cached.stocks as unknown as Record<string, unknown>[];
-          } else {
+          const localCached = stockCache.loadStocks(selectedExchange);
+          if (localCached?.stocks && localCached.stocks.length > 0) {
+            fetchedData = localCached.stocks as unknown as Record<string, unknown>[];
+          } else if (selectedExchange === "NSE") {
             fetchedData = FALLBACK_KENYAN_STOCKS as unknown as Record<string, unknown>[];
           }
         }
 
         const normalized = fetchedData.map(normalizeStock);
-        if (normalized.length === 0) throw new Error("No stock data returned from any source");
+        if (normalized.length === 0) {
+          if (!disposed) setStocks([]);
+          return;
+        }
         if (disposed) return;
         setStocks(normalized);
-        stockCache.saveStocks(normalized);
+        stockCache.saveStocks(normalized, selectedExchange);
       } catch (e) {
         console.error("Failed to load stocks", e);
       } finally {
@@ -435,7 +481,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     fetchMarketHistory();
     const stopRefresh = startMarketRefresh(fetchStocks);
     const ch = supabase
-      .channel("stocks-page-rt")
+      .channel(`stocks-page-rt-${selectedExchange}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => fetchStocks())
       .subscribe();
     return () => {
@@ -443,7 +489,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
       stopRefresh();
       supabase.removeChannel(ch);
     };
-  }, [cachedStocks]);
+  }, [selectedExchange]);
 
   // Preload sparkline data for all stocks (recent window via gateway).
   useEffect(() => {
@@ -580,10 +626,10 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
   const showPageLoading = useMinimumLoadingDuration(pageLoading);
 
   useEffect(() => {
-    if (!pageLoading) {
-      setMarketPageMemory<StocksPageMemory>("stocks", { stocks, marketHistory, history });
+    if (!pageLoading && stocks.length > 0) {
+      setMarketPageMemory<StocksPageMemory>(`stocks:${selectedExchange}`, { stocks, marketHistory, history });
     }
-  }, [history, marketHistory, pageLoading, stocks]);
+  }, [history, marketHistory, pageLoading, selectedExchange, stocks]);
 
   if (desktopDemo) {
     if (isMobile) return null;
@@ -628,23 +674,35 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     <div className="min-h-screen animate-in fade-in-50 duration-500">
       <div className="px-4 md:px-6 py-5 md:py-6">
         {/* Semantic title for A11y & SEO */}
-        <h1 className="sr-only">Kenyan Stocks</h1>
+        <h1 className="sr-only">{market.adjective} Stocks</h1>
 
         <div className="md:hidden mb-3">
           <p className="text-sm text-muted-foreground">
-            Live Nairobi Securities Exchange (NSE) share prices and daily market movements.
+            Live {market.exchangeName} ({market.exchange}) share prices and daily market movements in {market.currency}.
           </p>
         </div>
 
         {/* Desktop Header Live Status */}
-        <div className="hidden md:flex justify-end items-center mb-4">
+        <div className="hidden md:flex justify-between items-center mb-4">
+          <p className="text-sm text-muted-foreground">
+            Live <strong className="font-semibold text-foreground">{market.exchangeName} ({market.exchange})</strong> share prices in {market.currency}
+          </p>
           <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
         </div>
-        
-        {/* Market Summary for Desktop */}
-        <div className="hidden md:block">
-          <MarketSummary stocks={stocks as any} history={marketHistory} />
-        </div>
+
+        {/* Desktop 4-Card Country Market Tabs (Option 2) */}
+        <DesktopCountryMarketStrip
+          selectedExchange={selectedExchange}
+          onSelectExchange={setSelectedExchange}
+          activeStats={{ total: stocks.length, gainers, losers }}
+        />
+
+        {/* Market Summary for Desktop (NSE aggregate history) */}
+        {selectedExchange === "NSE" && (
+          <div className="hidden md:block">
+            <MarketSummary stocks={stocks as any} history={marketHistory} />
+          </div>
+        )}
 
         <ActiveAlertsCard assetType="stock" />
 
@@ -1068,8 +1126,8 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                   category="stocks"
                   totalCount={stocks.length}
                   visibleCount={3}
-                  title="Unlock All 60+ NSE Stocks & Live Market Data"
-                  description="Showing top 3 stocks. Create a free account to track live prices, price alerts, full valuation ratios, and daily market movers."
+                  title={market.gateTitle}
+                  description={`Showing top 3 ${market.exchange} stocks. Create a free account to track live prices, price alerts, full valuation ratios, and daily market movers.`}
                 />
               )}
             </>
@@ -1087,7 +1145,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
 
         <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
           <p className="text-[10px] leading-relaxed text-muted-foreground">
-            Stock prices shown are indicative and may be delayed. Data is sourced from the Kenyan stock market. Click on
+            Stock prices shown are indicative and may be delayed. Data is sourced from the {market.exchangeName} ({market.exchange}). Click on
             any stock to view price history and detailed metrics. This information is for educational purposes only.
           </p>
         </div>
@@ -1288,14 +1346,15 @@ const StockDetailPanel = ({
   history?: PriceHistory[];
   historyLoading: boolean;
 }) => {
+  const ccy = s.currency || "KES";
   const yearRange = s.year_low != null && s.year_high != null;
   const pricePosition = yearRange ? ((s.price - s.year_low!) / (s.year_high! - s.year_low!)) * 100 : 0;
 
   return (
     <div className="p-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <DetailBox label="Price" value={`KSh ${formatNumber(s.price)}`} />
-        <DetailBox label="Previous" value={s.previous_price != null ? `KSh ${formatNumber(s.previous_price)}` : "—"} />
+        <DetailBox label="Price" value={`${ccy} ${formatNumber(s.price)}`} />
+        <DetailBox label="Previous" value={s.previous_price != null ? `${ccy} ${formatNumber(s.previous_price)}` : "—"} />
         <DetailBox
           label="Day Change"
           value={`${s.day_change > 0 ? "+" : ""}${formatNumber(s.day_change)}`}
@@ -1304,7 +1363,7 @@ const StockDetailPanel = ({
         <DetailBox label="Volume" value={formatVolume(s.volume)} />
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <DetailBox label="Market Cap" value={formatMarketCap(s.market_cap)} />
+        <DetailBox label="Market Cap" value={formatMarketCap(s.market_cap, ccy)} />
         <DetailBox label="P/E Ratio" value={s.pe_ratio != null ? formatNumber(s.pe_ratio) : "—"} />
         <DetailBox
           label="Div Yield"
@@ -1333,7 +1392,7 @@ const StockDetailPanel = ({
             </div>
             <span className="text-[10px] text-muted-foreground tabular-nums w-16">{formatNumber(s.year_high!)}</span>
           </div>
-          <p className="text-center text-[10px] text-muted-foreground mt-1">Current: KSh {formatNumber(s.price)}</p>
+          <p className="text-center text-[10px] text-muted-foreground mt-1">Current: {s.currency || "KES"} {formatNumber(s.price)}</p>
         </div>
       )}
 
@@ -1382,7 +1441,7 @@ const StockDetailPanel = ({
                     labelFormatter={(v) =>
                       formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })
                     }
-                    formatter={(value: number) => [`KSh ${formatNumber(value)}`, "Price"]}
+                    formatter={(value: number) => [`${s.currency || "KES"} ${formatNumber(value)}`, "Price"]}
                   />
                   <Line type="monotone" dataKey="price" stroke="hsl(152 60% 42%)" strokeWidth={2} dot={false} />
                 </LineChart>
@@ -1399,9 +1458,9 @@ const StockDetailPanel = ({
         <CreateAlertDialog
           assetType="stock"
           assetId={s.id}
-          assetName={`${s.symbol} - ${s.name}`}
+          assetName={`${s.exchange_ticker || s.symbol} - ${s.name}`}
           currentPrice={s.price}
-          unit="KSh"
+          unit={s.currency || "KES"}
         />
       </div>
     </div>
@@ -1433,7 +1492,7 @@ const DesktopStockCard = ({
             {getInitials(s.name, s.symbol)}
           </div>
           <div className="min-w-0">
-            <h3 className="font-bold text-foreground text-base tracking-tight truncate">{s.symbol}</h3>
+            <h3 className="font-bold text-foreground text-base tracking-tight truncate">{s.exchange_ticker || s.symbol}</h3>
             <p className="text-xs text-muted-foreground truncate">{s.name}</p>
           </div>
         </div>
@@ -1466,7 +1525,7 @@ const DesktopStockCard = ({
 
       <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-2 gap-x-2 gap-y-3">
         <div>
-          <p className="text-[10px] text-muted-foreground mb-0.5">Price (KSh)</p>
+          <p className="text-[10px] text-muted-foreground mb-0.5">Price ({s.currency || "KES"})</p>
           <p className="font-bold text-foreground text-sm tabular-nums">{formatNumber(s.price)}</p>
         </div>
         <div className="text-right">
@@ -1475,7 +1534,7 @@ const DesktopStockCard = ({
         </div>
         <div>
           <p className="text-[10px] text-muted-foreground mb-0.5">Market Cap</p>
-          <p className="font-medium text-foreground text-xs tabular-nums">{formatMarketCap(s.market_cap)}</p>
+          <p className="font-medium text-foreground text-xs tabular-nums">{formatMarketCap(s.market_cap, s.currency || "KES")}</p>
         </div>
         <div className="text-right">
           <p className="text-[10px] text-muted-foreground mb-0.5">P/E Ratio</p>
@@ -1560,13 +1619,13 @@ const DesktopStockRow = ({
               {getInitials(s.name, s.symbol)}
             </div>
             <div className="min-w-0 flex flex-col justify-center leading-tight">
-              <span className="font-bold text-foreground text-sm tracking-wide truncate">{s.symbol}</span>
+              <span className="font-bold text-foreground text-sm tracking-wide truncate">{s.exchange_ticker || s.symbol}</span>
               <span className="text-muted-foreground text-[12px] opacity-90 mt-0.5">{displayName}</span>
             </div>
           </div>
         </td>
         <td className="px-3 py-4 text-left">
-          <span className="font-medium text-foreground text-[13px] tabular-nums">KSh {formatNumber(s.price)}</span>
+          <span className="font-medium text-foreground text-[13px] tabular-nums">{s.currency || "KES"} {formatNumber(s.price)}</span>
         </td>
         <td className="px-3 py-4 text-left">
           <span className={`text-[13px] tabular-nums font-medium ${s.day_change > 0 ? "text-emerald-500" : s.day_change < 0 ? "text-destructive" : "text-muted-foreground"}`}>
@@ -1613,7 +1672,7 @@ const DesktopStockRow = ({
           <span className="font-medium text-muted-foreground text-[13px] tabular-nums">{formatVolume(s.volume)}</span>
         </td>
         <td className="px-3 py-4 text-left">
-          <span className="font-medium text-muted-foreground text-[13px] tabular-nums">{formatMarketCap(s.market_cap)}</span>
+          <span className="font-medium text-muted-foreground text-[13px] tabular-nums">{formatMarketCap(s.market_cap, s.currency || "KES")}</span>
         </td>
         <td className="px-3 py-4 text-left">
           <div className="flex items-center gap-1.5 whitespace-nowrap">
@@ -1715,7 +1774,7 @@ const MobileStockCard = ({
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <StockLogoAvatar stock={s} />
           <div className="min-w-0">
-            <span className="block truncate font-extrabold text-base tracking-tight text-foreground">{s.symbol}</span>
+            <span className="block truncate font-extrabold text-base tracking-tight text-foreground">{s.exchange_ticker || s.symbol}</span>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.name}</p>
           </div>
         </div>
@@ -1733,7 +1792,7 @@ const MobileStockCard = ({
 
         {/* Price + Return % */}
         <div className="text-right shrink-0">
-          <p className="font-extrabold text-foreground text-base tabular-nums">KES {formatNumber(s.price)}</p>
+          <p className="font-extrabold text-foreground text-base tabular-nums">{s.currency || "KES"} {formatNumber(s.price)}</p>
           <div className="mt-0.5 flex justify-end">
             <ChangeCell change={s.day_change} pct={s.day_change_percent} />
           </div>
@@ -1751,7 +1810,7 @@ const MobileStockCard = ({
               Vol <strong className="font-semibold text-foreground ml-0.5">{formatVolume(s.volume)}</strong>
             </span>
             <span>
-              Cap <strong className="font-semibold text-foreground ml-0.5">{formatMarketCap(s.market_cap)}</strong>
+              Cap <strong className="font-semibold text-foreground ml-0.5">{formatMarketCap(s.market_cap, s.currency || "KES")}</strong>
             </span>
           </div>
 

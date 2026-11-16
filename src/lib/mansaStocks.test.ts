@@ -94,6 +94,10 @@ describe("Mansa API East African stocks parser & safeguards", () => {
     expect(inferStockSector("Dar es Salaam Stock Exchange PLC", "DSE", null)).toBe("Commercial & Services");
     expect(inferStockSector("Centum Investment Company Plc", "CENT", null)).toBe("Investment");
     expect(inferStockSector("NICO Holdings Plc", "NICO", null)).toBe("Investment");
+    expect(inferStockSector("Urafiki Textile Mill Company Limited", "USL", null)).toBe("Manufacturing & Allied");
+    expect(inferStockSector("Uchumi Supermarket PLC", "USL", null)).toBe("Commercial & Services");
+    expect(inferStockSector("JATU Limited", "JATU", null)).toBe("Agricultural");
+    expect(inferStockSector("RH Bophelo PLC", "RHB", null)).toBe("Investment");
   });
 
   it("enforces the 90-minute wall-clock throttle using DB updated_at even when prices are 0% unchanged", () => {

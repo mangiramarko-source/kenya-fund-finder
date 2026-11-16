@@ -15,6 +15,7 @@ import {
   stockCache,
   type CachedStock,
 } from "@/lib/stockCache";
+import { buildStocksRouteUrl, readStoredStockExchange } from "@/lib/stockExchangeSelection";
 import { formatMarketDate, formatMarketDateTime, decodeHtmlEntities } from "@/lib/utils";
 import {
   downsampleStockHistory,
@@ -424,6 +425,8 @@ const StockDetailPage = () => {
   const isUp = s.day_change > 0;
   const isDown = s.day_change < 0;
 
+  const backToStocksPath = buildStocksRouteUrl(s.exchange || readStoredStockExchange());
+
   return (
     <div className="min-h-screen px-3 pb-6 pt-0 md:px-6 md:py-6 max-w-6xl mx-auto">
       {/* Header */}
@@ -431,7 +434,7 @@ const StockDetailPage = () => {
       <div className="fixed inset-x-0 top-0 z-50 flex h-safe-detail-header pt-safe items-center justify-between border-b border-border bg-background px-4 md:hidden">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(backToStocksPath)}
           aria-label="Go back"
           className="flex h-10 w-10 items-center justify-center rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground transition-all active:scale-95 hover:bg-muted"
         >
@@ -466,7 +469,7 @@ const StockDetailPage = () => {
       <div className="h-safe-detail-header mb-5 md:hidden" aria-hidden="true" />
 
       <button
-        onClick={() => navigate("/stocks")}
+        onClick={() => navigate(backToStocksPath)}
         className="hidden md:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
       >
         <ArrowLeft className="h-4 w-4" /> Back

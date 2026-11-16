@@ -24,6 +24,8 @@ import { calculateDemoReturn, fetchCompleteDemoHistory, filterDemoStocks, findDe
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import MarketPageLoader from "@/components/MarketPageLoader";
 import StockFavourites from "@/components/home/StockFavourites";
+import DesktopCountryMarketStrip from "@/components/stocks/DesktopCountryMarketStrip";
+import { getEastAfricanMarketMeta, useSelectedStockExchange } from "@/lib/stockExchangeSelection";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { toast } from "sonner";
 
@@ -34,25 +36,43 @@ const formatCompact = (value: number | null) => {
   return new Intl.NumberFormat("en-KE", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 };
 
+const CURRENCY_SHORTHAND: Record<string, string> = {
+  KES: "KSh",
+  UGX: "USh",
+  TZS: "TSh",
+  RWF: "FRw",
+};
+
+function getDesktopCurrencyPrefix(currency?: string | null): string {
+  const code = (currency || "KES").toUpperCase();
+  return CURRENCY_SHORTHAND[code] || code;
+}
+
 export default function StockDetailDesktopDemoPage({ production = false }: { production?: boolean }) {
   const { symbol = "" } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const { entries: favouriteEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
-  const [cachedStocks] = useState(() => stockCache.loadStocks()?.stocks ?? []);
-  const [stocks, setStocks] = useState<CachedStock[]>(cachedStocks);
+  const { selectedExchange, market, setSelectedExchange } = useSelectedStockExchange();
+  const [stocks, setStocks] = useState<CachedStock[]>(() => stockCache.loadStocks(selectedExchange)?.stocks ?? []);
   const [history, setHistory] = useState<Record<string, DemoPricePoint[]>>({});
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(stockCache.loadStocks(selectedExchange)?.stocks?.length));
   const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("All");
   const [movement, setMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
 
   useDocumentTitle(
-    production ? "Kenyan Stocks – Stock Market | Kenya Fund Finder" : "Desktop Stock Detail Demo | Kenya Fund Finder",
-    production ? "Track Kenyan stock market prices, market cap, volumes, and performance." : "Experimental three-column desktop stock page.",
+    production
+      ? selectedExchange === "NSE"
+        ? "Kenyan Stocks – Stock Market | Kenya Fund Finder"
+        : `${market.countryName} Stocks (${market.exchange}) – Stock Market | Kenya Fund Finder`
+      : "Desktop Stock Detail Demo | Kenya Fund Finder",
+    production
+      ? `Track ${market.adjective} stock market prices (${market.exchange}) in ${market.currency}, market cap, volumes, and performance.`
+      : "Experimental three-column desktop stock page.",
   );
 
   useEffect(() => {
@@ -60,23 +80,46 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   }, [isMobile, navigate, symbol]);
 
   useEffect(() => {
+    setSector("All");
+    setMovement("all");
+    setSearch("");
+
+    const localCached = stockCache.loadStocks(selectedExchange)?.stocks ?? [];
+    if (localCached.length > 0) {
+      setStocks(localCached);
+      setLoading(false);
+    } else if (selectedExchange === "NSE") {
+      setStocks([]);
+      setLoading(true);
+    } else {
+      setStocks([]);
+      setLoading(true);
+    }
+
     let cancelled = false;
     const loadStocks = async () => {
-      setLoading(true);
+      if (localCached.length === 0) setLoading(true);
       setLoadError(false);
       try {
         let rows: any[] = [];
         try {
           const response = await fetchPublicData<CachedStock>("stocks", {
             select: [
-              "id", "symbol", "name", "sector", "price", "previous_price", "day_change",
+              "id", "symbol", "exchange", "exchange_ticker", "currency", "country_code",
+              "name", "sector", "price", "previous_price", "day_change",
               "day_change_percent", "volume", "market_cap", "pe_ratio", "dividend_yield",
               "logo_url", "updated_at",
             ],
+            filters: { exchange: selectedExchange },
             limit: 200,
           });
           if (Array.isArray(response.data) && response.data.length > 0) {
-            rows = response.data;
+            rows = response.data.filter((item: any) => {
+              const ex = String(item.exchange || "NSE").toUpperCase();
+              if (ex !== selectedExchange) return false;
+              if (selectedExchange === "NSE" && /^(USE|DSE|RSE)-/i.test(String(item.symbol || ""))) return false;
+              return true;
+            });
           }
         } catch (gwErr) {
           console.warn("Desktop demo gateway failed, trying direct table fallback:", gwErr);
@@ -86,35 +129,42 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
           try {
             const { data, error } = await supabase
               .from("stocks")
-              .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, logo_url, updated_at")
+              .select("id, symbol, exchange, exchange_ticker, currency, country_code, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, logo_url, updated_at")
+              .eq("exchange", selectedExchange)
               .order("sort_order", { ascending: true })
               .limit(200);
             if (!error && Array.isArray(data) && data.length > 0) {
               rows = data;
-            } else {
+            } else if (selectedExchange === "NSE") {
               rows = FALLBACK_KENYAN_STOCKS;
             }
           } catch {
-            rows = FALLBACK_KENYAN_STOCKS;
+            if (selectedExchange === "NSE") rows = FALLBACK_KENYAN_STOCKS;
           }
         }
 
         const normalized = rows.map(normalizeStock);
         if (!cancelled) {
           setStocks(normalized);
-          stockCache.saveStocks(normalized);
+          stockCache.saveStocks(normalized, selectedExchange);
           setLoading(false);
         }
       } catch (error) {
         console.error("Failed to load desktop stock demo", error);
         if (!cancelled) {
-          setStocks(FALLBACK_KENYAN_STOCKS);
+          if (selectedExchange === "NSE") setStocks(FALLBACK_KENYAN_STOCKS);
           setLoadError(false);
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
+    loadStocks();
+    return () => { cancelled = true; };
+  }, [selectedExchange]);
+
+  useEffect(() => {
+    let cancelled = false;
     const loadHistory = async () => {
       setHistoryLoading(true);
       try {
@@ -135,10 +185,9 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
         if (!cancelled) setHistoryLoading(false);
       }
     };
-    loadStocks();
     loadHistory();
     return () => { cancelled = true; };
-  }, [cachedStocks]);
+  }, []);
 
   const selectedStock = useMemo(
     () => symbol ? findDemoStock(stocks, symbol) : stocks[0] ?? null,
@@ -180,7 +229,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
 
   if (isMobile) return null;
 
-  if (showLoading) {
+  if (showLoading && stocks.length === 0) {
     return (
       <div className="min-h-screen bg-background px-6 py-6 text-foreground">
         <MarketPageLoader message="Loading latest stock data…" />
@@ -191,21 +240,40 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   return (
     <div className="min-h-screen bg-background pb-16 text-foreground animate-in fade-in-50 duration-500">
       <main className="mx-auto max-w-[1600px] px-6 py-6">
-        {loadError ? (
-          <DemoState title="Stock data is temporarily unavailable" detail="Please check your connection and refresh the demo." />
-        ) : !selectedStock ? (
-          <DemoState title="Stock not found" detail={`No listed stock matches “${symbol}”.`} />
-        ) : (
-          <div>
-            <section className="min-w-0">
-              <div className="mb-7 flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">Nairobi Securities Exchange</p>
-                  <h1 className="mt-2 text-5xl font-black tracking-tight">Stocks</h1>
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">Browse current market prices, momentum across timeframes and open full stock reports.</p>
-                </div>
-                <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
-              </div>
+        <section className="min-w-0">
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">
+                {market.exchangeName} ({market.exchange}) · {market.currency}
+              </p>
+              <h1 className="mt-2 text-5xl font-black tracking-tight">Stocks</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">Browse current market prices, momentum across timeframes and open full stock reports.</p>
+            </div>
+            <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
+          </div>
+
+          <DesktopCountryMarketStrip
+            selectedExchange={selectedExchange}
+            onSelectExchange={setSelectedExchange}
+            activeStats={{
+              total: stocks.length,
+              gainers: stocks.filter((s) => s.day_change_percent > 0).length,
+              losers: stocks.filter((s) => s.day_change_percent < 0).length,
+            }}
+          />
+
+          {loadError ? (
+            <DemoState title="Stock data is temporarily unavailable" detail="Please check your connection and refresh the demo." />
+          ) : loading && stocks.length === 0 ? (
+            <div className="rounded-[22px] border border-border bg-card p-6 space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : !selectedStock ? (
+            <DemoState title="Stock not found" detail={`No listed stock matches “${symbol}”.`} />
+          ) : (
+            <div>
 
               {user && favouriteEntries.length > 0 && (
                 <StockFavourites entries={favouriteEntries} stocks={stocks} />
@@ -259,9 +327,9 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
                 </div>
                 {filteredStocks.length === 0 && <DemoState title="No stocks found" detail="Try another company, ticker, or sector." compact />}
               </div>
-            </section>
-          </div>
-        )}
+            </div>
+          )}
+        </section>
         {production && <ResearchLinks pillar="stocks" />}
       </main>
     </div>
@@ -273,11 +341,15 @@ function StockTableRow({ stock, points, selected, historyLoading, isFavourite, o
   const oneMonth = calculateDemoReturn(points, stock.price, 30);
   const threeMonth = calculateDemoReturn(points, stock.price, 90);
   const oneYear = calculateDemoReturn(points, stock.price, 365);
-  const logoUrl = getStockLogoUrl(stock.symbol, stock.logo_url);
+  const logoUrl = getStockLogoUrl(stock.symbol, stock.logo_url, stock.name);
+  const displayTicker = stock.exchange_ticker || stock.symbol.replace(/^(USE|DSE|RSE)-/i, "");
+  const ccyPrefix = getDesktopCurrencyPrefix(
+    stock.currency || getEastAfricanMarketMeta(stock.exchange || "NSE").currency,
+  );
   return (
     <tr onClick={() => window.location.assign(stockProductionPath(stock.symbol))} className={`cursor-pointer bg-muted/20 transition-colors hover:bg-muted/35 dark:bg-[#191a1d] dark:hover:bg-[#202226] ${selected ? "ring-1 ring-inset ring-emerald-500/20" : ""}`}>
-      <td className="bg-background/60 px-4 py-4 dark:bg-[#151619]"><div className="flex items-center gap-2.5"><div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted/60 text-[10px] font-bold text-muted-foreground"><span>{stock.symbol.slice(0, 2)}</span>{logoUrl && <img src={logoUrl} alt={`${stock.name} logo`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />}</div><div className="min-w-0"><p className="text-sm font-bold">{stock.symbol}</p><p className="truncate text-[11px] text-muted-foreground">{stock.name}</p></div></div></td>
-      <td className="whitespace-nowrap px-2 py-4 text-center font-body text-sm font-bold tabular-nums"><span className="mr-1 text-[10px] font-medium text-muted-foreground">KSh</span>{formatPrice(stock.price)}</td>
+      <td className="bg-background/60 px-4 py-4 dark:bg-[#151619]"><div className="flex items-center gap-2.5"><div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted/60 text-[10px] font-bold text-muted-foreground"><span>{displayTicker.slice(0, 2)}</span>{logoUrl && <img src={logoUrl} alt={`${stock.name} logo`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />}</div><div className="min-w-0"><p className="text-sm font-bold">{displayTicker}</p><p className="truncate text-[11px] text-muted-foreground">{stock.name}</p></div></div></td>
+      <td className="whitespace-nowrap px-2 py-4 text-center font-body text-sm font-bold tabular-nums"><span className="mr-1 text-[10px] font-medium text-muted-foreground">{ccyPrefix}</span>{formatPrice(stock.price)}</td>
       <td className="px-2 py-4 text-right"><ReturnValue value={stock.day_change_percent} /></td>
       <td className="px-2 py-4 text-right"><ReturnValue value={sevenDay} loading={historyLoading} /></td>
       <td className="px-2 py-4 text-right"><ReturnValue value={oneMonth} loading={historyLoading} /></td>
@@ -285,13 +357,13 @@ function StockTableRow({ stock, points, selected, historyLoading, isFavourite, o
       <td className="px-2 py-4 text-right"><ReturnValue value={oneYear} loading={historyLoading} /></td>
       <td className="px-2 py-4"><div className="flex justify-center"><TrendSparkline points={points} positive={(oneMonth ?? stock.day_change_percent) >= 0} loading={historyLoading} /></div></td>
       <td className="px-2 py-4 text-center font-body text-xs text-muted-foreground tabular-nums">{formatCompact(stock.volume)}</td>
-      <td className="whitespace-nowrap px-2 py-4 text-center font-body text-sm font-bold tabular-nums">KSh {formatCompact(stock.market_cap)}</td>
+      <td className="whitespace-nowrap px-2 py-4 text-center font-body text-sm font-bold tabular-nums">{stock.market_cap != null ? `${ccyPrefix} ${formatCompact(stock.market_cap)}` : "—"}</td>
       <td className="px-2 py-4 text-center">
         <button
           type="button"
           onClick={(event) => { event.preventDefault(); event.stopPropagation(); onToggleFavourite(); }}
           className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-yellow-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-          aria-label={isFavourite ? `Remove ${stock.symbol} from watchlist` : `Add ${stock.symbol} to watchlist`}
+          aria-label={isFavourite ? `Remove ${displayTicker} from watchlist` : `Add ${displayTicker} to watchlist`}
           aria-pressed={isFavourite}
         >
           <Star className={`h-4 w-4 ${isFavourite ? "fill-yellow-500 text-yellow-500" : ""}`} />

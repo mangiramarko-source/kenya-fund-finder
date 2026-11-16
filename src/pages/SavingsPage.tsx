@@ -59,7 +59,7 @@ const SavingsPage = () => {
       setActiveTab("saccos");
     } else if (tabParam === "tbills" || tabParam === "t-bills" || tabParam === "treasury") {
       setActiveTab("tbills");
-    } else if (tabParam === "fixed-deposits") {
+    } else {
       setActiveTab("fixed-deposits");
     }
   }, [tabParam]);
@@ -198,76 +198,7 @@ const SavingsPage = () => {
           </div>
         </div>
 
-        {/* Mobile: Filter Pills Row (Exact Match to MMF FundGrid) */}
-        <div className="md:hidden mb-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-          <button
-            type="button"
-            onClick={() => handleTabChange("fixed-deposits")}
-            className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === "fixed-deposits"
-                ? "border-foreground bg-foreground text-background shadow-sm"
-                : "border border-border bg-card text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-            }`}
-          >
-            <Landmark className="h-3.5 w-3.5" />
-            <span>Bank Fixed Deposits</span>
-            <span
-              className={`text-[11px] px-1.5 py-0.5 rounded-full font-normal tabular-nums ${
-                activeTab === "fixed-deposits"
-                  ? "bg-background/20 text-background"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {deposits.length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("saccos")}
-            className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === "saccos"
-                ? "border-foreground bg-foreground text-background shadow-sm"
-                : "border border-border bg-card text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-            }`}
-          >
-            <Users className="h-3.5 w-3.5" />
-            <span>SACCOs</span>
-            <span
-              className={`text-[11px] px-1.5 py-0.5 rounded-full font-normal tabular-nums ${
-                activeTab === "saccos"
-                  ? "bg-background/20 text-background"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {saccos.length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("tbills")}
-            className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === "tbills"
-                ? "border-foreground bg-foreground text-background shadow-sm"
-                : "border border-border bg-card text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-            }`}
-          >
-            <ShieldCheck className="h-3.5 w-3.5" />
-            <span>T-Bills & Bonds</span>
-            <span
-              className={`text-[11px] px-1.5 py-0.5 rounded-full font-normal tabular-nums ${
-                activeTab === "tbills"
-                  ? "bg-background/20 text-background"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              CBK
-            </span>
-          </button>
-        </div>
-
-        {/* Mobile Live Status (Between filter pills and table, matching MMF FundGrid) */}
+        {/* Mobile Live Status (Between description and table; tab switcher lives in mobile top nav) */}
         <div className="md:hidden mb-3.5 flex items-center justify-between px-0.5">
           <SectionLiveStatus
             section="funds"

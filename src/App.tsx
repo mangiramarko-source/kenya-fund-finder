@@ -109,6 +109,7 @@ const DevOnlyPages = import.meta.env.DEV
       DevAiLabPopupPreviewPage: lazyWithRetry(() => import("./pages/DevAiLabPopupPreviewPage"), "DevAiLabPopupPreviewPage"),
       DevAiResultCardPreviewPage: lazyWithRetry(() => import("./pages/DevAiResultCardPreviewPage"), "DevAiResultCardPreviewPage"),
       DevCompareDemoPage: lazyWithRetry(() => import("./pages/DevCompareDemoPage"), "DevCompareDemoPage"),
+      DevDesktopCountryDemoPage: lazyWithRetry(() => import("./pages/DevDesktopCountryDemoPage"), "DevDesktopCountryDemoPage"),
     }
   : null;
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"), "NotFound");
@@ -238,6 +239,7 @@ const App = () => (
                       <Route path="/dev/ai-lab-popup-preview" element={<DevOnlyPages.DevAiLabPopupPreviewPage />} />
                       <Route path="/dev/ai-result-card-preview" element={<DevOnlyPages.DevAiResultCardPreviewPage />} />
                       <Route path="/dev/compare-demo" element={<DevOnlyPages.DevCompareDemoPage />} />
+                      <Route path="/dev/desktop-country-demos" element={<DevOnlyPages.DevDesktopCountryDemoPage />} />
                     </> : null}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

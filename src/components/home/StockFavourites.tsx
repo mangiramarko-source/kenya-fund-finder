@@ -8,6 +8,8 @@ import type { WatchlistEntry } from "@/hooks/useFundWatchlist";
 interface Stock {
   id: string;
   symbol: string;
+  exchange_ticker?: string;
+  currency?: string;
   name: string;
   price: number;
   day_change: number;
@@ -24,9 +26,9 @@ interface StockFavouritesProps {
 const formatNumber = (n: number) =>
   n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const StockAvatar = ({ symbol, logoUrl, size = 28 }: { symbol: string; logoUrl?: string | null; size?: number }) => {
+const StockAvatar = ({ symbol, logoUrl, name, size = 28 }: { symbol: string; logoUrl?: string | null; name?: string | null; size?: number }) => {
   const [failed, setFailed] = useState(false);
-  const resolvedLogo = getStockLogoUrl(symbol, logoUrl);
+  const resolvedLogo = getStockLogoUrl(symbol, logoUrl, name);
 
   const hash = Array.from(symbol).reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const hue = hash % 360;
@@ -88,10 +90,10 @@ const StockFavourites = ({ entries, stocks }: StockFavouritesProps) => {
             className="flex items-center justify-between gap-2.5 min-w-[190px] max-w-[240px] shrink-0 rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card px-3 py-2 hover:border-emerald-500/40 shadow-xs transition-all active:scale-[0.98] group"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <StockAvatar symbol={s.symbol} logoUrl={s.logo_url} size={28} />
+              <StockAvatar symbol={s.symbol} logoUrl={s.logo_url} name={s.name} size={28} />
               <div className="min-w-0 flex-1">
                 <span className="text-xs font-bold text-foreground tracking-wide block truncate group-hover:text-accent transition-colors">
-                  {s.symbol}
+                  {s.exchange_ticker || s.symbol}
                 </span>
                 <p className="text-[10px] text-muted-foreground truncate mt-0.5">{s.name}</p>
               </div>

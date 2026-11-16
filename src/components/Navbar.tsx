@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, User } from "lucide-react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { ArrowLeft, ChevronDown, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,23 @@ import NotificationBell from "@/components/alerts/NotificationBell";
 import { getStoredTheme, saveTheme } from "@/lib/themeStorage";
 import MobileAccountSheet from "@/components/mobile/MobileAccountSheet";
 import { sanitizeAvatarUrl } from "@/lib/safeImageUpload";
+import MobileCountryExchangeSheet, { CountryFlagCircle } from "@/components/stocks/MobileCountryExchangeSheet";
+import { useSelectedStockExchange } from "@/lib/stockExchangeSelection";
+import MobileSectionPickerSheet, { MobileNavPickerTrigger } from "@/components/mobile/MobileSectionPickerSheet";
+import {
+  buildBankingTabOptions,
+  buildFundCategoryOptions,
+  buildMacroTabOptions,
+  getFundCategoryOptionMeta,
+  getStoredFundListForCounts,
+  parseBankingTabFromSearch,
+  parseFundCategoryFromSearch,
+  parseMacroTabFromLocation,
+  resolveMobileNavSectionKind,
+} from "@/lib/mobileNavSections";
+import { fetchBankFixedDeposits, fetchSaccoRecords } from "@/lib/savingsApi";
+import { fetchPublicData } from "@/lib/gateway";
+import { fetchFunds, type FundFromDB } from "@/lib/api";
 
 export const mobileNavLinks = [
   { to: "/", label: "Overview" },
@@ -147,8 +164,14 @@ function MobileProfileButton({
 }
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
+let cachedNavbarFunds: FundFromDB[] | null = null;
+let cachedBankingCounts: { deposits: number; saccos: number } | null = null;
+let cachedMacroCounts: { fx: number; commodities?: number } | null = null;
+
 const Navbar = () => {
   const [accountOpen, setAccountOpen] = useState(false);
+  const [countrySheetOpen, setCountrySheetOpen] = useState(false);
+  const [sectionSheetOpen, setSectionSheetOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(64);
   const [dark, setDark] = useState(() => {
@@ -234,8 +257,136 @@ const Navbar = () => {
 
   const cleanPath = location.pathname.length > 1 && location.pathname.endsWith("/") ? location.pathname.slice(0, -1) : location.pathname;
   const isFeedPage = cleanPath === "" || cleanPath === "/" || cleanPath === "/overview" || cleanPath === "/news";
+  const isStocksListPage = cleanPath === "/stocks";
+  const mobileSectionKind = resolveMobileNavSectionKind(cleanPath);
+  const { selectedExchange, market: selectedMarket, setSelectedExchange } = useSelectedStockExchange();
   const [newsScrolledPast, setNewsScrolledPast] = useState(false);
   const [marketNewsCount, setMarketNewsCount] = useState<number>(0);
+
+  const [navFunds, setNavFunds] = useState<FundFromDB[]>(() => cachedNavbarFunds ?? getStoredFundListForCounts());
+  const [bankingCounts, setBankingCounts] = useState<{ deposits: number; saccos: number } | undefined>(
+    () => cachedBankingCounts ?? undefined,
+  );
+  const [macroCounts, setMacroCounts] = useState<{ fx: number; commodities?: number } | undefined>(
+    () => cachedMacroCounts ?? undefined,
+  );
+
+  useEffect(() => {
+    setSectionSheetOpen(false);
+  }, [cleanPath]);
+
+  useEffect(() => {
+    if (!sectionSheetOpen) return;
+    let cancelled = false;
+
+    if (mobileSectionKind === "funds") {
+      const stored = getStoredFundListForCounts();
+      setNavFunds(stored);
+      if (!cachedNavbarFunds) {
+        fetchFunds()
+          .then((list) => {
+            if (cancelled || !Array.isArray(list) || list.length === 0) return;
+            const published = list.filter((f) => f.is_published);
+            cachedNavbarFunds = published;
+            setNavFunds(published);
+          })
+          .catch(() => {});
+      }
+    } else if (mobileSectionKind === "banking" && !cachedBankingCounts) {
+      Promise.all([fetchBankFixedDeposits(), fetchSaccoRecords()])
+        .then(([deposits, saccos]) => {
+          if (cancelled) return;
+          const next = { deposits: deposits.length, saccos: saccos.length };
+          cachedBankingCounts = next;
+          setBankingCounts(next);
+        })
+        .catch(() => {});
+    } else if (mobileSectionKind === "macro" && !cachedMacroCounts) {
+      Promise.allSettled([
+        fetchPublicData<unknown>("rates", { limit: 200 }),
+        fetchPublicData<unknown>("commodities", { limit: 200 }),
+      ]).then(([ratesRes, commRes]) => {
+        if (cancelled) return;
+        const fxCount =
+          ratesRes.status === "fulfilled" && Array.isArray(ratesRes.value?.data) && ratesRes.value.data.length > 0
+            ? ratesRes.value.data.length
+            : 14;
+        const commCount =
+          commRes.status === "fulfilled" && Array.isArray(commRes.value?.data) && commRes.value.data.length > 0
+            ? commRes.value.data.length
+            : undefined;
+        const next = { fx: fxCount, commodities: commCount };
+        cachedMacroCounts = next;
+        setMacroCounts(next);
+      });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sectionSheetOpen, mobileSectionKind]);
+
+  const activeFundCategory = parseFundCategoryFromSearch(location.search);
+  const activeBankingTab = parseBankingTabFromSearch(location.search);
+  const activeMacroTab = parseMacroTabFromLocation(cleanPath, location.search);
+
+  const fundCategoryOptions = useMemo(() => buildFundCategoryOptions(navFunds), [navFunds]);
+  const activeFundMeta = useMemo(
+    () => getFundCategoryOptionMeta(activeFundCategory, navFunds),
+    [activeFundCategory, navFunds],
+  );
+  const bankingOptions = useMemo(() => buildBankingTabOptions(bankingCounts), [bankingCounts]);
+  const activeBankingMeta = useMemo(
+    () => bankingOptions.find((o) => o.id === activeBankingTab) ?? bankingOptions[0],
+    [bankingOptions, activeBankingTab],
+  );
+  const macroOptions = useMemo(() => buildMacroTabOptions(macroCounts), [macroCounts]);
+  const activeMacroMeta = useMemo(
+    () => macroOptions.find((o) => o.id === activeMacroTab) ?? macroOptions[0],
+    [macroOptions, activeMacroTab],
+  );
+
+  const handleSelectFundCategory = (category: string) => {
+    const params = new URLSearchParams(location.search);
+    if (category === "money_market") {
+      params.delete("category");
+    } else {
+      params.set("category", category);
+    }
+    params.delete("movement");
+    const nextSearch = params.toString();
+    navigate(`${cleanPath}${nextSearch ? `?${nextSearch}` : ""}`, { replace: true });
+  };
+
+  const handleSelectBankingTab = (tab: string) => {
+    const params = new URLSearchParams(location.search);
+    if (tab === "fixed-deposits") {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+    const nextSearch = params.toString();
+    navigate(`${cleanPath}${nextSearch ? `?${nextSearch}` : ""}`, { replace: true });
+  };
+
+  const handleSelectMacroTab = (tab: string) => {
+    if (tab === "fx") {
+      if (cleanPath === "/commodities") {
+        navigate("/rates", { replace: true });
+        return;
+      }
+      const params = new URLSearchParams(location.search);
+      params.delete("tab");
+      const nextSearch = params.toString();
+      navigate(`/rates${nextSearch ? `?${nextSearch}` : ""}`, { replace: true });
+      return;
+    }
+
+    if (cleanPath === "/commodities") return;
+    const params = new URLSearchParams(location.search);
+    params.set("tab", "commodities");
+    navigate(`/rates?${params.toString()}`, { replace: true });
+  };
 
   useEffect(() => {
     if (!isFeedPage) {
@@ -397,6 +548,46 @@ const Navbar = () => {
                       </span>
                     )}
                   </button>
+                ) : isStocksListPage ? (
+                  <button
+                    type="button"
+                    onClick={() => setCountrySheetOpen(true)}
+                    data-testid="mobile-country-trigger"
+                    aria-label={`Selected market: ${selectedMarket.countryName} (${selectedMarket.exchange}). Change country`}
+                    className="inline-flex h-10 min-w-0 items-center gap-2 rounded-full border border-border/80 bg-muted/60 dark:bg-muted/70 pl-2.5 pr-3 text-sm font-bold text-foreground hover:bg-muted active:scale-95 transition-all shadow-2xs"
+                  >
+                    <CountryFlagCircle
+                      countryCode={selectedMarket.countryCode}
+                      countryName={selectedMarket.countryName}
+                      size={22}
+                    />
+                    <span className="truncate">{selectedMarket.countryName}</span>
+                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </button>
+                ) : mobileSectionKind === "funds" ? (
+                  <MobileNavPickerTrigger
+                    iconName={activeFundMeta.iconName}
+                    label={activeFundMeta.pillLabel}
+                    ariaLabel={`Selected fund category: ${activeFundMeta.title}. Change category`}
+                    onClick={() => setSectionSheetOpen(true)}
+                    testId="mobile-funds-trigger"
+                  />
+                ) : mobileSectionKind === "banking" ? (
+                  <MobileNavPickerTrigger
+                    iconName={activeBankingMeta.iconName}
+                    label={activeBankingMeta.pillLabel}
+                    ariaLabel={`Selected savings category: ${activeBankingMeta.title}. Switch view`}
+                    onClick={() => setSectionSheetOpen(true)}
+                    testId="mobile-banking-trigger"
+                  />
+                ) : mobileSectionKind === "macro" ? (
+                  <MobileNavPickerTrigger
+                    iconName={activeMacroMeta.iconName}
+                    label={activeMacroMeta.pillLabel}
+                    ariaLabel={`Selected market: ${activeMacroMeta.title}. Switch between FX and Commodities`}
+                    onClick={() => setSectionSheetOpen(true)}
+                    testId="mobile-macro-trigger"
+                  />
                 ) : (
                   <Link
                     to="/"
@@ -445,6 +636,58 @@ const Navbar = () => {
         signOut={signOut}
         navigate={navigate}
       />
+
+      <MobileCountryExchangeSheet
+        open={countrySheetOpen}
+        onOpenChange={setCountrySheetOpen}
+        selectedExchange={selectedExchange}
+        onSelectExchange={setSelectedExchange}
+      />
+
+      {mobileSectionKind === "funds" && (
+        <MobileSectionPickerSheet
+          open={sectionSheetOpen}
+          onOpenChange={setSectionSheetOpen}
+          title="Filter by Category"
+          subtitle="Select a fund category to filter unit trusts"
+          headerIcon="Landmark"
+          ariaLabel="Choose fund category"
+          closeAriaLabel="Close fund category selector"
+          options={fundCategoryOptions}
+          selectedId={activeFundCategory}
+          onSelect={handleSelectFundCategory}
+        />
+      )}
+
+      {mobileSectionKind === "banking" && (
+        <MobileSectionPickerSheet
+          open={sectionSheetOpen}
+          onOpenChange={setSectionSheetOpen}
+          title="Banking & Fixed Income"
+          subtitle="Compare bank deposits, SACCOs, and T-Bills"
+          headerIcon="Landmark"
+          ariaLabel="Choose savings and fixed income view"
+          closeAriaLabel="Close banking view selector"
+          options={bankingOptions}
+          selectedId={activeBankingTab}
+          onSelect={handleSelectBankingTab}
+        />
+      )}
+
+      {mobileSectionKind === "macro" && (
+        <MobileSectionPickerSheet
+          open={sectionSheetOpen}
+          onOpenChange={setSectionSheetOpen}
+          title="FX & Commodities"
+          subtitle="Switch between currency rates and commodities"
+          headerIcon="Coins"
+          ariaLabel="Choose FX or Commodities view"
+          closeAriaLabel="Close FX and commodities selector"
+          options={macroOptions}
+          selectedId={activeMacroTab}
+          onSelect={handleSelectMacroTab}
+        />
+      )}
     </>
   );
 };

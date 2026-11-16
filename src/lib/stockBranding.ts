@@ -61,7 +61,8 @@ export const HOSTED_STOCK_LOGOS: Record<string, string> = {
 
 /** Normalizes symbol or resolves by company name if ticker is incomplete. */
 export function resolveTickerSymbol(symbol?: string | null, name?: string | null): string {
-  const sym = (symbol || "").trim().toUpperCase();
+  const rawSym = (symbol || "").trim().toUpperCase();
+  const sym = rawSym.replace(/^(NSE|USE|DSE|RSE)-/, "");
   const n = (name || "").toLowerCase();
 
   if (sym === "SCOM" || sym === "SAFA" || sym.startsWith("SAFARI") || n.includes("safaricom")) {
@@ -70,7 +71,7 @@ export function resolveTickerSymbol(symbol?: string | null, name?: string | null
   if (sym === "SGL" || sym.startsWith("STAND") || n.includes("standard group")) {
     return "SGL";
   }
-  if (sym === "CTUM" || sym.startsWith("CENT") || n.includes("centum")) {
+  if (sym === "CTUM" || sym === "CENT" || sym.startsWith("CENT") || n.includes("centum")) {
     return "CTUM";
   }
   if (sym === "KEGN" || sym.startsWith("KENG") || n.includes("kengen")) {
@@ -79,11 +80,26 @@ export function resolveTickerSymbol(symbol?: string | null, name?: string | null
   if (sym === "LKL" || sym.startsWith("LONG") || n.includes("longhorn")) {
     return "LKL";
   }
-  if (sym === "UMME" || sym.startsWith("UMEM") || n.includes("umeme")) {
+  if (sym === "UMME" || sym === "UMEM" || sym.startsWith("UMEM") || n.includes("umeme")) {
     return "UMME";
   }
-  if (sym === "KQ" || n.includes("kenya airways")) {
+  if (sym === "KQ" || sym === "KA" || n.includes("kenya airways")) {
     return "KQ";
+  }
+  if (sym === "EQTY" || sym === "EBL" || n.includes("equity bank") || n.includes("equity group")) {
+    return "EQTY";
+  }
+  if (sym === "BKG" || sym === "BOK" || n.includes("bank of kigali") || n.includes("bk group")) {
+    return "BKG";
+  }
+  if (sym === "JUB" || sym === "JHL" || n.includes("jubilee")) {
+    return "JUB";
+  }
+  if (sym === "SBIC" || sym === "SBU" || n.includes("stanbic")) {
+    return "SBIC";
+  }
+  if (sym === "IMH" || sym === "IMR" || n.includes("i&m bank")) {
+    return "IMH";
   }
   return sym;
 }

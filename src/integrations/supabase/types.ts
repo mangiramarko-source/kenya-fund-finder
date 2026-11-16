@@ -1901,11 +1901,15 @@ export type Database = {
       }
       stocks: {
         Row: {
+          country_code: string
           created_at: string
           created_by: string | null
+          currency: string
           day_change: number
           day_change_percent: number
           dividend_yield: number | null
+          exchange: string
+          exchange_ticker: string
           id: string
           is_active: boolean
           logo_url: string | null
@@ -1926,11 +1930,15 @@ export type Database = {
           year_low: number | null
         }
         Insert: {
+          country_code?: string
           created_at?: string
           created_by?: string | null
+          currency?: string
           day_change?: number
           day_change_percent?: number
           dividend_yield?: number | null
+          exchange?: string
+          exchange_ticker?: string
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -1951,11 +1959,15 @@ export type Database = {
           year_low?: number | null
         }
         Update: {
+          country_code?: string
           created_at?: string
           created_by?: string | null
+          currency?: string
           day_change?: number
           day_change_percent?: number
           dividend_yield?: number | null
+          exchange?: string
+          exchange_ticker?: string
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -2480,9 +2492,13 @@ export type Database = {
       stocks_public: {
         Row: {
           company_summary: string | null
+          country_code: string | null
+          currency: string | null
           day_change: number | null
           day_change_percent: number | null
           dividend_yield: number | null
+          exchange: string | null
+          exchange_ticker: string | null
           id: string | null
           headquarters: string | null
           is_active: boolean | null
@@ -2506,9 +2522,13 @@ export type Database = {
         }
         Insert: {
           company_summary?: string | null
+          country_code?: string | null
+          currency?: string | null
           day_change?: number | null
           day_change_percent?: number | null
           dividend_yield?: number | null
+          exchange?: string | null
+          exchange_ticker?: string | null
           id?: string | null
           headquarters?: string | null
           is_active?: boolean | null
@@ -2532,9 +2552,13 @@ export type Database = {
         }
         Update: {
           company_summary?: string | null
+          country_code?: string | null
+          currency?: string | null
           day_change?: number | null
           day_change_percent?: number | null
           dividend_yield?: number | null
+          exchange?: string | null
+          exchange_ticker?: string | null
           id?: string | null
           headquarters?: string | null
           is_active?: boolean | null

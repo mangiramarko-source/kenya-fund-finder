@@ -205,7 +205,7 @@ export function inferStockSector(
   if (/\b(mtn|airtel|telecom|safaricom|vodacom|tigo)\b/.test(hay)) {
     return "Telecommunications";
   }
-  if (/\b(brewer|cement|cigarette|tobacco|bralirwa|cimerwa|clays|cipla|chemical|pharma|unga|bamburi|sugar|tea|carbacid|paint|packaging)\b/.test(hay)) {
+  if (/\b(brewer|cement|cigarette|tobacco|bralirwa|cimerwa|clays|cipla|chemical|pharma|unga|bamburi|sugar|tea|carbacid|paint|packaging|textile|mill)\b/.test(hay)) {
     return "Manufacturing & Allied";
   }
   if (/\b(jubilee|insurance|assurance|nic\s+holdings|sanlam|britam|liberty|reinsurance)\b/.test(hay)) {
@@ -217,10 +217,10 @@ export function inferStockSector(
   if (/\b(airways|airline|precision\s+air|swissport|aviation|media|vision|exchange|serena|tourism|hotel|uchumi|supermarket|logistics|port)\b/.test(hay)) {
     return "Commercial & Services";
   }
-  if (/\b(centum|nico\b|investment|holdings|capital|trust|afriprise|tccia)\b/.test(hay)) {
+  if (/\b(centum|nico\b|investment|holdings|capital|trust|afriprise|tccia|bophelo|rhb)\b/.test(hay)) {
     return "Investment";
   }
-  if (/\b(agric|kakuzi|sasini|plantation|coffee|ranch)\b/.test(hay)) {
+  if (/\b(agric|kakuzi|sasini|plantation|coffee|ranch|jatu)\b/.test(hay)) {
     return "Agricultural";
   }
 
