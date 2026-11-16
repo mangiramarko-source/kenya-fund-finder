@@ -709,7 +709,7 @@ async function buildDailyMarketReport(
 
   const wants = (kind: DailyMarketReportTopic) => topic === "all" || topic === kind;
   const [stocksResult, fundsResult, ratesResult, commoditiesResult] = await Promise.all([
-    wants("stocks") ? client.from("stocks").select("symbol,name,price,day_change_percent,updated_at").eq("is_active", true).limit(100) : Promise.resolve({ data: [] }),
+    wants("stocks") ? client.from("stocks").select("symbol,name,price,day_change_percent,updated_at").eq("is_active", true).eq("exchange", "NSE").limit(100) : Promise.resolve({ data: [] }),
     wants("mmf") ? client.from("funds").select("name,annual_yield,fund_type,updated_at").eq("is_published", true).eq("fund_type", "money_market").limit(100) : Promise.resolve({ data: [] }),
     wants("fx") ? client.from("exchange_rates").select("currency_code,currency_name,rate,previous_rate,updated_at").eq("is_active", true).limit(40) : Promise.resolve({ data: [] }),
     wants("commodities") ? client.from("commodities").select("symbol,name,price,previous_price,unit,updated_at").eq("is_active", true).limit(40) : Promise.resolve({ data: [] }),
@@ -843,12 +843,15 @@ async function fetchEntityQuote(client: ResolverClient, entity: CanonicalFinanci
   const sourceId = entity.sourceId;
   const sourceKey = entity.sourceKey;
   if (entity.kind === "stock") {
-    let query = client.from("stocks").select("id,symbol,name,price,updated_at").eq("is_active", true);
+    let query = client.from("stocks").select("id,symbol,name,price,exchange,currency,updated_at").eq("is_active", true);
     query = sourceId ? query.eq("id", sourceId) : query.eq("symbol", sourceKey);
     const { data } = await query.maybeSingle();
     const value = parseNumber(data?.price);
     if (!data || value == null || value <= 0) return null;
-    return { value, label: "Price (KES)", quoteCurrency: "KES", updatedAt: data.updated_at ?? null, name: String(data.name ?? sourceKey).trim(), symbol: String(data.symbol ?? sourceKey).trim() };
+    const rawSym = String(data.symbol ?? sourceKey).toUpperCase();
+    const ex = String((data as { exchange?: string | null }).exchange ?? (rawSym.startsWith("USE-") ? "USE" : rawSym.startsWith("DSE-") ? "DSE" : rawSym.startsWith("RSE-") ? "RSE" : "NSE")).toUpperCase();
+    const quoteCurrency = String((data as { currency?: string | null }).currency ?? (ex === "USE" ? "UGX" : ex === "DSE" ? "TZS" : ex === "RSE" ? "RWF" : "KES")).toUpperCase();
+    return { value, label: `Price (${quoteCurrency})`, quoteCurrency, updatedAt: data.updated_at ?? null, name: String(data.name ?? sourceKey).trim(), symbol: String(data.symbol ?? sourceKey).trim() };
   }
   if (entity.kind === "fund") {
     let query = client.from("funds").select("id,slug,name,annual_yield,fund_type,yield_unit,minimum_investment,management_fee,withdrawal_time,updated_at").eq("is_published", true);

@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchPublicData } from "@/lib/gateway";
+import { inferCurrencyFromExchange, inferExchangeFromSymbol } from "@/lib/stockCache";
 import { resolveAssetMatch } from "./nameMatch";
 
 export type AssetKind = "stock" | "fund" | "commodity" | "fx";
@@ -56,6 +57,9 @@ interface FundRow {
 interface StockRow {
   id: string | null;
   symbol: string | null;
+  exchange?: string | null;
+  exchange_ticker?: string | null;
+  currency?: string | null;
   name: string | null;
   sector: string | null;
   price: number | string | null;
@@ -110,9 +114,9 @@ export async function fetchMarketContext(): Promise<MarketContext> {
       limit: 100,
     }),
     fetchPublicData<StockRow>("stocks", {
-      select: ["id", "symbol", "name", "sector", "price", "day_change_percent"],
+      select: ["id", "symbol", "name", "sector", "price", "day_change_percent", "exchange", "exchange_ticker", "currency"],
       order: "sort_order.asc",
-      limit: 80,
+      limit: 200,
     }),
     fetchPublicData<CommodityRow>("commodities", {
       select: ["id", "symbol", "name", "price", "previous_price", "unit"],
@@ -164,16 +168,22 @@ export async function fetchMarketContext(): Promise<MarketContext> {
   for (const s of stocks.data) {
     const p = num(s.price);
     if (!s.symbol || p == null) continue;
+    const exchange = inferExchangeFromSymbol(s.symbol, s.exchange);
+    const currency = inferCurrencyFromExchange(exchange, s.currency);
+    const extras = [
+      { label: "Exchange", value: exchange },
+      ...(s.sector ? [{ label: "Sector", value: s.sector }] : []),
+    ];
     assets.push({
       kind: "stock",
       id: s.id ?? undefined,
       name: s.name ?? s.symbol,
       symbol: s.symbol,
       value: p,
-      valueLabel: "Price (KES)",
+      valueLabel: `Price (${currency})`,
       changePct: num(s.day_change_percent),
-      extras: s.sector ? [{ label: "Sector", value: s.sector }] : undefined,
-      aliases: tokenize(s.symbol, s.name, s.sector, s.symbol === "SCOM" ? "safaricom" : null),
+      extras,
+      aliases: tokenize(s.symbol, s.exchange_ticker, exchange, s.name, s.sector, s.symbol === "SCOM" ? "safaricom" : null),
     });
   }
 

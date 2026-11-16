@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { PortfolioItem } from "@/hooks/usePortfolio";
 import { resolveAsset, buildNameIndex } from "@/lib/assetMatch";
+import { inferCurrencyFromExchange, inferExchangeFromSymbol } from "@/lib/stockCache";
 
 export interface ChangeRow {
   itemId: string;
@@ -11,7 +12,7 @@ export interface ChangeRow {
   previous: number | null;
   delta: number | null;
   deltaPct: number | null;
-  unit: "%" | "KES";
+  unit: string;
 }
 
 /**
@@ -94,12 +95,14 @@ export function usePortfolioChanges(items: PortfolioItem[]) {
       if (stocks.length) {
         const { data: stockRows } = await supabase
           .from("stocks_public")
-          .select("id, name, symbol, price, previous_price")
+          .select("id, name, symbol, price, previous_price, exchange, currency")
           .eq("is_active", true);
         const records = (stockRows || []).map((r: any) => ({
           id: r.id as string,
           name: r.name as string,
           symbol: r.symbol as string | null,
+          exchange: r.exchange as string | null,
+          currency: r.currency as string | null,
           current: Number(r.price) || 0,
           previous: r.previous_price == null ? null : Number(r.previous_price),
         }));
@@ -125,20 +128,25 @@ export function usePortfolioChanges(items: PortfolioItem[]) {
         }
 
         matched.forEach(({ holding, match }) => {
+          const fallbackUnit = inferCurrencyFromExchange(inferExchangeFromSymbol(holding.ticker));
           if (!match) {
             out.push({
               itemId: holding.id, assetType: "stock", assetName: holding.asset_name,
-              current: holding.current_price, previous: null, delta: null, deltaPct: null, unit: "KES",
+              current: holding.current_price, previous: null, delta: null, deltaPct: null, unit: fallbackUnit,
             });
             return;
           }
+          const matchedUnit = inferCurrencyFromExchange(
+            inferExchangeFromSymbol(match.symbol, match.exchange),
+            match.currency,
+          );
           const previous = match.previous ?? prev.get(match.id);
           const delta = previous != null ? match.current - previous : null;
           const deltaPct = previous != null && previous !== 0
             ? ((match.current - previous) / previous) * 100 : null;
           out.push({
             itemId: holding.id, assetType: "stock", assetName: holding.asset_name,
-            current: match.current, previous: previous ?? null, delta, deltaPct, unit: "KES",
+            current: match.current, previous: previous ?? null, delta, deltaPct, unit: matchedUnit,
           });
         });
       }

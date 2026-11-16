@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMarketDate } from "@/lib/utils";
 import { useMarketData, type ExchangeRate, type Commodity, type Stock } from "@/components/home/MarketTicker";
+import { inferExchangeFromSymbol } from "@/lib/stockCache";
 import { TrendingUp, TrendingDown, Minus, ArrowUpDown, Search, DollarSign, Gem } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -81,7 +82,11 @@ const MarketDashboardPage = () => {
   );
   useJsonLd({ "@context": "https://schema.org", "@type": "WebPage", name: "Market Overview – Kenya Fund Finder", url: "https://kenyafundfinder.com/markets" });
 
-  const { rates, commodities, stocks, loading } = useMarketData();
+  const { rates, commodities, stocks: allStocks, loading } = useMarketData();
+  const stocks = useMemo(
+    () => allStocks.filter((s) => inferExchangeFromSymbol(s.symbol, s.exchange) === "NSE"),
+    [allStocks],
+  );
   const { lastUpdateDate, isLive, showDate } = useLiveStatus();
 
   const [activeTab, setActiveTab] = useState<MarketCategory>("fx_rates");

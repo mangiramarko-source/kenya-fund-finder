@@ -41,7 +41,7 @@ export interface UniversalCompareEntity {
     minDepositKes?: number;
     tenorOrWithdrawal?: string;
     riskLevel?: "Low / Capital Preservation" | "Moderate" | "Equity Market Risk" | "Currency Fluctuations";
-    regulator?: "CMA Regulated" | "CBK Monitored" | "SASRA Regulated" | "KDIC Insured Bank";
+    regulator?: string;
     sectorOrType?: string;
     marketCapFormatted?: string;
     currencyCode?: string;
@@ -294,7 +294,7 @@ export const CompareWorkbench: React.FC<CompareWorkbenchProps> = ({
                 </span>
                 <span className="text-lg font-black text-foreground tabular-nums">
                   {category === "stocks" && item.metrics.priceKes != null
-                    ? `KES ${item.metrics.priceKes.toFixed(2)}`
+                    ? `${item.metrics.currencyCode || "KES"} ${item.metrics.priceKes.toFixed(2)}`
                     : category === "rates" && item.metrics.priceKes != null
                     ? `KES ${item.metrics.priceKes.toFixed(2)}`
                     : item.metrics.primaryYieldOrReturnPct != null
@@ -907,7 +907,7 @@ export const CompareWorkbench: React.FC<CompareWorkbenchProps> = ({
                         {c.metrics.primaryYieldOrReturnPct != null
                           ? `${c.metrics.primaryYieldOrReturnPct.toFixed(2)}%`
                           : c.metrics.priceKes != null
-                          ? `KES ${c.metrics.priceKes.toFixed(2)}`
+                          ? `${c.metrics.currencyCode || "KES"} ${c.metrics.priceKes.toFixed(2)}`
                           : "—"}
                       </span>
                       <span className="text-[10px] text-emerald-600 font-semibold group-hover:underline">

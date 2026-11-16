@@ -2,7 +2,7 @@ import { ArrowDownRight, ArrowUpRight, Minus, PieChart } from "lucide-react";
 import { PortfolioItem, getCurrentValue, getPnL, getPnLPercent } from "@/hooks/usePortfolio";
 import type { ChangeRow } from "@/hooks/usePortfolioChanges";
 import type { ExchangeRate } from "@/components/home/MarketTicker";
-import { formatPortfolioCurrency } from "@/lib/portfolioCurrency";
+import { convertToKes, formatPortfolioCurrency, type ExchangeRateLike } from "@/lib/portfolioCurrency";
 
 interface PortfolioHoldingCardProps {
   item: PortfolioItem;
@@ -32,14 +32,23 @@ const directionFor = (value: number): PerformanceDirection => value > 0 ? "gain"
 const toneFor = (direction: PerformanceDirection) =>
   direction === "gain" ? "text-[#10B981]" : direction === "loss" ? "text-rose-500" : "text-zinc-300";
 
-/** Only price quotes can truthfully become a holding's monetary 1D result. */
-export const holdingOneDayPerformance = (item: PortfolioItem, change?: ChangeRow): OneDayPerformance => {
+/** Only price quotes can truthfully become a holding's monetary 1D result (normalized to KES). */
+export const holdingOneDayPerformance = (
+  item: PortfolioItem,
+  change?: ChangeRow,
+  rates?: ExchangeRateLike[],
+): OneDayPerformance => {
   if (
-    change?.unit !== "KES" || change.delta == null || change.deltaPct == null ||
+    !change || change.unit === "%" || change.delta == null || change.deltaPct == null ||
     !Number.isFinite(change.delta) || !Number.isFinite(change.deltaPct)
   ) return { available: false, percent: null, amount: null };
 
-  return { available: true, percent: change.deltaPct, amount: change.delta * item.units };
+  const localDelta = change.delta * item.units;
+  return {
+    available: true,
+    percent: change.deltaPct,
+    amount: convertToKes(localDelta, change.unit || "KES", rates),
+  };
 };
 
 function PerformanceValue({ value, direction }: { value: number; direction: PerformanceDirection }) {
@@ -55,11 +64,11 @@ function PerformanceValue({ value, direction }: { value: number; direction: Perf
 export default function PortfolioHoldingCard({
   item, currency, rates, change, compact = false, presentation, onClick, className = "",
 }: PortfolioHoldingCardProps) {
-  const val = getCurrentValue(item);
-  const pnlPct = getPnLPercent(item);
-  const pnl = getPnL(item);
+  const val = getCurrentValue(item, rates);
+  const pnlPct = getPnLPercent(item, rates);
+  const pnl = getPnL(item, rates);
   const overallDirection = directionFor(pnl);
-  const oneDay = holdingOneDayPerformance(item, change);
+  const oneDay = holdingOneDayPerformance(item, change, rates);
   const oneDayDirection = oneDay.percent == null ? "flat" : directionFor(oneDay.percent);
   const mobilePresentation = presentation === "mobile" || (!presentation && !compact);
   const assetBadgeLabel = item.id === "demo-safaricom" ? "EXAMPLE" : item.asset_type === "fixed_income" ? "T-BILLS" : item.asset_type === "stock" ? "STOCKS" : item.asset_type.toUpperCase();

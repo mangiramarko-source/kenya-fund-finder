@@ -19,6 +19,7 @@ import WatchCard, { type AlertState } from "@/components/watchlist/WatchCard";
 import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
+import { inferCurrencyFromExchange, inferExchangeFromSymbol } from "@/lib/stockCache";
 import { computeAlertSummary } from "@/lib/watchlistAlertSummary";
 import { useUnifiedWatchlist, type UnifiedWatchlistItem as WatchlistItem } from "@/hooks/useUnifiedWatchlist";
 import WatchlistAlertsTabs from "@/components/watchlist/WatchlistAlertsTabs";
@@ -186,7 +187,13 @@ export default function MobileWatchlistView() {
   }, [funds, effectiveWatchlist]);
 
   const mobileAlertAssets = useMemo<WatchlistAlertAsset[]>(() => [
-    ...watchedStocks.map((asset) => ({ type: "stock" as const, id: asset.id, name: `${asset.name} (${asset.symbol})`, value: Number(asset.price), unit: "KES" })),
+    ...watchedStocks.map((asset) => ({
+      type: "stock" as const,
+      id: asset.id,
+      name: `${asset.name} (${asset.symbol})`,
+      value: Number(asset.price),
+      unit: inferCurrencyFromExchange(inferExchangeFromSymbol(asset.symbol, asset.exchange), asset.currency),
+    })),
     ...watchedFunds.map((asset) => ({ type: "fund" as const, id: asset.id, name: asset.name, value: Number(asset.annual_yield), unit: "%" })),
     ...watchedRates.map((asset) => ({ type: "currency" as const, id: asset.id, name: `${asset.currency_code}/KES`, value: Number(asset.rate), unit: "KES" })),
     ...watchedCommodities.map((asset) => ({ type: "commodity" as const, id: asset.id, name: asset.name, value: Number(asset.price), unit: asset.unit })),
@@ -280,14 +287,17 @@ export default function MobileWatchlistView() {
 
     if (addType === "stock") {
       return stocks
-        .filter((stock: any) => matches(stock.symbol, stock.name, stock.sector))
+        .filter((stock) => matches(stock.symbol, stock.name, stock.sector))
         .slice(0, 40)
-        .map((stock: any) => ({
-          id: stock.id,
-          name: stock.name,
-          sub: stock.symbol,
-          value: `KES ${Number(stock.price || 0).toFixed(2)}`,
-        }));
+        .map((stock) => {
+          const currency = inferCurrencyFromExchange(inferExchangeFromSymbol(stock.symbol, stock.exchange), stock.currency);
+          return {
+            id: stock.id,
+            name: stock.name,
+            sub: stock.symbol,
+            value: `${currency} ${Number(stock.price || 0).toFixed(2)}`,
+          };
+        });
     }
 
     if (addType === "currency") {
@@ -535,7 +545,7 @@ export default function MobileWatchlistView() {
             <section className="space-y-3 pt-2">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 <TrendingUp className="h-3.5 w-3.5 text-indigo-500" />
-                <span>NSE Stocks ({filteredWatchedStocks.length})</span>
+                <span>Stocks ({filteredWatchedStocks.length})</span>
               </div>
               <div className="space-y-2">
                 {filteredWatchedStocks.map((s) => {
@@ -543,13 +553,14 @@ export default function MobileWatchlistView() {
                   const isUp = diff > 0;
                   const isDown = diff < 0;
                   const spark = getStockSpark(s.id);
+                  const currency = inferCurrencyFromExchange(inferExchangeFromSymbol(s.symbol, s.exchange), s.currency);
                   return (
                     <WatchCard
                       key={s.id}
                       title={s.name}
                       sub={s.symbol}
                       visual={<WatchlistAssetAvatar type="stock" symbol={s.symbol} name={s.name} logoUrl={s.logo_url} size={36} />}
-                      value={`KES ${Number(s.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+                      value={`${currency} ${Number(s.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
                       change={
                         <span className={`inline-flex items-center gap-0.5 font-bold ${isUp ? "text-emerald-500" : isDown ? "text-red-500" : "text-muted-foreground"}`}>
                           {isUp ? <TrendingUp className="h-3 w-3" /> : isDown ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
@@ -558,7 +569,7 @@ export default function MobileWatchlistView() {
                       }
                       sparkData={spark.length > 2 ? spark : undefined}
                       trend={isUp ? "up" : isDown ? "down" : "flat"}
-                      linkTo={`/stocks/${s.symbol}`}
+                      linkTo={`/stocks/${encodeURIComponent(s.symbol)}`}
                       onRemove={() => removeByTypeAndId("stock", s.id)}
                       mobileFooter={<SectionLiveStatus section="stocks" className={watchCardStatusClass} />}
                     />

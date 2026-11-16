@@ -62,7 +62,7 @@ Kenya Fund Finder is Kenya’s independent market intelligence and comparison pl
 
 KEY FEATURES:
 • 40+ CMA-Regulated Unit Trusts & Money Market Funds (KES & USD): Compare published daily yields, annual effective yields (EAR), estimated net returns after Kenya’s 15% withholding tax, management fees, minimum investment amounts, and withdrawal turnaround times.
-• Nairobi Securities Exchange (NSE) Stocks: Track share prices, daily gainers and losers, trading volume, market capitalisation, P/E valuation ratios, dividend yields, and company disclosures across all NSE sectors.
+• Nairobi Securities Exchange (NSE) & Regional EAC Stocks (USE, DSE, RSE): Track share prices in KES, UGX, TZS, and RWF, daily gainers and losers, trading volume, market capitalisation, P/E valuation ratios, dividend yields, and company disclosures across East African sectors.
 • CBK Treasury Bills & Bonds: Follow weekly Central Bank of Kenya (CBK) 91-day, 182-day, and 364-day Treasury Bill auction rates, Fixed-Coupon Treasury Bonds (FXD), and tax-free Infrastructure Bonds (IFBs).
 • Bank Fixed Deposits & SASRA-Regulated DT-SACCOs: Benchmark commercial bank fixed deposit rates alongside dividend and interest rebates from leading regulated Kenyan SACCOs.
 • Tax-Aware Return Calculators & AI Lab: Model lump-sum and monthly contribution scenarios with automatic 15% KRA withholding tax breakdowns and plain-language educational explanations.

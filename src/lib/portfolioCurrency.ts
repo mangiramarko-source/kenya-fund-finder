@@ -1,4 +1,9 @@
-import type { ExchangeRate } from "@/components/home/MarketTicker";
+import { inferCurrencyFromExchange, inferExchangeFromSymbol } from "@/lib/stockCache";
+
+export interface ExchangeRateLike {
+  currency_code: string;
+  rate: number;
+}
 
 export const SUPPORTED_CORE_CURRENCIES = ["KES", "USD", "EUR", "GBP"] as const;
 
@@ -9,6 +14,7 @@ export const FALLBACK_RATES: Record<string, number> = {
   GBP: 173.97,
   UGX: 0.035,
   TZS: 0.050,
+  RWF: 0.092,
   ZAR: 7.15,
   AED: 35.24,
   CAD: 93.50,
@@ -24,7 +30,7 @@ export const FALLBACK_RATES: Record<string, number> = {
  */
 export function getActiveExchangeRate(
   currency: string,
-  rates?: ExchangeRate[]
+  rates?: ExchangeRateLike[]
 ): { rate: number; label: string; isLive: boolean } {
   const code = currency.toUpperCase();
   if (code === "KES") {
@@ -49,12 +55,43 @@ export function getActiveExchangeRate(
 }
 
 /**
+ * Resolves the native quote currency of a portfolio holding.
+ */
+export function resolveHoldingCurrency(item: {
+  asset_type?: string | null;
+  ticker?: string | null;
+  currency?: string | null;
+}): string {
+  if (item.currency) return item.currency.toUpperCase();
+  if (item.asset_type === "stock") {
+    return inferCurrencyFromExchange(inferExchangeFromSymbol(item.ticker));
+  }
+  return "KES";
+}
+
+/**
+ * Converts a monetary amount from its native currency (e.g. UGX, TZS, RWF, USD) into KES.
+ */
+export function convertToKes(
+  amountInSourceCurrency: number,
+  sourceCurrency: string,
+  rates?: ExchangeRateLike[]
+): number {
+  if (!Number.isFinite(amountInSourceCurrency) || amountInSourceCurrency === 0) return 0;
+  const code = (sourceCurrency || "KES").toUpperCase();
+  if (code === "KES") return amountInSourceCurrency;
+
+  const { rate } = getActiveExchangeRate(code, rates);
+  return amountInSourceCurrency * rate;
+}
+
+/**
  * Converts a monetary value in KES to the target currency using live or fallback exchange rates.
  */
 export function convertFromKes(
   amountInKes: number,
   targetCurrency: string,
-  rates?: ExchangeRate[]
+  rates?: ExchangeRateLike[]
 ): number {
   if (!Number.isFinite(amountInKes) || amountInKes === 0) return 0;
   const code = targetCurrency.toUpperCase();
@@ -70,7 +107,7 @@ export function convertFromKes(
 export function formatPortfolioCurrency(
   amountInKes: number,
   targetCurrency: string,
-  rates?: ExchangeRate[],
+  rates?: ExchangeRateLike[],
   options?: {
     compact?: boolean;
     minimumFractionDigits?: number;

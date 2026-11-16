@@ -83,7 +83,7 @@ const AlertMiniCard = ({
             {isHit
               ? `Target ${isAbove ? ">" : "<"} ${alert.target_price.toLocaleString()}`
               : currentPrice != null
-              ? `Now ${alert.asset_unit} ${currentPrice.toLocaleString()}`
+              ? `Now ${alert.asset_unit || parsed.currencyCode || "KES"} ${currentPrice.toLocaleString()}`
               : parsed.name}
           </p>
         </div>

@@ -52,6 +52,11 @@ const fmtKES = (n: number) =>
     maximumFractionDigits: 2,
   }).format(n);
 
+const formatAssetMoney = (n: number, currency = "KES") =>
+  currency === "KES"
+    ? fmtKES(n)
+    : `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 interface InvestmentOptionCardProps {
   asset: LiveAsset;
   detail: string;
@@ -84,7 +89,7 @@ const InvestmentOptionCard = ({ asset, detail, isYieldType, selected, onSelect, 
       <span className="mt-0.5 block truncate text-xs text-muted-foreground">{detail}</span>
     </span>
     <span className="shrink-0 text-right text-sm tabular-nums">
-      <span className="block font-semibold text-foreground">{isYieldType ? `${asset.yld?.toFixed(2) ?? "—"}%` : fmtKES(asset.price || 0)}</span>
+      <span className="block font-semibold text-foreground">{isYieldType ? `${asset.yld?.toFixed(2) ?? "—"}%` : formatAssetMoney(asset.price || 0, asset.currency)}</span>
       {mobile ? (
         asset.changePercent == null ? (
           <span className="block min-h-4 text-[11px] text-muted-foreground">{isYieldType ? "annual yield" : ""}</span>
@@ -215,11 +220,12 @@ const AddInvestmentModal = ({ onAdd, isPending, open: controlledOpen, onOpenChan
     setOpen(false);
   };
 
+  const selectedCurrency = selectedAsset?.currency || "KES";
   const amountLabel = isYieldType ? "How much are you investing?" : "How much are you spending?";
   const amountHelp = isYieldType
     ? "Enter the money you want to put into this fund."
     : selectedAsset
-      ? `At ${fmtKES(selectedAsset.price || 0)} per unit, we'll calculate how many units that buys.`
+      ? `At ${formatAssetMoney(selectedAsset.price || 0, selectedCurrency)} per unit, we'll calculate how many units that buys.`
       : "Enter how much money you want to spend on this asset.";
   const estimatedAnnualReturn = selectedAsset && validAmount && isYieldType
     ? amountNum * (parseFloat(customYield) || selectedAsset.yld || 0) / 100
@@ -230,7 +236,7 @@ const AddInvestmentModal = ({ onAdd, isPending, open: controlledOpen, onOpenChan
 
   const assetDetail = (asset: LiveAsset) => {
     if (asset.fundType) return FUND_TYPE_LABELS[asset.fundType] || asset.fundType.replace(/_/g, " ");
-    if (asset.ticker) return asset.ticker;
+    if (asset.ticker) return asset.exchange && asset.exchange !== "NSE" ? `${asset.exchange} · ${asset.ticker}` : asset.ticker;
     return ASSET_TYPE_LABELS[assetType];
   };
 
@@ -398,7 +404,7 @@ const AddInvestmentModal = ({ onAdd, isPending, open: controlledOpen, onOpenChan
                       <p className="mt-0.5 truncate text-sm text-muted-foreground">{assetDetail(selectedAsset)}</p>
                     </div>
                     <div className="shrink-0 text-right text-sm tabular-nums">
-                      <p className="font-semibold text-foreground">{isYieldType ? `${selectedAsset.yld?.toFixed(2) ?? "—"}%` : fmtKES(selectedAsset.price || 0)}</p>
+                      <p className="font-semibold text-foreground">{isYieldType ? `${selectedAsset.yld?.toFixed(2) ?? "—"}%` : formatAssetMoney(selectedAsset.price || 0, selectedCurrency)}</p>
                       <p className="text-[11px] text-muted-foreground">{isYieldType ? "annual yield" : "current price"}</p>
                     </div>
                   </div>
@@ -406,7 +412,7 @@ const AddInvestmentModal = ({ onAdd, isPending, open: controlledOpen, onOpenChan
                   <div className="rounded-[22px] border border-border bg-card p-4">
                     <Label htmlFor="mobile-investment-amount" className="text-sm font-medium">{amountLabel}</Label>
                     <div className="relative mt-2">
-                      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">KES</span>
+                      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">{selectedCurrency}</span>
                       <Input
                         id="mobile-investment-amount"
                         type="number"
@@ -464,7 +470,7 @@ const AddInvestmentModal = ({ onAdd, isPending, open: controlledOpen, onOpenChan
               <div className="mt-5">
                 <Label htmlFor="investment-amount" className="text-sm font-medium">{amountLabel}</Label>
                 <div className="relative mt-2">
-                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">KES</span>
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">{selectedCurrency}</span>
                   <Input
                     id="investment-amount"
                     type="number"

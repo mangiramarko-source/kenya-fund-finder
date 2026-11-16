@@ -28,6 +28,7 @@ import {
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { inferCurrencyFromExchange, inferExchangeFromSymbol, type StockExchangeCode } from "@/lib/stockCache";
 import { cn } from "@/lib/utils";
 import WatchlistAlertsTabs from "@/components/watchlist/WatchlistAlertsTabs";
 import DesktopWatchlistWorkspace from "@/components/watchlist/DesktopWatchlistWorkspace";
@@ -37,6 +38,7 @@ interface AssetOption {
   name: string;
   currentValue: number;
   unit?: string;
+  exchange?: StockExchangeCode;
 }
 
 type TabKey = "active" | "triggered" | "paused" | "settings";
@@ -79,8 +81,23 @@ const AlertsPage = () => {
 
     const fetchAssets = async () => {
       let options: AssetOption[] = [];
-      const { data } = await supabase.from("stocks").select("id, name, symbol, price").eq("is_active", true).eq("exchange" as never, "NSE").order("name");
-      options = (data || []).map((s) => ({ id: s.id, name: `${s.name} (${s.symbol})`, currentValue: Number(s.price), unit: "KES" }));
+      const { data } = await supabase
+        .from("stocks")
+        .select("id, name, symbol, price, exchange, exchange_ticker, currency")
+        .eq("is_active", true)
+        .order("name");
+      options = (data || []).map((s) => {
+        const exchange = inferExchangeFromSymbol(s.symbol, (s as { exchange?: string | null }).exchange);
+        const unit = inferCurrencyFromExchange(exchange, (s as { currency?: string | null }).currency);
+        const displayTicker = (s as { exchange_ticker?: string | null }).exchange_ticker || s.symbol.replace(/^(USE|DSE|RSE)-/i, "");
+        return {
+          id: s.id,
+          name: `${s.name} (${exchange}:${displayTicker})`,
+          currentValue: Number(s.price),
+          unit,
+          exchange,
+        };
+      });
       setAssetOptions(options);
       setLoadingAssets(false);
     };
@@ -103,6 +120,7 @@ const AlertsPage = () => {
       asset_type: "stock",
       asset_id: selectedAsset.id,
       asset_name: selectedAsset.name,
+      asset_unit: selectedAsset.unit || "KES",
       target_price: price,
       condition,
       baseline_price: selectedAsset.currentValue,
@@ -121,9 +139,10 @@ const AlertsPage = () => {
   const enrichedAlerts = useMemo(() => {
     return alerts.map((alert) => {
       const parsed = resolveAlertAsset(alert, stocks, rates, commodities);
-      const isHit = isAlertTriggered(alert, parsed.currentPrice);
-      const progress = calculateAlertProgress(alert, parsed.currentPrice, isHit);
-      const distance = calculateAlertDistance(alert, parsed.currentPrice, isHit);
+      const effectiveAlert = alert.asset_unit ? alert : { ...alert, asset_unit: parsed.currencyCode };
+      const isHit = isAlertTriggered(effectiveAlert, parsed.currentPrice);
+      const progress = calculateAlertProgress(effectiveAlert, parsed.currentPrice, isHit);
+      const distance = calculateAlertDistance(effectiveAlert, parsed.currentPrice, isHit);
       return {
         ...alert,
         _parsed: parsed,
@@ -590,7 +609,7 @@ const AlertsPage = () => {
             {/* Target */}
             <div>
               <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                Target Price (KES)
+                Target Price ({selectedAsset?.unit || "KES"})
               </label>
               <Input
                 type="number"

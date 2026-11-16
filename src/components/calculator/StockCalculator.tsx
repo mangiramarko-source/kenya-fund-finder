@@ -21,7 +21,16 @@ import {
   Coins,
   X,
 } from "lucide-react";
-import { stockCache, type CachedStock } from "@/lib/stockCache";
+import {
+  getStockCurrencySymbol,
+  inferCurrencyFromExchange,
+  inferExchangeFromSymbol,
+  normalizeStock,
+  stockCache,
+  type CachedStock,
+  type StockExchangeCode,
+} from "@/lib/stockCache";
+import { fetchPublicData } from "@/lib/gateway";
 import { FALLBACK_KENYAN_STOCKS } from "@/lib/stockDataFallback";
 import CalculatorTrajectoryChart, { type TrajectoryPoint } from "./CalculatorTrajectoryChart";
 
@@ -55,12 +64,41 @@ export interface StockCalculatorProps {
 
 export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) => {
   const [stocks, setStocks] = useState<CachedStock[]>(() => {
-    const cached = stockCache.loadStocks();
-    if (cached?.stocks && cached.stocks.length > 0) return cached.stocks;
-    return FALLBACK_KENYAN_STOCKS;
+    const combined: CachedStock[] = [];
+    const seen = new Set<string>();
+    for (const ex of ["NSE", "USE", "DSE", "RSE"] as StockExchangeCode[]) {
+      const cached = stockCache.loadStocks(ex);
+      for (const s of cached?.stocks || []) {
+        const key = s.symbol.toUpperCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          combined.push(s);
+        }
+      }
+    }
+    return combined.length > 0 ? combined : FALLBACK_KENYAN_STOCKS;
   });
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicData<Record<string, unknown>>("stocks", { limit: 200, order: "sort_order.asc" })
+      .then((res) => {
+        if (cancelled) return;
+        const rows = Array.isArray(res) ? res : res?.data;
+        if (Array.isArray(rows) && rows.length > 0) {
+          setStocks(rows.map((row) => normalizeStock(row)));
+        }
+      })
+      .catch(() => {
+        // Keep cached / fallback stocks if gateway is offline
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(() => initialSymbol || null);
+  const [exchangeFilter, setExchangeFilter] = useState<"ALL" | StockExchangeCode>("ALL");
   const [sectorFilter, setSectorFilter] = useState<SectorFilter>("all");
   const [stockSearch, setStockSearch] = useState<string>("");
   const [isSelectorOpen, setIsSelectorOpen] = useState<boolean>(false);
@@ -104,6 +142,14 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
     return stocks.find((s) => s.symbol.toUpperCase() === selectedSymbol.toUpperCase()) || null;
   }, [selectedSymbol, stocks]);
 
+  const activeExchange: StockExchangeCode = activeStock
+    ? inferExchangeFromSymbol(activeStock.symbol, activeStock.exchange)
+    : "NSE";
+  const activeCurrency = activeStock
+    ? inferCurrencyFromExchange(activeExchange, activeStock.currency)
+    : "KES";
+  const activeSymbol = getStockCurrencySymbol(activeCurrency);
+
   // Top popular Kenyan stocks for quick 1-tap selection on the card
   const popularStocks = useMemo(() => {
     const symbols = ["SCOM", "EQTY", "KCB", "EABL", "COOP"];
@@ -127,6 +173,8 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
   const filteredStocks = useMemo(() => {
     const q = stockSearch.trim().toLowerCase();
     return stocks.filter((s) => {
+      const ex = inferExchangeFromSymbol(s.symbol, s.exchange);
+      if (exchangeFilter !== "ALL" && ex !== exchangeFilter) return false;
       const sec = (s.sector || "").toLowerCase();
       if (sectorFilter === "banking" && !sec.includes("bank")) return false;
       if (sectorFilter === "telecom" && !sec.includes("telecom") && !sec.includes("tech")) return false;
@@ -142,11 +190,13 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
       if (!q) return true;
       return (
         s.symbol.toLowerCase().includes(q) ||
+        (s.exchange_ticker || "").toLowerCase().includes(q) ||
         s.name.toLowerCase().includes(q) ||
-        sec.includes(q)
+        sec.includes(q) ||
+        ex.toLowerCase().includes(q)
       );
     });
-  }, [stocks, stockSearch, sectorFilter]);
+  }, [stocks, stockSearch, exchangeFilter, sectorFilter]);
 
   // Sector counts
   const sectorCounts = useMemo(() => {
@@ -330,7 +380,7 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
             <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
               {activeStock && activeStock.price ? (
                 <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  KES {activeStock.price.toFixed(2)}
+                  {activeCurrency} {activeStock.price.toFixed(2)}
                 </span>
               ) : (
                 <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
@@ -345,13 +395,13 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
         {/* Selected Stock Summary Metrics */}
         {activeStock && (
           <div className="flex items-center gap-3 pt-2.5 mt-2.5 border-t border-border/50 text-[11px] text-muted-foreground flex-wrap">
-            <span>Market Price: <strong className="text-foreground">KES {activeStock.price.toFixed(2)}</strong></span>
+            <span>Market Price: <strong className="text-foreground">{activeCurrency} {activeStock.price.toFixed(2)}</strong></span>
             <span>•</span>
             <span>Div Yield: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{activeStock.dividend_yield ? `${activeStock.dividend_yield.toFixed(2)}%` : "—"}</strong></span>
             <span>•</span>
             <span>P/E: <strong className="text-foreground">{activeStock.pe_ratio ? activeStock.pe_ratio.toFixed(1) : "—"}</strong></span>
             <Link
-              to={`/stocks/${activeStock.symbol.toLowerCase()}`}
+              to={`/stocks/${encodeURIComponent(activeStock.symbol)}`}
               className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline font-bold"
             >
               <span>Dashboard</span>
@@ -423,18 +473,36 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
 
           <SheetHeader className="text-left pb-2 space-y-1">
             <SheetTitle className="text-base sm:text-lg font-bold text-foreground">
-              Select NSE Listed Stock
+              Select Listed Stock
             </SheetTitle>
             <p className="text-xs text-muted-foreground">
-              Choose from all equities listed on the Nairobi Securities Exchange
+              Choose from equities listed across NSE (Kenya), USE (Uganda), DSE (Tanzania), and RSE (Rwanda)
             </p>
           </SheetHeader>
+
+          {/* Exchange Filter Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 pb-1 text-xs">
+            {(["ALL", "NSE", "USE", "DSE", "RSE"] as const).map((ex) => (
+              <button
+                key={ex}
+                type="button"
+                onClick={() => setExchangeFilter(ex)}
+                className={`px-3 py-1 rounded-full font-bold shrink-0 transition-colors ${
+                  exchangeFilter === ex
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {ex === "ALL" ? "All Markets" : ex}
+              </button>
+            ))}
+          </div>
 
           {/* Search Bar */}
           <div className="relative mt-2">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by symbol or company name (e.g. SCOM, EQTY, BAT)..."
+              placeholder="Search by ticker or name (e.g. SCOM, USE-MTNU, DSE-CRDB, RSE-BOK)..."
               value={stockSearch}
               onChange={(e) => setStockSearch(e.target.value)}
               className="h-10 pl-9 text-xs sm:text-sm rounded-xl"
@@ -521,6 +589,9 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
 
             {filteredStocks.map((s) => {
               const isSelected = selectedSymbol === s.symbol;
+              const ex = inferExchangeFromSymbol(s.symbol, s.exchange);
+              const cur = inferCurrencyFromExchange(ex, s.currency);
+              const displaySym = s.exchange_ticker || s.symbol.replace(/^(USE|DSE|RSE)-/i, "");
 
               return (
                 <button
@@ -535,7 +606,10 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
                 >
                   <div className="truncate pr-3">
                     <div className="truncate font-bold text-xs sm:text-sm flex items-center gap-2">
-                      <span>{s.symbol}</span>
+                      <span>{displaySym}</span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase shrink-0">
+                        {ex}
+                      </span>
                       <span className="font-normal text-muted-foreground truncate">• {s.name}</span>
                     </div>
                     <div className="text-[11px] text-muted-foreground truncate mt-0.5">
@@ -544,7 +618,7 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-black text-sm sm:text-base text-foreground tabular-nums">
-                      KES {s.price?.toFixed(2)}
+                      {cur} {s.price?.toFixed(2)}
                     </div>
                     <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
                       {s.dividend_yield ? `${s.dividend_yield.toFixed(1)}% div` : "Dividend"}
@@ -580,7 +654,7 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            By Investment Amount (KSh)
+            By Investment Amount ({activeSymbol})
           </button>
           <button
             type="button"
@@ -600,10 +674,10 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="stock-amount" className="text-xs font-semibold text-foreground">
-                Investment Capital (KSh)
+                Investment Capital ({activeSymbol})
               </Label>
               <span className="text-xs font-bold text-foreground tabular-nums">
-                KSh {fmt(amount)}
+                {activeSymbol} {fmt(amount)}
               </span>
             </div>
             <Input
@@ -675,10 +749,10 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="stock-price" className="text-xs font-semibold text-foreground">
-                Stock Price (KES / share)
+                Stock Price ({activeCurrency} / share)
               </Label>
               <span className="text-xs font-bold text-foreground tabular-nums">
-                KES {sharePrice.toFixed(2)}
+                {activeCurrency} {sharePrice.toFixed(2)}
               </span>
             </div>
             <Input
@@ -797,10 +871,14 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-foreground">
-                Include NSE & CDSC Brokerage Fees (~1.8%)
+                {activeExchange === "NSE"
+                  ? "Include NSE & CDSC Brokerage Fees (~1.8%)"
+                  : `Include ${activeExchange} Brokerage & Settlement Fees (~1.8%)`}
               </p>
               <p className="text-[11px] text-muted-foreground">
-                CMA statutory transaction levy, CDSC clearing, and licensed stockbroker commission
+                {activeExchange === "NSE"
+                  ? "CMA statutory transaction levy, CDSC clearing, and licensed stockbroker commission"
+                  : `Estimated ${activeExchange} statutory levy, central depository clearing, and licensed broker commission`}
               </p>
             </div>
             <Switch checked={includeFees} onCheckedChange={setIncludeFees} />
@@ -817,14 +895,14 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
               <span>{years}-Year Estimated Stock Value</span>
             </div>
             <div className="text-3xl sm:text-5xl font-black tracking-tight text-foreground tabular-nums mt-1.5">
-              KSh {fmt(results.finalPortfolioValue)}
+              {activeSymbol} {fmt(results.finalPortfolioValue)}
             </div>
           </div>
 
           <div className="flex sm:flex-col items-start sm:items-end justify-between sm:justify-center gap-1.5">
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
               <TrendingUp className="h-3.5 w-3.5" />
-              +KSh {fmt(results.netProfit)} ({returnPct}%)
+              +{activeSymbol} {fmt(results.netProfit)} ({returnPct}%)
             </span>
             <span className="text-xs text-muted-foreground">
               Dividends + Price Growth after 5% WHT
@@ -837,23 +915,25 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
           <div className="rounded-2xl border border-border/60 bg-muted/30 p-3">
             <p className="text-[11px] font-medium text-muted-foreground">Total Invested</p>
             <p className="text-sm sm:text-base font-bold text-foreground tabular-nums mt-0.5">
-              KSh {fmt(results.effectiveInitialCost)}
+              {activeSymbol} {fmt(results.effectiveInitialCost)}
             </p>
             <p className="text-[10px] text-muted-foreground mt-0.5">
-              {fmt(results.initialShares)} shares @ KES {sharePrice.toFixed(2)}
+              {fmt(results.initialShares)} shares @ {activeCurrency} {sharePrice.toFixed(2)}
             </p>
           </div>
           <div className="rounded-2xl border border-border/60 bg-emerald-500/10 p-3">
             <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">Net Dividends Kept</p>
             <p className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
-              +KSh {fmt(results.cumulativeNetDividends)}
+              +{activeSymbol} {fmt(results.cumulativeNetDividends)}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">After 5% KRA WHT</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {activeExchange === "NSE" ? "After 5% KRA WHT" : "After 5% modeled WHT"}
+            </p>
           </div>
           <div className="rounded-2xl border border-border/60 bg-muted/30 p-3">
             <p className="text-[11px] font-medium text-muted-foreground">Projected Share Price</p>
             <p className="text-sm sm:text-base font-bold text-foreground tabular-nums mt-0.5">
-              KES {results.finalPrice.toFixed(2)}
+              {activeCurrency} {results.finalPrice.toFixed(2)}
             </p>
             <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-semibold">
               +{capitalGrowth}% p.a. growth
@@ -862,7 +942,7 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
           <div className="rounded-2xl border border-border/60 bg-muted/30 p-3">
             <p className="text-[11px] font-medium text-muted-foreground">Monthly Passive Dividends</p>
             <p className="text-sm sm:text-base font-bold text-foreground tabular-nums mt-0.5">
-              ~KSh {fmt(results.monthlyPassiveDividend)}/mo
+              ~{activeSymbol} {fmt(results.monthlyPassiveDividend)}/mo
             </p>
             <p className="text-[10px] text-muted-foreground mt-0.5">Year {years} Run-rate</p>
           </div>
@@ -880,7 +960,7 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
             onClick={() => setShowBreakdown((prev) => !prev)}
             className="w-full flex items-center justify-between py-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
-            <span>Kenyan brokerage fees & dividend tax breakdown</span>
+            <span>{activeExchange} brokerage fees &amp; dividend tax breakdown</span>
             {showBreakdown ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
 
@@ -891,18 +971,20 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
                 <span className="font-semibold text-foreground">{fmt(results.finalShares)} shares</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">KRA Resident Dividend WHT (5%)</span>
-                <span className="font-semibold text-destructive">-KSh {fmt(results.cumulativeTaxWithheld)}</span>
+                <span className="text-muted-foreground">
+                  {activeExchange === "NSE" ? "KRA Resident Dividend WHT (5%)" : "Modeled Dividend WHT (5%)"}
+                </span>
+                <span className="font-semibold text-destructive">-{activeSymbol} {fmt(results.cumulativeTaxWithheld)}</span>
               </div>
               {includeFees && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">NSE & CDSC Brokerage Fees (~1.8% round-trip)</span>
-                  <span className="font-semibold text-destructive">-KSh {fmt(results.totalFees)}</span>
+                  <span className="text-muted-foreground">{activeExchange} Brokerage &amp; Clearing Fees (~1.8% round-trip)</span>
+                  <span className="font-semibold text-destructive">-{activeSymbol} {fmt(results.totalFees)}</span>
                 </div>
               )}
               <div className="flex justify-between pt-1 border-t border-border/40 font-bold">
                 <span>Net Return on Investment</span>
-                <span className="text-emerald-600 dark:text-emerald-400">KSh {fmt(results.netProfit)} ({returnPct}%)</span>
+                <span className="text-emerald-600 dark:text-emerald-400">{activeSymbol} {fmt(results.netProfit)} ({returnPct}%)</span>
               </div>
             </div>
           )}

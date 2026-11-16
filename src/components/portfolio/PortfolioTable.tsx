@@ -7,7 +7,7 @@ import {
 } from "@/hooks/usePortfolio";
 import type { ChangeRow } from "@/hooks/usePortfolioChanges";
 import type { ExchangeRate } from "@/components/home/MarketTicker";
-import { formatPortfolioCurrency } from "@/lib/portfolioCurrency";
+import { convertToKes, formatPortfolioCurrency, resolveHoldingCurrency } from "@/lib/portfolioCurrency";
 import { getHoldingAlertState, type MinimalAlert } from "@/lib/portfolioAlertBadge";
 import { normalizeName } from "@/lib/assetMatch";
 import { formatDistanceToNow } from "date-fns";
@@ -62,7 +62,7 @@ const RecentChange = ({ row, currency, rates }: { row: ChangeRow | undefined; cu
   const sign = v > 0 ? "+" : "";
   const display = row.unit === "%"
     ? `${sign}${v.toFixed(2)}%`
-    : `${sign}${fmt(v, currency, rates)}`;
+    : `${sign}${fmt(convertToKes(v, row.unit || "KES", rates), currency, rates)}`;
   return (
     <span className={`inline-flex items-center gap-1 text-xs font-semibold tabular-nums whitespace-nowrap ${tone}`}>
       <Icon className="h-3 w-3" />
@@ -137,8 +137,8 @@ const PortfolioTable = ({
   const MobileList = (
     <ul className="md:hidden divide-y divide-border/60 -mx-3">
       {items.map((item) => {
-        const pnl = getPnL(item);
-        const pnlPct = getPnLPercent(item);
+        const pnl = getPnL(item, rates);
+        const pnlPct = getPnLPercent(item, rates);
         const isUp = pnl >= 0;
         const recent = changeFor(item.id);
         const alertState = getHoldingAlertState(
@@ -160,7 +160,7 @@ const PortfolioTable = ({
                     {item.asset_name}
                   </span>
                   <span className="text-sm font-semibold tabular-nums text-foreground whitespace-nowrap">
-                    {fmt(getCurrentValue(item), currency, rates)}
+                    {fmt(getCurrentValue(item, rates), currency, rates)}
                   </span>
                 </div>
                 {/* Row 2: type/ticker + P&L */}
@@ -240,8 +240,8 @@ const PortfolioTable = ({
         </TableHeader>
         <TableBody>
           {items.map((item) => {
-            const pnl = getPnL(item);
-            const pnlPct = getPnLPercent(item);
+            const pnl = getPnL(item, rates);
+            const pnlPct = getPnLPercent(item, rates);
             const isUp = pnl >= 0;
             const recent = changeFor(item.id);
 
@@ -253,7 +253,7 @@ const PortfolioTable = ({
 
             const monthlyIncome =
               item.asset_type === "mmf"
-                ? (getCurrentValue(item) * (item.current_yield || 0) / 100 * 0.85) / 12
+                ? (getCurrentValue(item, rates) * (item.current_yield || 0) / 100 * 0.85) / 12
                 : null;
 
             const alertState = getHoldingAlertState(
@@ -271,7 +271,7 @@ const PortfolioTable = ({
               }
             } else if (item.asset_type === "stock") {
               meta.push(`${item.units.toLocaleString()} units`);
-              meta.push(`@ ${fmt(item.current_price, currency, rates)}`);
+              meta.push(`@ ${fmt(convertToKes(item.current_price, resolveHoldingCurrency(item), rates), currency, rates)}`);
             } else {
               meta.push(`${item.units.toLocaleString()} units`);
             }
@@ -314,7 +314,7 @@ const PortfolioTable = ({
                 {/* Value / P&L stacked */}
                 <TableCell className="text-right py-3 whitespace-nowrap">
                   <div className="text-sm font-semibold tabular-nums text-foreground">
-                    {fmt(getCurrentValue(item), currency, rates)}
+                    {fmt(getCurrentValue(item, rates), currency, rates)}
                   </div>
                   <div className={`text-[11px] tabular-nums font-medium mt-0.5 ${isUp ? "text-accent" : "text-destructive"}`}>
                     {isUp ? "+" : ""}{fmt(pnl, currency, rates)}

@@ -26,7 +26,7 @@ const TermsOfUsePage = () => (
         </p>
         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1 mt-2">
           <li>Collective Investment Schemes (Money Market Funds, Fixed Income Funds, Balanced Funds, Equity Funds, and Special Funds) regulated by the <strong>Capital Markets Authority (CMA)</strong> of Kenya;</li>
-          <li>Listed equities traded on the <strong>Nairobi Securities Exchange (NSE)</strong>;</li>
+          <li>Listed equities traded on the <strong>Nairobi Securities Exchange (NSE)</strong> alongside regional East African exchanges including the <strong>Uganda Securities Exchange (USE)</strong>, <strong>Dar es Salaam Stock Exchange (DSE)</strong>, and <strong>Rwanda Stock Exchange (RSE)</strong>;</li>
           <li>Government of Kenya Treasury Bills, Fixed-Coupon Bonds (FXD), and Infrastructure Bonds (IFB), commercial bank fixed deposits, and indicative foreign exchange (FX) rates published by or regulated under the <strong>Central Bank of Kenya (CBK)</strong>;</li>
           <li>Deposit-Taking Savings and Credit Co-operative Societies (DT-SACCOs) regulated by the <strong>SACCO Societies Regulatory Authority (SASRA)</strong>; and</li>
           <li>Global benchmark commodities and curated financial news.</li>
@@ -39,7 +39,7 @@ const TermsOfUsePage = () => (
           <li>Does <strong>not</strong> provide personalized investment advice, financial planning, tax advice, or any recommendation to buy, sell, or hold any security or financial product.</li>
           <li>Does <strong>not</strong> act as a licensed stockbroker, dealer, fund manager, investment adviser, commercial bank, or SACCO agent.</li>
           <li>Does <strong>not</strong> accept client deposits, hold custodial funds, process financial payments, or execute securities or fund transactions.</li>
-          <li>Is <strong>not</strong> affiliated with, endorsed by, or sponsored by the CMA, the NSE, the CBK, SASRA, the Kenya Revenue Authority (KRA), or any listed company, bank, SACCO, or fund manager.</li>
+          <li>Is <strong>not</strong> affiliated with, endorsed by, or sponsored by the CMA (Kenya, Uganda, or Rwanda), CMSA (Tanzania), the NSE, USE, DSE, RSE, the CBK, SASRA, the Kenya Revenue Authority (KRA), or any listed company, bank, SACCO, or fund manager.</li>
         </ul>
       </section>
 
@@ -56,7 +56,7 @@ const TermsOfUsePage = () => (
           Market quotes, fund yields, bank deposit rates, SACCO dividend rates, and Treasury auction results displayed on the Platform are sourced from publicly available regulatory filings, fund fact sheets, newspaper disclosures, and public market-data feeds. While we strive for accuracy:
         </p>
         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1 mt-2">
-          <li>NSE stock quotes, FX rates, and commodity prices may be delayed and are <strong>not guaranteed as real-time executable exchange prices</strong>.</li>
+          <li>NSE, USE, DSE, and RSE stock quotes, FX rates, and commodity prices may be delayed and are <strong>not guaranteed as real-time executable exchange prices</strong>.</li>
           <li>Money Market Fund and Treasury yields shown are <strong>gross annual effective yields before Kenya&apos;s statutory 15% (or 10%) KRA withholding tax</strong> unless explicitly labeled as an estimated net return.</li>
           <li>Past performance, historical yields, and prior SACCO dividend rates are <strong>not indicative of future results</strong>.</li>
           <li>We do not warrant the completeness, accuracy, or timeliness of any information. Users must verify all current rates, fees, and dealing terms directly with the respective licensed institution before acting.</li>
@@ -66,7 +66,7 @@ const TermsOfUsePage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">5. Investment Risks</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          All investments carry risk, including the potential loss of principal. Unit trust funds, NSE equities, government securities, and SACCO shares carry varying levels of market, credit, interest-rate, and liquidity risk. Money Market Funds, while generally lower-risk, are <strong>not guaranteed</strong> and are <strong>not bank deposits</strong> protected by the Kenya Deposit Insurance Corporation (KDIC). Share prices and fund Net Asset Values (NAVs) can rise or fall.
+          All investments carry risk, including the potential loss of principal. Unit trust funds, East African listed equities (NSE, USE, DSE, and RSE), government securities, and SACCO shares carry varying levels of market, credit, interest-rate, and liquidity risk. Money Market Funds, while generally lower-risk, are <strong>not guaranteed</strong> and are <strong>not bank deposits</strong> protected by the Kenya Deposit Insurance Corporation (KDIC). Share prices and fund Net Asset Values (NAVs) can rise or fall.
         </p>
       </section>
 
@@ -95,7 +95,7 @@ const TermsOfUsePage = () => (
           All original content, platform architecture, design, typography, icons, and source code on this Platform are the intellectual property of <strong>Elyon Innovation LTD</strong>. You may not reproduce, distribute, or create derivative works without prior written consent.
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed mt-2">
-          All third-party product names, logos, NSE ticker symbols, commercial bank marks, SACCO names, licensed Collective Investment Scheme manager trademarks, and media publication marks are the property of their respective owners. Their display on Kenya Fund Finder is strictly for nominative identification, factual comparison, and news reporting purposes under fair dealing / fair use principles, and does not imply any affiliation, sponsorship, or endorsement by those trademark owners.
+          All third-party product names, logos, exchange ticker symbols (NSE, USE, DSE, and RSE), commercial bank marks, SACCO names, licensed Collective Investment Scheme manager trademarks, and media publication marks are the property of their respective owners. Their display on Kenya Fund Finder is strictly for nominative identification, factual comparison, and news reporting purposes under fair dealing / fair use principles, and does not imply any affiliation, sponsorship, or endorsement by those trademark owners.
         </p>
       </section>
 

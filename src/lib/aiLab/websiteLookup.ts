@@ -62,6 +62,9 @@ const FUND_LOOKUP_SELECT = [
 
 const STOCK_LOOKUP_SELECT = [
   "symbol",
+  "exchange",
+  "exchange_ticker",
+  "currency",
   "name",
   "sector",
   "price",
@@ -248,6 +251,9 @@ interface StockRow {
   sector?: string | null;
   price?: number | string | null;
   previous_price?: number | string | null;
+  exchange?: string | null;
+  exchange_ticker?: string | null;
+  currency?: string | null;
   day_change_percent?: number | string | null;
   volume?: number | string | null;
   market_cap?: number | string | null;
@@ -293,6 +299,20 @@ const fmtKES = (n: number | null) =>
         currency: "KES",
         maximumFractionDigits: n >= 1000 ? 0 : 2,
       }).format(n);
+
+const fmtCurrency = (n: number | null, currency = "KES") =>
+  n == null
+    ? null
+    : currency === "KES"
+      ? fmtKES(n)
+      : `${currency} ${n.toLocaleString("en-US", { maximumFractionDigits: n >= 1000 ? 0 : 2 })}`;
+
+const resolveStockExchangeCurrency = (row: { symbol?: string | null; exchange?: string | null; currency?: string | null }) => {
+  const sym = String(row.symbol || "").toUpperCase();
+  const ex = String(row.exchange || (sym.startsWith("USE-") ? "USE" : sym.startsWith("DSE-") ? "DSE" : sym.startsWith("RSE-") ? "RSE" : "NSE")).toUpperCase();
+  const currency = String(row.currency || (ex === "USE" ? "UGX" : ex === "DSE" ? "TZS" : ex === "RSE" ? "RWF" : "KES")).toUpperCase();
+  return { ex, currency };
+};
 
 const fmtNum = (n: number | null) => (n == null ? null : n.toLocaleString("en-KE"));
 
@@ -748,17 +768,19 @@ function buildFundLookup(row: FundRow): WebsiteLookupScenarioResult | null {
 
 function buildStockLookup(row: StockRow): WebsiteLookupScenarioResult | null {
   if (!row.symbol || !row.name) return null;
+  const { ex, currency } = resolveStockExchangeCurrency(row);
   const fields: Array<{ label: string; value: string }> = [];
-  addField(fields, "Latest price", fmtKES(num(row.price)) ?? undefined);
+  addField(fields, "Exchange", ex);
+  addField(fields, "Latest price", fmtCurrency(num(row.price), currency) ?? undefined);
   addField(fields, "Day change", fmtPct(num(row.day_change_percent)) ?? undefined);
   addField(fields, "About", row.company_summary ?? undefined);
   addField(fields, "Sector", row.sector ?? undefined);
   addField(fields, "Volume", fmtNum(num(row.volume)) ?? undefined);
-  addField(fields, "Market cap", fmtKES(num(row.market_cap)) ?? undefined);
+  addField(fields, "Market cap", fmtCurrency(num(row.market_cap), currency) ?? undefined);
   addField(fields, "P/E ratio", fmtNum(num(row.pe_ratio)) ?? undefined);
   addField(fields, "Dividend yield", fmtPct(num(row.dividend_yield)) ?? undefined);
-  addField(fields, "52-week high", fmtKES(num(row.year_high)) ?? undefined);
-  addField(fields, "52-week low", fmtKES(num(row.year_low)) ?? undefined);
+  addField(fields, "52-week high", fmtCurrency(num(row.year_high), currency) ?? undefined);
+  addField(fields, "52-week low", fmtCurrency(num(row.year_low), currency) ?? undefined);
   if (row.updated_at) {
     const updated = new Date(row.updated_at);
     if (!Number.isNaN(updated.getTime())) {
@@ -770,7 +792,7 @@ function buildStockLookup(row: StockRow): WebsiteLookupScenarioResult | null {
     row.name,
     row.symbol,
     fields,
-    `/stocks/${row.symbol}`,
+    `/stocks/${encodeURIComponent(row.symbol)}`,
   );
 }
 
@@ -782,12 +804,13 @@ export async function resolveStockPerformanceLookup(
   const asset = findAssetInPrompt(query, ctx.assets.filter((candidate) => candidate.kind === "stock"));
   if (!asset) return null;
   const row = await fetchStockBySymbol(asset.symbol);
+  const { currency } = resolveStockExchangeCurrency({ symbol: asset.symbol });
   const result = row ? buildStockLookup(row) : buildResult(
     "stock",
     asset.name,
     asset.symbol,
     [
-      { label: "Latest price", value: fmtKES(asset.value) ?? String(asset.value) },
+      { label: "Latest price", value: fmtCurrency(asset.value, currency) ?? String(asset.value) },
       ...(asset.changePct == null ? [] : [{ label: "Day change", value: fmtPct(asset.changePct)! }]),
     ],
     `/stocks/${asset.symbol}`,

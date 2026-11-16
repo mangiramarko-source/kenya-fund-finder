@@ -8,6 +8,12 @@ import { portfolioEventsStorage } from "@/lib/portfolioEventsStorage";
 import { trackEvent } from "@/lib/analytics";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
 import { getStockLogoUrl } from "@/lib/stockBranding";
+import { inferCurrencyFromExchange, inferExchangeFromSymbol } from "@/lib/stockCache";
+import {
+  convertToKes,
+  resolveHoldingCurrency,
+  type ExchangeRateLike,
+} from "@/lib/portfolioCurrency";
 
 export type AssetType = "mmf" | "stock" | "fx" | "fixed_income" | "commodity";
 
@@ -27,6 +33,7 @@ export interface PortfolioItem {
   notes: string;
   created_at: string;
   updated_at: string;
+  currency?: string;
 }
 
 export interface NewPortfolioItem {
@@ -60,6 +67,8 @@ export interface LiveAsset {
   id?: string;
   fundType?: string;
   logoUrl?: string;
+  exchange?: string;
+  currency?: string;
 }
 
 /** MMF daily compounding: Value = Principal × (1 + Rate/365)^Days */
@@ -73,20 +82,25 @@ export const daysBetween = (start: string, end: Date = new Date()) => {
   return Math.max(0, Math.floor((end.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)));
 };
 
-/** Current value for any asset */
-export const getCurrentValue = (item: PortfolioItem): number => {
+/** Current value for any asset normalized into KES */
+export const getCurrentValue = (item: PortfolioItem, rates?: ExchangeRateLike[]): number => {
   if (item.asset_type === "mmf") {
     const days = daysBetween(item.buy_date);
     return calcMMFValue(item.units * item.buy_price, item.current_yield || 15, days);
   }
-  return item.units * item.current_price;
+  const rawValue = item.units * item.current_price;
+  return convertToKes(rawValue, resolveHoldingCurrency(item), rates);
 };
 
-export const getCostBasis = (item: PortfolioItem): number => item.units * item.buy_price;
-export const getPnL = (item: PortfolioItem): number => getCurrentValue(item) - getCostBasis(item);
-export const getPnLPercent = (item: PortfolioItem): number => {
-  const cost = getCostBasis(item);
-  return cost === 0 ? 0 : (getPnL(item) / cost) * 100;
+export const getCostBasis = (item: PortfolioItem, rates?: ExchangeRateLike[]): number => {
+  const rawCost = item.units * item.buy_price;
+  return convertToKes(rawCost, resolveHoldingCurrency(item), rates);
+};
+export const getPnL = (item: PortfolioItem, rates?: ExchangeRateLike[]): number =>
+  getCurrentValue(item, rates) - getCostBasis(item, rates);
+export const getPnLPercent = (item: PortfolioItem, rates?: ExchangeRateLike[]): number => {
+  const cost = getCostBasis(item, rates);
+  return cost === 0 ? 0 : (getPnL(item, rates) / cost) * 100;
 };
 
 export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
@@ -116,7 +130,7 @@ export const useLiveAssets = (enabled = true) => {
     queryFn: async () => {
       const [fundsRes, stocksRes, commoditiesRes, fxRes] = await Promise.all([
         supabase.from("funds_public").select("id, name, slug, manager, logo_url, annual_yield, daily_yield, fund_type").order("name"),
-        supabase.from("stocks_public").select("id, name, symbol, logo_url, price, previous_price, day_change_percent").order("name"),
+        supabase.from("stocks_public").select("id, name, symbol, logo_url, price, previous_price, day_change_percent, exchange, exchange_ticker, currency").order("name"),
         supabase.from("commodities_public").select("id, name, symbol, price, previous_price, unit").order("name"),
         supabase.from("exchange_rates_public").select("id, currency_code, currency_name, rate, previous_rate").order("sort_order"),
       ]);
@@ -131,16 +145,23 @@ export const useLiveAssets = (enabled = true) => {
         logoUrl: getFundManagerLogoUrl((f as any).manager, (f as any).logo_url),
       }));
 
-      const stocks: LiveAsset[] = (stocksRes.data || []).map((s) => ({
-        name: s.name || "",
-        ticker: s.symbol || undefined,
-        price: Number(s.price) || 0,
-        changePercent: s.day_change_percent == null
-          ? percentChange(s.price, s.previous_price)
-          : Number(s.day_change_percent),
-        id: s.id || undefined,
-        logoUrl: getStockLogoUrl(s.symbol || "", (s as any).logo_url),
-      }));
+      const stocks: LiveAsset[] = (stocksRes.data || []).map((s) => {
+        const meta = s as { exchange?: string | null; exchange_ticker?: string | null; currency?: string | null; logo_url?: string | null };
+        const exchange = inferExchangeFromSymbol(s.symbol, meta.exchange);
+        const currency = inferCurrencyFromExchange(exchange, meta.currency);
+        return {
+          name: s.name || "",
+          ticker: s.symbol || undefined,
+          price: Number(s.price) || 0,
+          changePercent: s.day_change_percent == null
+            ? percentChange(s.price, s.previous_price)
+            : Number(s.day_change_percent),
+          id: s.id || undefined,
+          logoUrl: getStockLogoUrl(s.symbol || "", meta.logo_url),
+          exchange,
+          currency,
+        };
+      });
 
       const commodities: LiveAsset[] = (commoditiesRes.data || []).map((c) => ({
         name: `${c.name || ""} (${c.unit || "USD"})`,
@@ -178,12 +199,12 @@ export const useLiveAssets = (enabled = true) => {
 
 /** Build a lookup map: ticker/name → live price */
 const buildPriceLookup = (liveAssets: Record<AssetType, LiveAsset[]> | undefined) => {
-  if (!liveAssets) return new Map<string, { price: number; yld?: number }>();
-  const map = new Map<string, { price: number; yld?: number }>();
+  if (!liveAssets) return new Map<string, { price: number; yld?: number; currency?: string }>();
+  const map = new Map<string, { price: number; yld?: number; currency?: string }>();
   for (const [, assets] of Object.entries(liveAssets)) {
     for (const a of assets) {
-      if (a.ticker) map.set(a.ticker.toLowerCase(), { price: a.price, yld: a.yld });
-      map.set(a.name.toLowerCase(), { price: a.price, yld: a.yld });
+      if (a.ticker) map.set(a.ticker.toLowerCase(), { price: a.price, yld: a.yld, currency: a.currency });
+      map.set(a.name.toLowerCase(), { price: a.price, yld: a.yld, currency: a.currency });
     }
   }
   return map;
@@ -223,19 +244,28 @@ export const usePortfolio = () => {
     refetchOnWindowFocus: true,
   });
 
-  // Enrich items with live prices
+  // Enrich items with live prices and quote currencies
   const priceLookup = buildPriceLookup(liveAssets);
+  const liveFxRates: ExchangeRateLike[] = (liveAssets?.fx || [])
+    .map((asset) => ({
+      currency_code: asset.ticker?.replace(/^KES\//i, "").trim().toUpperCase() || "",
+      rate: asset.price,
+    }))
+    .filter((entry) => entry.currency_code && Number.isFinite(entry.rate) && entry.rate > 0);
   const items: PortfolioItem[] = rawItems.map((item) => {
     if (item.asset_type === "mmf") {
       // For MMFs, update yield from live fund data
       const live = priceLookup.get(item.ticker?.toLowerCase() || "") || priceLookup.get(item.asset_name.toLowerCase());
-      if (live?.yld) return { ...item, current_yield: live.yld };
-      return item;
+      if (live?.yld) return { ...item, current_yield: live.yld, currency: "KES" };
+      return { ...item, currency: "KES" };
     }
-    // For stocks, commodities, fx — update current_price from live data
+    // For stocks, commodities, fx — update current_price and preserve stock quote currency
     const live = priceLookup.get(item.ticker?.toLowerCase() || "") || priceLookup.get(item.asset_name.toLowerCase());
-    if (live) return { ...item, current_price: live.price };
-    return item;
+    const currency =
+      live?.currency ||
+      (item.asset_type === "stock" ? inferCurrencyFromExchange(inferExchangeFromSymbol(item.ticker)) : "KES");
+    if (live) return { ...item, current_price: live.price, currency };
+    return { ...item, currency };
   });
 
   const addItem = useMutation({
@@ -371,13 +401,13 @@ export const usePortfolio = () => {
     },
   });
 
-  const totalValue = items.reduce((sum, i) => sum + getCurrentValue(i), 0);
-  const totalCost = items.reduce((sum, i) => sum + getCostBasis(i), 0);
+  const totalValue = items.reduce((sum, i) => sum + getCurrentValue(i, liveFxRates), 0);
+  const totalCost = items.reduce((sum, i) => sum + getCostBasis(i, liveFxRates), 0);
   const totalPnL = totalValue - totalCost;
   const totalPnLPercent = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
 
   const allocation = items.reduce<Record<AssetType, number>>((acc, item) => {
-    const val = getCurrentValue(item);
+    const val = getCurrentValue(item, liveFxRates);
     acc[item.asset_type] = (acc[item.asset_type] || 0) + val;
     return acc;
   }, {} as Record<AssetType, number>);

@@ -19,6 +19,7 @@ import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { fetchFunds, fetchLatestSnapshots, type FundFromDB, type YieldSnapshot } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
+import { inferCurrencyFromExchange, inferExchangeFromSymbol } from "@/lib/stockCache";
 import { FALLBACK_KENYAN_STOCKS } from "@/lib/stockDataFallback";
 import { fetchBankFixedDeposits, fetchSaccoRecords } from "@/lib/savingsApi";
 import type { BankFixedDeposit, SaccoRecord } from "@/types/savings";
@@ -132,7 +133,7 @@ export const ComparePage: React.FC = () => {
       try {
         const [fundsRes, stocksRes, ratesRes, fdRes, saccoRes] = await Promise.allSettled([
           fetchFunds(),
-          fetchPublicData<any>("stocks", { select: "*", order: { column: "market_cap", ascending: false } }),
+          fetchPublicData<any>("stocks", { order: "sort_order.asc", limit: 200 }),
           fetchPublicData<any>("cbk_exchange_rates", { select: "*" }),
           fetchBankFixedDeposits(),
           fetchSaccoRecords(),
@@ -179,34 +180,47 @@ export const ComparePage: React.FC = () => {
 
   // ─── Normalized Entities ───
   const stockEntities: UniversalCompareEntity[] = useMemo(() => {
-    return stocks.map((s) => ({
-      id: `stock-${s.symbol || s.id}`,
-      type: "stock" as const,
-      title: s.name,
-      subtitle: s.sector || "Equities",
-      symbol: s.symbol,
-      badge: "NSE Stock",
-      link: `/stocks/${encodeURIComponent(s.symbol)}`,
-      metrics: {
-        priceKes: Number(s.price || 0),
-        dayChangePct: Number(s.day_change_percent || 0),
-        peRatio: s.pe_ratio != null ? Number(s.pe_ratio) : undefined,
-        dividendYieldPct: s.dividend_yield != null ? Number(s.dividend_yield) : 0,
-        sectorOrType: s.sector || "Equities",
-        marketCapFormatted:
-          s.market_cap != null
-            ? s.market_cap >= 1e12
-              ? `KES ${(s.market_cap / 1e12).toFixed(1)}T`
-              : s.market_cap >= 1e9
-              ? `KES ${(s.market_cap / 1e9).toFixed(1)}B`
-              : `KES ${(s.market_cap / 1e6).toFixed(0)}M`
-            : "—",
-        riskLevel: "Equity Market Risk",
-        regulator: "CMA Regulated",
-        tenorOrWithdrawal: "T+2 Settlement (NSE)",
-      },
-      raw: s,
-    }));
+    return stocks.map((s) => {
+      const exchange = inferExchangeFromSymbol(s.symbol, s.exchange);
+      const currencyCode = inferCurrencyFromExchange(exchange, s.currency);
+      const regulatorLabel =
+        exchange === "USE"
+          ? "CMA Uganda / USE"
+          : exchange === "DSE"
+          ? "CMSA Tanzania / DSE"
+          : exchange === "RSE"
+          ? "CMA Rwanda / RSE"
+          : "CMA Regulated";
+      return {
+        id: `stock-${s.symbol || s.id}`,
+        type: "stock" as const,
+        title: s.name,
+        subtitle: s.sector || "Equities",
+        symbol: s.exchange_ticker || s.symbol,
+        badge: `${exchange} Stock`,
+        link: `/stocks/${encodeURIComponent(s.symbol)}`,
+        metrics: {
+          priceKes: Number(s.price || 0),
+          currencyCode,
+          dayChangePct: Number(s.day_change_percent || 0),
+          peRatio: s.pe_ratio != null ? Number(s.pe_ratio) : undefined,
+          dividendYieldPct: s.dividend_yield != null ? Number(s.dividend_yield) : 0,
+          sectorOrType: s.sector || "Equities",
+          marketCapFormatted:
+            s.market_cap != null
+              ? s.market_cap >= 1e12
+                ? `${currencyCode} ${(s.market_cap / 1e12).toFixed(1)}T`
+                : s.market_cap >= 1e9
+                ? `${currencyCode} ${(s.market_cap / 1e9).toFixed(1)}B`
+                : `${currencyCode} ${(s.market_cap / 1e6).toFixed(0)}M`
+              : "—",
+          riskLevel: "Equity Market Risk",
+          regulator: regulatorLabel,
+          tenorOrWithdrawal: exchange === "RSE" ? "T+2 Settlement (RSE)" : `T+3 Settlement (${exchange})`,
+        },
+        raw: { ...s, exchange, currency: currencyCode },
+      };
+    });
   }, [stocks]);
 
   const fundEntities: UniversalCompareEntity[] = useMemo(() => {

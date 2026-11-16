@@ -172,6 +172,44 @@ describe("priceAlertEvaluation", () => {
       expect(resolved.symbol).toBe("SCOM");
       expect(resolved.currentPrice).toBe(36.5);
       expect(resolved.logoUrl).toBe("/scom.png");
+      expect(resolved.currencyCode).toBe("KES");
+      expect(resolved.linkTo).toBe("/stocks/SCOM");
+    });
+
+    it("resolves regional USE (UGX), DSE (TZS), and RSE (RWF) stocks with localized currency codes and encoded routes", () => {
+      const mockStocks = [
+        { id: "uuid-mtnu", symbol: "USE-MTNU", exchange: "USE", currency: "UGX", name: "MTN Uganda", price: 170.5 },
+        { id: "uuid-crdb", symbol: "DSE-CRDB", exchange: "DSE", name: "CRDB Bank", price: 620 },
+        { id: "uuid-bok", symbol: "RSE-BOK", name: "Bank of Kigali", price: 305 },
+      ];
+
+      const useResolved = resolveAlertAsset(
+        createMockAlert({ asset_id: "uuid-mtnu", asset_name: "MTN Uganda (USE:MTNU)", asset_unit: "UGX" }),
+        mockStocks,
+      );
+      expect(useResolved.symbol).toBe("USE-MTNU");
+      expect(useResolved.currencyCode).toBe("UGX");
+      expect(useResolved.currentPrice).toBe(170.5);
+      expect(useResolved.linkTo).toBe("/stocks/USE-MTNU");
+
+      const dseResolved = resolveAlertAsset(
+        createMockAlert({ asset_id: "uuid-crdb", asset_name: "CRDB Bank (DSE:CRDB)", asset_unit: "TZS", target_price: 700 }),
+        mockStocks,
+      );
+      expect(dseResolved.currencyCode).toBe("TZS");
+      const dseDistance = calculateAlertDistance(
+        createMockAlert({ asset_unit: "TZS", target_price: 700 }),
+        620,
+      );
+      expect(dseDistance.formattedDelta).toContain("TZS 80.0");
+
+      const rseFallback = resolveAlertAsset(
+        createMockAlert({ asset_id: "unknown-rse", asset_name: "Bank of Kigali (RSE:BOK)", asset_unit: "" }),
+        [],
+      );
+      expect(rseFallback.symbol).toBe("RSE-BOK");
+      expect(rseFallback.currencyCode).toBe("RWF");
+      expect(rseFallback.linkTo).toBe("/stocks/RSE-BOK");
     });
   });
 });

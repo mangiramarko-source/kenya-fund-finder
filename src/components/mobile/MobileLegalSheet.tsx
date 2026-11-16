@@ -131,7 +131,7 @@ export default function MobileLegalSheet({
               </h4>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Collective Investment Schemes (Unit Trusts &amp; MMFs) profiled on this platform are regulated by the Capital Markets Authority (CMA) of Kenya; listed equities trade on the Nairobi Securities Exchange (NSE); Treasury Bills/Bonds and commercial banks are regulated by the Central Bank of Kenya (CBK); and DT-SACCOs are regulated by SASRA. Listing or comparison does not imply an endorsement by any regulator or Kenya Fund Finder.
+              Collective Investment Schemes (Unit Trusts &amp; MMFs) profiled on this platform are regulated by the Capital Markets Authority (CMA) of Kenya; listed equities trade on the Nairobi Securities Exchange (NSE) and regional East African exchanges (USE, DSE, and RSE); Treasury Bills/Bonds and commercial banks are regulated by the Central Bank of Kenya (CBK); and DT-SACCOs are regulated by SASRA. Listing or comparison does not imply an endorsement by any regulator or Kenya Fund Finder.
             </p>
           </div>
 
@@ -213,7 +213,7 @@ export default function MobileLegalSheet({
               <p className="text-[11px] font-semibold text-foreground">Operated by Elyon Innovation LTD</p>
             </div>
             <p className="text-[10px] text-muted-foreground/60 leading-tight">
-              A product of Elyon.ltd · Not affiliated with the CMA or the NSE.
+              A product of Elyon Innovation LTD · Not affiliated with the CMA, NSE, USE, DSE, or RSE.
             </p>
             <p className="text-[10px] text-muted-foreground/40">
               © {new Date().getFullYear()} Kenya Fund Finder. All rights reserved.

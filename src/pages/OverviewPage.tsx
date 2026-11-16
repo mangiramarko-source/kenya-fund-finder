@@ -37,6 +37,7 @@ import { dedupeNewsArticles } from "@/lib/newsDedupe";
 import { getNewsPublishedAt } from "@/lib/newsDate";
 import { newsCache } from "@/lib/newsCache";
 import { fundCache } from "@/lib/fundCache";
+import { inferExchangeFromSymbol } from "@/lib/stockCache";
 import { feedNavigationState } from "@/lib/feedNavigationState";
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
@@ -1238,15 +1239,19 @@ const OverviewPage = () => {
 
   const hasWatchlist = watchedStocks.length > 0 || watchedRates.length > 0 || watchedCommoditiesList.length > 0 || watchedFunds.length > 0;
 
-  // Best performers
-  const bestStock = useMemo(() => stocks.length ? [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent)[0] : null, [stocks]);
+  // Best performers (NSE benchmark movers for Kenyan overview cards)
+  const nseStocks = useMemo(
+    () => stocks.filter((s) => inferExchangeFromSymbol(s.symbol, s.exchange) === "NSE"),
+    [stocks],
+  );
+  const bestStock = useMemo(() => nseStocks.length ? [...nseStocks].sort((a, b) => b.day_change_percent - a.day_change_percent)[0] : null, [nseStocks]);
   const topGainers = useMemo(
-    () => [...stocks].filter(s => s.day_change_percent > 0).sort((a, b) => b.day_change_percent - a.day_change_percent).slice(0, 3),
-    [stocks]
+    () => [...nseStocks].filter(s => s.day_change_percent > 0).sort((a, b) => b.day_change_percent - a.day_change_percent).slice(0, 3),
+    [nseStocks]
   );
   const topLosers = useMemo(
-    () => [...stocks].filter(s => s.day_change_percent < 0).sort((a, b) => a.day_change_percent - b.day_change_percent).slice(0, 3),
-    [stocks]
+    () => [...nseStocks].filter(s => s.day_change_percent < 0).sort((a, b) => a.day_change_percent - b.day_change_percent).slice(0, 3),
+    [nseStocks]
   );
   const bestMM = useMemo(() => {
     const mm = funds.filter(f => f.fund_type === "money_market");
@@ -1331,17 +1336,17 @@ const OverviewPage = () => {
   }, []);
 
   const sortedStocks = useMemo(() => {
-    if (!stocks) return [];
-    return [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent);
-  }, [stocks]);
-  
+    if (!nseStocks) return [];
+    return [...nseStocks].sort((a, b) => b.day_change_percent - a.day_change_percent);
+  }, [nseStocks]);
+
   const topGainer = sortedStocks[0];
   const topLoser = sortedStocks[sortedStocks.length - 1];
 
   const scomStock = useMemo(() => {
-    if (!stocks || stocks.length === 0) return null;
-    return stocks.find(s => s.symbol === "SCOM" || s.name.toLowerCase().includes("safaricom")) || stocks[0];
-  }, [stocks]);
+    if (!nseStocks || nseStocks.length === 0) return null;
+    return nseStocks.find(s => s.symbol === "SCOM" || s.name.toLowerCase().includes("safaricom")) || nseStocks[0];
+  }, [nseStocks]);
 
   const usdRate = rates?.find(r => r.currency_code === "USD");
   const gbpRate = rates?.find(r => r.currency_code === "GBP");
@@ -1645,7 +1650,7 @@ const OverviewPage = () => {
               setWatchlistPromptOpen(true);
             }}
           />
-          <MarketMoversCard stocks={stocks as any} />
+          <MarketMoversCard stocks={nseStocks} />
           <ExchangeRatesCard
             rates={displayFxRates}
             onOpenCustomize={() => {

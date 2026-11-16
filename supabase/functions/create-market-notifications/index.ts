@@ -88,7 +88,7 @@ Deno.serve(async (request) => {
       supabase.from("mock_portfolios").select("user_id,asset_type,asset_id,asset_name,ticker").in("asset_type", ["stock", "mmf"]),
       supabase
         .from("stocks")
-        .select("id,symbol,name,price,day_change,day_change_percent,updated_at")
+        .select("id,symbol,name,exchange,currency,price,day_change,day_change_percent,updated_at")
         .eq("is_active", true),
       supabase
         .from("funds")
@@ -184,22 +184,28 @@ Deno.serve(async (request) => {
         if (pct === null || price === null || Math.abs(pct) < 3.0) continue;
         if (nairobiDateForIso(stock.updated_at) !== today) continue;
         const sign = pct > 0 ? "+" : "";
+        const symUpper = String(stock.symbol ?? "").toUpperCase();
+        const ex = String((stock as { exchange?: string | null }).exchange ?? (symUpper.startsWith("USE-") ? "USE" : symUpper.startsWith("DSE-") ? "DSE" : symUpper.startsWith("RSE-") ? "RSE" : "NSE")).toUpperCase();
+        const stockCurrency = String((stock as { currency?: string | null }).currency ?? (ex === "USE" ? "UGX" : ex === "DSE" ? "TZS" : ex === "RSE" ? "RWF" : "KES")).toUpperCase();
+        const formattedPrice = stockCurrency === "KES" ? kes(price) : `${stockCurrency} ${money.format(price)}`;
         candidates.push({
           user_id: userId,
           event_key: `watchlist_mover:${userId}:${stock.id}:${today}`,
           title: `${stock.name} (${stock.symbol}) moved ${sign}${pct.toFixed(2)}%`,
-          message: `${stock.name} is trading at ${kes(price)} (${sign}${pct.toFixed(2)}% today).`,
+          message: `${stock.name} is trading at ${formattedPrice} (${sign}${pct.toFixed(2)}% today).`,
           type: "watchlist_mover",
           metadata: {
             asset_type: "stock",
             asset_id: stock.id,
             symbol: stock.symbol,
+            exchange: ex,
+            currency: stockCurrency,
             asset_name: stock.name,
             price,
             day_change_percent: Number(pct.toFixed(2)),
             market_date: today,
             observed_at: stock.updated_at,
-            route: `/stocks/${stock.symbol}`,
+            route: `/stocks/${encodeURIComponent(stock.symbol)}`,
           },
         });
       }

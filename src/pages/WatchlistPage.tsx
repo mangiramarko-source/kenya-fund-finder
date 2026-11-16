@@ -21,6 +21,7 @@ import WatchCard, { type AlertState } from "@/components/watchlist/WatchCard";
 import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
+import { inferCurrencyFromExchange, inferExchangeFromSymbol } from "@/lib/stockCache";
 import { computeAlertSummary } from "@/lib/watchlistAlertSummary";
 import { useUnifiedWatchlist, type UnifiedWatchlistItem as WatchlistItem } from "@/hooks/useUnifiedWatchlist";
 import WatchlistAlertsTabs from "@/components/watchlist/WatchlistAlertsTabs";
@@ -190,19 +191,20 @@ const WatchlistPage = () => {
     unit: string;
   } | null>(null);
 
-  const openAlertForStock = (s: { id: string; symbol: string; name: string; price: number }) => {
+  const openAlertForStock = (s: { id: string; symbol: string; name: string; price: number; exchange?: string | null; currency?: string | null }) => {
     const existing = alertFor("stock", s.id);
     if (existing?.is_triggered) {
       resetAlert(existing.id, s.price);
       toast.success("Alert reset");
       return;
     }
+    const unit = inferCurrencyFromExchange(inferExchangeFromSymbol(s.symbol, s.exchange), s.currency);
     setAlertDialog({
       assetType: "stock",
       assetId: s.id,
       assetName: `${s.name} (${s.symbol})`,
       currentPrice: s.price,
-      unit: "KES",
+      unit,
     });
   };
 
@@ -344,7 +346,13 @@ const WatchlistPage = () => {
   }, [funds, effectiveWatchlist]);
 
   const mobileAlertAssets = useMemo<WatchlistAlertAsset[]>(() => [
-    ...watchedStocks.map((asset) => ({ type: "stock" as const, id: asset.id, name: `${asset.name} (${asset.symbol})`, value: Number(asset.price), unit: "KES" })),
+    ...watchedStocks.map((asset) => ({
+      type: "stock" as const,
+      id: asset.id,
+      name: `${asset.name} (${asset.symbol})`,
+      value: Number(asset.price),
+      unit: inferCurrencyFromExchange(inferExchangeFromSymbol(asset.symbol, asset.exchange), asset.currency),
+    })),
     ...watchedFunds.map((asset) => ({ type: "fund" as const, id: asset.id, name: asset.name, value: Number(asset.annual_yield), unit: "%" })),
     ...watchedRates.map((asset) => ({ type: "currency" as const, id: asset.id, name: `${asset.currency_code}/KES`, value: Number(asset.rate), unit: "KES" })),
     ...watchedCommodities.map((asset) => ({ type: "commodity" as const, id: asset.id, name: asset.name, value: Number(asset.price), unit: asset.unit })),
@@ -478,14 +486,17 @@ const WatchlistPage = () => {
 
     if (addType === "stock") {
       return stocks
-        .filter((stock: any) => matches(stock.symbol, stock.name, stock.sector))
+        .filter((stock) => matches(stock.symbol, stock.name, stock.sector))
         .slice(0, 40)
-        .map((stock: any) => ({
-          id: stock.id,
-          name: stock.name,
-          sub: stock.symbol,
-          value: `KES ${Number(stock.price || 0).toFixed(2)}`,
-        }));
+        .map((stock) => {
+          const currency = inferCurrencyFromExchange(inferExchangeFromSymbol(stock.symbol, stock.exchange), stock.currency);
+          return {
+            id: stock.id,
+            name: stock.name,
+            sub: stock.symbol,
+            value: `${currency} ${Number(stock.price || 0).toFixed(2)}`,
+          };
+        });
     }
 
     if (addType === "currency") {
@@ -818,17 +829,18 @@ const WatchlistPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filteredWatchedStocks.map((s) => {
               const spark = getStockSpark(s.id);
+              const currency = inferCurrencyFromExchange(inferExchangeFromSymbol(s.symbol, s.exchange), s.currency);
               return (
                 <WatchCard
                   key={s.id}
                   title={s.symbol}
                   sub={s.name}
                   visual={<WatchlistAssetAvatar type="stock" symbol={s.symbol} name={s.name} logoUrl={s.logo_url} size={36} />}
-                  value={`KES ${s.price.toFixed(2)}`}
+                  value={`${currency} ${s.price.toFixed(2)}`}
                   change={<Change current={s.price} previous={s.previous_price} />}
                   sparkData={spark.length > 2 ? spark : undefined}
                   trend={trendOf(s.price, s.previous_price)}
-                  linkTo={`/stocks/${s.symbol}`}
+                  linkTo={`/stocks/${encodeURIComponent(s.symbol)}`}
                   onRemove={() => removeByTypeAndId("stock", s.id)}
                   onAlert={() => openAlertForStock(s)}
                   onReset={() => resetStockAlert(s)}

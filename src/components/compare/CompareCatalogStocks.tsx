@@ -17,6 +17,7 @@ export const CompareCatalogStocks: React.FC<CompareCatalogStocksProps> = ({
   onToggleCompare,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [exchangeFilter, setExchangeFilter] = useState<"ALL" | "NSE" | "USE" | "DSE" | "RSE">("ALL");
   const [sectorFilter, setSectorFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"market_cap" | "day_change" | "dividend_yield" | "pe_ratio">("market_cap");
 
@@ -31,12 +32,15 @@ export const CompareCatalogStocks: React.FC<CompareCatalogStocksProps> = ({
   const filteredStocks = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     const list = stocks.filter((s) => {
+      const stockExchange = String(s.raw?.exchange || s.badge || "NSE").replace(/\s+Stock$/i, "").toUpperCase();
+      if (exchangeFilter !== "ALL" && stockExchange !== exchangeFilter) return false;
       if (sectorFilter !== "all" && s.metrics.sectorOrType !== sectorFilter) return false;
       if (!q) return true;
       return (
         s.title.toLowerCase().includes(q) ||
         (s.symbol && s.symbol.toLowerCase().includes(q)) ||
-        (s.subtitle && s.subtitle.toLowerCase().includes(q))
+        (s.subtitle && s.subtitle.toLowerCase().includes(q)) ||
+        stockExchange.toLowerCase().includes(q)
       );
     });
 
@@ -55,21 +59,34 @@ export const CompareCatalogStocks: React.FC<CompareCatalogStocksProps> = ({
       // default: market cap / raw price
       return (b.metrics.priceKes || 0) - (a.metrics.priceKes || 0);
     });
-  }, [stocks, searchQuery, sectorFilter, sortBy]);
+  }, [stocks, searchQuery, exchangeFilter, sectorFilter, sortBy]);
 
   return (
     <div className="space-y-4 pt-4 border-t border-border/60">
       {/* Search and Filters Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h4 className="text-sm font-bold text-foreground">Explore Nairobi Securities Exchange (NSE) Stocks</h4>
+          <h4 className="text-sm font-bold text-foreground">Explore East African Stocks (NSE, USE, DSE &amp; RSE)</h4>
           <p className="text-xs text-muted-foreground">
-            Click "+ Compare" on any stock to add it to the comparison workbench above.
+            Click &quot;+ Compare&quot; on any listed company across Kenya, Uganda, Tanzania, and Rwanda.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative w-full sm:w-60">
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={exchangeFilter}
+            onChange={(e) => setExchangeFilter(e.target.value as "ALL" | "NSE" | "USE" | "DSE" | "RSE")}
+            aria-label="Filter stocks by exchange"
+            className="h-8 px-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:outline-hidden"
+          >
+            <option value="ALL">All Exchanges</option>
+            <option value="NSE">NSE (Kenya)</option>
+            <option value="USE">USE (Uganda)</option>
+            <option value="DSE">DSE (Tanzania)</option>
+            <option value="RSE">RSE (Rwanda)</option>
+          </select>
+
+          <div className="relative w-full sm:w-56">
             <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
             <Input
               type="text"
@@ -82,7 +99,7 @@ export const CompareCatalogStocks: React.FC<CompareCatalogStocksProps> = ({
 
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={(e) => setSortBy(e.target.value as "market_cap" | "day_change" | "dividend_yield" | "pe_ratio")}
             className="h-8 px-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:outline-hidden"
           >
             <option value="market_cap">Sort: Market Cap</option>
@@ -100,7 +117,7 @@ export const CompareCatalogStocks: React.FC<CompareCatalogStocksProps> = ({
             <thead className="bg-muted/40 text-[10px] font-bold text-muted-foreground uppercase border-b border-border/60">
               <tr>
                 <th className="py-3 px-4">Company</th>
-                <th className="py-3 px-3 text-right">Price (KES)</th>
+                <th className="py-3 px-3 text-right">Price</th>
                 <th className="py-3 px-3 text-right">1D Move</th>
                 <th className="py-3 px-3 text-right hidden md:table-cell">P/E Ratio</th>
                 <th className="py-3 px-3 text-right hidden sm:table-cell">Div Yield</th>
@@ -113,6 +130,8 @@ export const CompareCatalogStocks: React.FC<CompareCatalogStocksProps> = ({
                 const isSelected = selectedItems.some((s) => s.id === stock.id);
                 const isPos = (stock.metrics.dayChangePct || 0) > 0;
                 const isNeg = (stock.metrics.dayChangePct || 0) < 0;
+                const stockExchange = String(stock.raw?.exchange || stock.badge || "NSE").replace(/\s+Stock$/i, "").toUpperCase();
+                const currencyCode = stock.metrics.currencyCode || "KES";
 
                 return (
                   <tr key={stock.id} className="hover:bg-muted/20 transition-colors">
@@ -120,18 +139,23 @@ export const CompareCatalogStocks: React.FC<CompareCatalogStocksProps> = ({
                       <div className="flex items-center gap-2.5 min-w-0">
                         <WatchlistAssetAvatar
                           type="stock"
-                          symbol={stock.symbol}
+                          symbol={stock.raw?.symbol || stock.symbol}
                           name={stock.title}
                           size={32}
                           className="shrink-0"
                         />
                         <div className="min-w-0">
-                          <Link
-                            to={stock.link}
-                            className="font-bold text-foreground hover:text-emerald-500 transition-colors truncate block"
-                          >
-                            {stock.symbol || stock.title}
-                          </Link>
+                          <div className="flex items-center gap-1.5">
+                            <Link
+                              to={stock.link}
+                              className="font-bold text-foreground hover:text-emerald-500 transition-colors truncate"
+                            >
+                              {stock.symbol || stock.title}
+                            </Link>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase shrink-0">
+                              {stockExchange}
+                            </span>
+                          </div>
                           <span className="text-[10px] text-muted-foreground truncate block">
                             {stock.title}
                           </span>
@@ -140,7 +164,7 @@ export const CompareCatalogStocks: React.FC<CompareCatalogStocksProps> = ({
                     </td>
 
                     <td className="py-3 px-3 text-right font-bold text-foreground tabular-nums">
-                      {stock.metrics.priceKes != null ? stock.metrics.priceKes.toFixed(2) : "—"}
+                      {stock.metrics.priceKes != null ? `${currencyCode} ${stock.metrics.priceKes.toFixed(2)}` : "—"}
                     </td>
 
                     <td className="py-3 px-3 text-right tabular-nums">

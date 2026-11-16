@@ -21,6 +21,7 @@ import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import { NotificationPreferencesSection } from "@/components/alerts/NotificationPreferencesSection";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getStockLogoUrl } from "@/lib/stockBranding";
+import { inferCurrencyFromExchange, inferExchangeFromSymbol } from "@/lib/stockCache";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
 import { getCurrencyFlagUrl } from "@/lib/currencyBranding";
 import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
@@ -120,19 +121,20 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
           s.name.toLowerCase() === targetName
         );
         if (asset) {
+          const currency = inferCurrencyFromExchange(inferExchangeFromSymbol(asset.symbol, asset.exchange), asset.currency);
           result.push({
             entry,
             type: "stock",
             title: asset.symbol,
             subtitle: asset.name,
             value: asset.price,
-            unit: "KES",
+            unit: currency,
             change: asset.day_change_percent,
-            href: `/stocks/${asset.symbol}`,
+            href: `/stocks/${encodeURIComponent(asset.symbol)}`,
             visualUrl: getStockLogoUrl(asset.symbol, asset.logo_url),
             meta: [
               { label: "Vol", value: asset.volume ? `${(asset.volume / 1_000_000).toFixed(1)}M` : "—" },
-              { label: "Cap", value: asset.market_cap ? `KES ${(asset.market_cap / 1_000_000_000).toFixed(1)}B` : "—" },
+              { label: "Cap", value: asset.market_cap ? `${currency} ${(asset.market_cap / 1_000_000_000).toFixed(1)}B` : "—" },
             ],
           });
         }
@@ -222,7 +224,10 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
     const normalized = addQuery.trim().toLowerCase();
     const saved = new Set(items.map((item) => `${item.item_type}:${item.item_id}`));
     const match = (...values: Array<string | undefined>) => !normalized || values.some((value) => value?.toLowerCase().includes(normalized));
-    if (addType === "stock") return stocks.filter((asset) => !saved.has(`stock:${asset.id}`) && match(asset.name, asset.symbol)).slice(0, 50).map((asset) => ({ id: asset.id, name: `${asset.symbol} · ${asset.name}`, value: formatValue(asset.price, "KES") }));
+    if (addType === "stock") return stocks.filter((asset) => !saved.has(`stock:${asset.id}`) && match(asset.name, asset.symbol)).slice(0, 50).map((asset) => {
+      const currency = inferCurrencyFromExchange(inferExchangeFromSymbol(asset.symbol, asset.exchange), asset.currency);
+      return { id: asset.id, name: `${asset.symbol} · ${asset.name}`, value: formatValue(asset.price, currency) };
+    });
     if (addType === "fund") return funds.filter((asset) => !saved.has(`fund:${asset.id}`) && match(asset.name, asset.manager)).slice(0, 50).map((asset) => ({ id: asset.id, name: asset.name, value: formatValue(asset.annual_yield, "%") }));
     if (addType === "currency") return rates.filter((asset) => !saved.has(`currency:${asset.id}`) && match(asset.currency_code, asset.currency_name)).slice(0, 50).map((asset) => ({ id: asset.id, name: `${asset.currency_code}/KES`, value: formatValue(asset.rate, "KES") }));
     return commodities.filter((asset) => !saved.has(`commodity:${asset.id}`) && match(asset.name, asset.symbol)).slice(0, 50).map((asset) => ({ id: asset.id, name: asset.name, value: formatValue(asset.price, asset.unit) }));

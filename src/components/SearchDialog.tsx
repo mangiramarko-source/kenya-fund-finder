@@ -37,6 +37,7 @@ import { trackEvent } from "@/lib/analytics";
 import { canonicalEntityFromSearch } from "@/lib/aiLab/canonicalCatalog";
 import { rankCanonicalEntities } from "../../supabase/functions/_shared/universal-query";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { inferCurrencyFromExchange, inferExchangeFromSymbol } from "@/lib/stockCache";
 
 interface SearchDialogProps {
   variant?: "default" | "topbar" | "icon" | "mobile-pill" | "round";
@@ -44,7 +45,17 @@ interface SearchDialogProps {
 
 type Category = "all" | "funds" | "stocks" | "rates" | "commodities" | "news" | "pages";
 
-interface StockRow { id: string; symbol: string; name: string; price: number; day_change_percent: number }
+interface StockRow {
+  id: string;
+  symbol: string;
+  exchange?: string | null;
+  exchange_ticker?: string | null;
+  currency?: string | null;
+  country_code?: string | null;
+  name: string;
+  price: number;
+  day_change_percent: number;
+}
 interface RateRow { id: string; currency_code: string; currency_name: string; rate: number }
 interface CommodityRow { id: string; symbol: string; name: string; price: number; unit: string }
 
@@ -55,7 +66,7 @@ const PAGES = [
   { label: "Overview", path: "/", icon: LayoutGrid, keywords: "home dashboard market overview" },
   { label: "Unit Trusts", path: "/funds", icon: TrendingUp, keywords: "funds money market mmf cma" },
   { label: "Bank Deposits & SACCOs", path: "/savings", icon: PiggyBank, keywords: "savings fixed deposits saccos bank rates yield interest" },
-  { label: "Stocks", path: "/stocks", icon: LineChart, keywords: "nse equities shares" },
+  { label: "Stocks", path: "/stocks", icon: LineChart, keywords: "nse use dse rse uganda tanzania rwanda east africa equities shares" },
   { label: "FX Rates", path: "/rates", icon: ArrowRightLeft, keywords: "currency forex exchange usd kes" },
   { label: "Commodities", path: "/commodities", icon: Coins, keywords: "gold oil silver" },
   { label: "News", path: "/news", icon: Newspaper, keywords: "articles updates" },
@@ -152,9 +163,8 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
     if (stocks.length === 0) {
       supabase
         .from("stocks")
-        .select("id, symbol, name, price, day_change_percent")
+        .select("id, symbol, name, price, day_change_percent, exchange, exchange_ticker, currency, country_code")
         .eq("is_active", true)
-        .eq("exchange" as any, "NSE")
         .order("symbol")
         .then(({ data }) => setStocks((data || []) as StockRow[]));
     }
@@ -243,13 +253,17 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
       manager: fund.manager,
       aliases: [fund.manager, fund.fund_type],
     })),
-    ...stocks.map((stock) => canonicalEntityFromSearch({
-      id: stock.id,
-      kind: "stock",
-      label: stock.name,
-      sourceKey: stock.symbol,
-      market: "NSE",
-    })),
+    ...stocks.map((stock) => {
+      const ex = inferExchangeFromSymbol(stock.symbol, stock.exchange);
+      return canonicalEntityFromSearch({
+        id: stock.id,
+        kind: "stock",
+        label: stock.name,
+        sourceKey: stock.symbol,
+        market: ex,
+        aliases: stock.exchange_ticker && stock.exchange_ticker !== stock.symbol ? [stock.exchange_ticker] : [],
+      });
+    }),
     ...rates.map((rate) => canonicalEntityFromSearch({
       id: rate.id,
       kind: "fx",
@@ -340,7 +354,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
 
     const joinedRecent = recent.join(" ").toLowerCase();
     const hasFundAffinity = /fund|mmf|yield|money|kuza|etica|sanlam|britam|ncba|iceal|lofty/i.test(joinedRecent);
-    const hasStockAffinity = /stock|share|nse|equity|safaricom|kcb|coop|eabl|bat/i.test(joinedRecent);
+    const hasStockAffinity = /stock|share|nse|use|dse|rse|uganda|tanzania|rwanda|equity|safaricom|kcb|coop|eabl|bat|mtn|airtel|crdb|nmb|tbl|bok/i.test(joinedRecent);
 
     const sortedFunds = [...funds]
       .filter((f) => f.annual_yield && Number(f.annual_yield) > 0)
@@ -779,7 +793,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
                   <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-border/80 bg-muted/20 space-y-2">
                     <p className="text-sm font-bold text-foreground">No matches found for "{query}"</p>
                     <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-                      Try searching for fund names, NSE stock tickers, currency pairs, or news topics.
+                      Try searching for fund names, NSE/USE/DSE/RSE stock tickers, currency pairs, or news topics.
                     </p>
                     <button
                       type="button"
@@ -830,19 +844,22 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
                       </div>
                     )}
 
-                    {/* Stocks (NSE) */}
+                    {/* Stocks (NSE / USE / DSE / RSE) */}
                     {filteredStocks.length > 0 && (
                       <div className="space-y-2">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
-                          NSE Stocks ({filteredStocks.length})
+                          East African Stocks ({filteredStocks.length})
                         </h3>
                         <div className="rounded-2xl border border-border/80 bg-card divide-y divide-border/60 overflow-hidden shadow-xs">
                           {filteredStocks.map((s) => {
                             const up = Number(s.day_change_percent) >= 0;
+                            const ex = inferExchangeFromSymbol(s.symbol, s.exchange);
+                            const currency = inferCurrencyFromExchange(ex, s.currency);
+                            const displayTicker = s.exchange_ticker || s.symbol.replace(/^(USE|DSE|RSE)-/i, "");
                             return (
                               <div
                                 key={s.id}
-                                onClick={() => go(`/stocks/${s.symbol}`, s.symbol)}
+                                onClick={() => go(`/stocks/${encodeURIComponent(s.symbol)}`, s.symbol)}
                                 className="flex items-center justify-between p-3.5 hover:bg-muted/40 active:bg-muted/70 transition-colors cursor-pointer group"
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -852,19 +869,22 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1.5">
                                       <span className="text-sm font-bold text-foreground truncate group-hover:text-blue-600 transition-colors">
-                                        {s.symbol}
+                                        {displayTicker}
+                                      </span>
+                                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase shrink-0">
+                                        {ex}
                                       </span>
                                       <span className="text-[10px] text-muted-foreground truncate">
                                         {s.name}
                                       </span>
                                     </div>
-                                    <p className="text-xs text-muted-foreground truncate mt-0.5">NSE Equities</p>
+                                    <p className="text-xs text-muted-foreground truncate mt-0.5">{ex} Equities</p>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 shrink-0 pl-2">
                                   <div className="text-right">
                                     <span className="font-mono text-xs font-bold text-foreground block">
-                                      KES {Number(s.price).toFixed(2)}
+                                      {currency} {Number(s.price).toFixed(2)}
                                     </span>
                                     <span className={`font-mono text-[10px] block ${up ? "text-emerald-500" : "text-red-500"}`}>
                                       {up ? "+" : ""}{Number(s.day_change_percent).toFixed(2)}%
@@ -1103,15 +1123,19 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
             )}
 
             {filteredStocks.length > 0 && (
-              <CommandGroup heading="Stocks (NSE)">
+              <CommandGroup heading="Stocks (NSE · USE · DSE · RSE)">
                 {filteredStocks.map((s) => {
                   const up = Number(s.day_change_percent) >= 0;
+                  const ex = inferExchangeFromSymbol(s.symbol, s.exchange);
+                  const currency = inferCurrencyFromExchange(ex, s.currency);
+                  const displayTicker = s.exchange_ticker || s.symbol.replace(/^(USE|DSE|RSE)-/i, "");
                   return (
-                    <CommandItem key={s.id} onSelect={() => go(`/stocks/${s.symbol}`, s.symbol)}>
+                    <CommandItem key={s.id} onSelect={() => go(`/stocks/${encodeURIComponent(s.symbol)}`, s.symbol)}>
                       <LineChart className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <span className="font-mono font-semibold w-16 shrink-0">{s.symbol}</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground mr-1.5 shrink-0">{ex}</span>
+                      <span className="font-mono font-semibold w-16 shrink-0 truncate">{displayTicker}</span>
                       <span className="flex-1 truncate text-muted-foreground text-xs">{s.name}</span>
-                      <span className="font-mono text-xs mr-2">{Number(s.price).toFixed(2)}</span>
+                      <span className="font-mono text-xs mr-2">{currency} {Number(s.price).toFixed(2)}</span>
                       <span className={`font-mono text-[10px] mr-1 ${up ? "text-emerald-500" : "text-red-500"}`}>
                         {up ? "+" : ""}{Number(s.day_change_percent).toFixed(2)}%
                       </span>

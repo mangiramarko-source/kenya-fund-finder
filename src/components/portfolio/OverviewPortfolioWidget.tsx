@@ -102,8 +102,8 @@ export default function OverviewPortfolioWidget() {
     }
 
     return portfolioItems.slice(0, 10).map((item) => {
-      const val = getCurrentValue(item);
-      const pnlPct = getPnLPercent(item);
+      const val = getCurrentValue(item, rates);
+      const pnlPct = getPnLPercent(item, rates);
 
       // Money Market Funds (MMFs) compound daily based on published annual yield
       if (item.asset_type === "mmf") {
@@ -141,7 +141,7 @@ export default function OverviewPortfolioWidget() {
 
       // Stocks, FX, Fixed Income, and Commodities
       const change = portfolioChanges.find((c) => c.itemId === item.id);
-      const perf = holdingOneDayPerformance(item, change);
+      const perf = holdingOneDayPerformance(item, change, rates);
       const category =
         item.asset_type === "fixed_income"
           ? "T-BILLS"

@@ -1,4 +1,5 @@
 import type { PriceAlert } from "@/hooks/usePriceAlerts";
+import { inferCurrencyFromExchange, inferExchangeFromSymbol } from "@/lib/stockCache";
 
 export interface ParsedAlertDetails {
   symbol: string;
@@ -57,10 +58,14 @@ export function resolveAlertAsset(
       const p = Number(matched.price);
       currentPrice = Number.isFinite(p) && p > 0 ? p : null;
       logoUrl = matched.logo_url;
-      linkTo = `/stocks/${matched.symbol}`;
+      currencyCode = inferCurrencyFromExchange(
+        inferExchangeFromSymbol(matched.symbol, matched.exchange),
+        matched.currency,
+      );
+      linkTo = `/stocks/${encodeURIComponent(matched.symbol)}`;
     } else {
       if (parenMatch) {
-        symbol = parenMatch[1].trim().toUpperCase();
+        symbol = parenMatch[1].trim().toUpperCase().replace(/:/g, "-");
         name = alert.asset_name.replace(/\([^)]+\)/, "").trim();
       } else if (dashMatch) {
         symbol = dashMatch[1].trim().toUpperCase();
@@ -68,7 +73,8 @@ export function resolveAlertAsset(
       } else {
         symbol = alert.asset_id?.toUpperCase() || alert.asset_name.slice(0, 4).toUpperCase();
       }
-      linkTo = `/stocks/${symbol}`;
+      currencyCode = alert.asset_unit || inferCurrencyFromExchange(inferExchangeFromSymbol(symbol));
+      linkTo = `/stocks/${encodeURIComponent(symbol)}`;
     }
   } else if (alert.asset_type === "currency") {
     const rawTarget = (alert.asset_id || "").toLowerCase();

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -71,6 +71,34 @@ vi.mock("@/lib/gateway", () => ({
           pe_ratio: 4.8,
           dividend_yield: 8.5,
           market_cap: 166000000000,
+          sector: "Banking",
+        },
+        {
+          id: "s3",
+          symbol: "USE-MTNU",
+          exchange: "USE",
+          exchange_ticker: "MTNU",
+          currency: "UGX",
+          name: "MTN Uganda Limited",
+          price: 170.0,
+          day_change_percent: 2.4,
+          pe_ratio: 9.1,
+          dividend_yield: 6.2,
+          market_cap: 3800000000000,
+          sector: "Telecommunication",
+        },
+        {
+          id: "s4",
+          symbol: "RSE-BOK",
+          exchange: "RSE",
+          exchange_ticker: "BOK",
+          currency: "RWF",
+          name: "Bank of Kigali Group",
+          price: 305.0,
+          day_change_percent: 0.8,
+          pe_ratio: 6.4,
+          dividend_yield: 7.1,
+          market_cap: 280000000000,
           sector: "Banking",
         },
       ]);
@@ -153,5 +181,25 @@ describe("ComparePage", () => {
 
     expect(screen.getByText(/Annual Management Fee/i)).toBeInTheDocument();
     expect(screen.getByText(/Explore Regulated Unit Trust Funds & MMFs/i)).toBeInTheDocument();
+  });
+
+  it("renders USE (UGX) and RSE (RWF) regional stocks with local currency codes instead of KES", async () => {
+    renderWithProviders(["/compare?tab=stocks"]);
+
+    await waitFor(() => {
+      expect(screen.getByText("MTN Uganda Limited")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("UGX 170.00")).toBeInTheDocument();
+    expect(screen.getByText("Bank of Kigali Group")).toBeInTheDocument();
+    expect(screen.getByText("RWF 305.00")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: /Filter stocks by exchange/i })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Filter stocks by exchange/i }), {
+      target: { value: "USE" },
+    });
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("MTN Uganda Limited")).toBeInTheDocument();
+    expect(within(table).queryByText("Safaricom PLC")).not.toBeInTheDocument();
   });
 });
