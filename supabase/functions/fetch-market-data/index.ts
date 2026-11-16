@@ -1,4 +1,4 @@
-import { createClient } from "../_shared/supabase-client.ts";
+import { createClient, type SupabaseClient } from "../_shared/supabase-client.ts";
 import { calculateMarketSummary } from "../_shared/market-summary.ts";
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
 import {
@@ -6,14 +6,24 @@ import {
   getSupabaseSecretKey,
 } from "../_shared/supabase-keys.ts";
 import { evaluateStockQuoteDrift, matchRapidApiStocks, parseRapidApiStockResponse, type QuoteSource, type StockQuote } from "./stock-quotes.ts";
-import { insertNewMansaStock, persistStockQuote, type StockWriteOperations } from "./stock-writes.ts";
+import {
+  compute52WeekRange,
+  insertBackfillHistoryBatch,
+  insertNewMansaStock,
+  persistStockQuote,
+  type StockWriteOperations,
+} from "./stock-writes.ts";
 import { fetchNseSector, parseNseQuoteRows, parseNseSnapshotDate, summarizeNseFallback } from "./nse-fallback.ts";
 import {
   EAST_AFRICAN_EXCHANGE_META,
   EAST_AFRICAN_EXCHANGES,
   fetchMansaExchangeStocks,
+  fetchMansaStockHistory,
+  REGIONAL_MANSA_EXCHANGES,
   shouldSkipMansaExchangeRefresh,
+  VALID_MANSA_HISTORY_RANGES,
   type EastAfricanExchange,
+  type MansaHistoryRange,
   type MansaStockQuote,
 } from "./mansa-stocks.ts";
 import {
@@ -634,6 +644,287 @@ async function getStockData(
   };
 }
 
+async function fetchAllCandidateHistoryRows(
+  supabase: SupabaseClient,
+  stockIds: string[],
+): Promise<Map<string, Array<{ snapshot_date: string; price: number }>>> {
+  const map = new Map<string, Array<{ snapshot_date: string; price: number }>>();
+  if (stockIds.length === 0) return map;
+
+  const pageSize = 1000;
+  let offset = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("stock_price_history")
+      .select("stock_id, snapshot_date, price")
+      .in("stock_id", stockIds)
+      .order("snapshot_date", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) {
+      throw new Error(`History bulk read failed: ${error.code || error.message}`);
+    }
+    const rows = (data || []) as Array<{ stock_id: string; snapshot_date: string; price: number }>;
+    for (const r of rows) {
+      const list = map.get(r.stock_id) ?? [];
+      list.push({ snapshot_date: String(r.snapshot_date), price: Number(r.price) });
+      map.set(r.stock_id, list);
+    }
+    if (rows.length < pageSize) break;
+    offset += pageSize;
+  }
+  return map;
+}
+
+async function handleBackfillHistory(
+  supabase: SupabaseClient,
+  body: Record<string, unknown>,
+  corsHeaders: Record<string, string>,
+): Promise<Response> {
+  const mansaApiKey = Deno.env.get("MANSA_API_KEY");
+  const dryRun = Boolean(body.dry_run);
+  if (!mansaApiKey) {
+    return new Response(
+      JSON.stringify({ success: false, action: "backfill_history", error: "MANSA_API_KEY secret is not configured" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  const rawExchanges = Array.isArray(body.exchanges) ? body.exchanges : [...REGIONAL_MANSA_EXCHANGES];
+  const requestedRegional = rawExchanges
+    .map((item) => String(item || "").trim().toUpperCase())
+    .filter((ex): ex is EastAfricanExchange =>
+      (REGIONAL_MANSA_EXCHANGES as readonly string[]).includes(ex)
+    );
+  const effectiveExchanges: EastAfricanExchange[] =
+    requestedRegional.length > 0 ? requestedRegional : [...REGIONAL_MANSA_EXCHANGES];
+
+  const rawRange = String(body.range || "1Y").trim().toUpperCase();
+  const range: MansaHistoryRange = (VALID_MANSA_HISTORY_RANGES as readonly string[]).includes(rawRange)
+    ? (rawRange as MansaHistoryRange)
+    : "1Y";
+
+  const minExistingRows = Math.max(
+    1,
+    Math.min(5000, Number.isFinite(Number(body.min_existing_rows)) ? Number(body.min_existing_rows) : 30),
+  );
+  const maxTickers = Math.max(
+    1,
+    Math.min(100, Number.isFinite(Number(body.max_tickers)) ? Number(body.max_tickers) : 30),
+  );
+
+  const { data: stockData, error: stocksErr } = await supabase
+    .from("stocks")
+    .select("id, symbol, exchange, exchange_ticker, price, year_high, year_low")
+    .eq("is_active", true)
+    .in("exchange", effectiveExchanges)
+    .order("sort_order", { ascending: true });
+
+  if (stocksErr) {
+    throw new Error(`Regional stock query failed: ${stocksErr.code || stocksErr.message}`);
+  }
+
+  const regionalRows = (stockData || []) as Array<{
+    id: string;
+    symbol: string;
+    exchange: string;
+    exchange_ticker: string | null;
+    price: number;
+    year_high: number | null;
+    year_low: number | null;
+  }>;
+
+  const historyByStockId = await fetchAllCandidateHistoryRows(
+    supabase,
+    regionalRows.map((r) => r.id),
+  );
+
+  const candidatesAll = regionalRows.filter(
+    (r) => (historyByStockId.get(r.id)?.length ?? 0) < minExistingRows,
+  );
+  const targets = candidatesAll.slice(0, maxTickers);
+
+  let tierBlocked = false;
+  let rateLimited = false;
+  let abortedReason: string | null = null;
+  let stocksWritten = 0;
+  let rowsWritten = 0;
+  const referenceDateIso = new Date().toISOString().slice(0, 10);
+
+  const report: Array<{
+    symbol: string;
+    exchange: string;
+    exchange_ticker: string;
+    existing_rows: number;
+    fetched_points: number;
+    inserted_rows: number;
+    scale_ratio: number | null;
+    status: string;
+    error?: string | null;
+  }> = [];
+
+  for (const row of targets) {
+    const ex = ((row.exchange || "USE").toUpperCase()) as EastAfricanExchange;
+    const ticker = (row.exchange_ticker || row.symbol.replace(/^(USE|DSE|RSE)-/i, "")).trim();
+    const existing = historyByStockId.get(row.id) ?? [];
+
+    const fetched = await fetchMansaStockHistory(mansaApiKey, ex, ticker, {
+      range,
+      referencePrice: Number(row.price) || null,
+    });
+
+    if (fetched.tierBlocked) {
+      tierBlocked = true;
+      abortedReason = `Mansa Pro tier or valid key required (HTTP ${fetched.status})`;
+      report.push({
+        symbol: row.symbol,
+        exchange: ex,
+        exchange_ticker: ticker,
+        existing_rows: existing.length,
+        fetched_points: 0,
+        inserted_rows: 0,
+        scale_ratio: null,
+        status: "tier_blocked",
+        error: fetched.error,
+      });
+      break;
+    }
+
+    if (fetched.rateLimited) {
+      rateLimited = true;
+      abortedReason = "Mansa API rate limit (HTTP 429) reached; stopped early to preserve quota";
+      report.push({
+        symbol: row.symbol,
+        exchange: ex,
+        exchange_ticker: ticker,
+        existing_rows: existing.length,
+        fetched_points: 0,
+        inserted_rows: 0,
+        scale_ratio: null,
+        status: "rate_limited",
+        error: fetched.error,
+      });
+      break;
+    }
+
+    if (!fetched.ok) {
+      report.push({
+        symbol: row.symbol,
+        exchange: ex,
+        exchange_ticker: ticker,
+        existing_rows: existing.length,
+        fetched_points: fetched.rawCount,
+        inserted_rows: 0,
+        scale_ratio: fetched.scaleRatio,
+        status: fetched.blockedReason === "SCALE_MISMATCH"
+          ? "scale_mismatch"
+          : fetched.notFound
+          ? "not_found"
+          : "error",
+        error: fetched.error,
+      });
+      continue;
+    }
+
+    const existingDates = new Set(existing.map((e) => e.snapshot_date));
+    const toInsert = fetched.points
+      .filter((pt) => !existingDates.has(pt.date))
+      .map((pt) => ({
+        stock_id: row.id,
+        price: pt.price,
+        snapshot_date: pt.date,
+      }));
+
+    if (dryRun) {
+      report.push({
+        symbol: row.symbol,
+        exchange: ex,
+        exchange_ticker: ticker,
+        existing_rows: existing.length,
+        fetched_points: fetched.points.length,
+        inserted_rows: toInsert.length,
+        scale_ratio: fetched.scaleRatio,
+        status: "dry_run_ok",
+      });
+      continue;
+    }
+
+    let writtenForTicker = 0;
+    if (toInsert.length > 0) {
+      const batchRes = await insertBackfillHistoryBatch(toInsert, (chunk) =>
+        supabase
+          .from("stock_price_history")
+          .upsert(chunk, { onConflict: "stock_id,snapshot_date", ignoreDuplicates: true })
+      );
+      if (batchRes.error) {
+        report.push({
+          symbol: row.symbol,
+          exchange: ex,
+          exchange_ticker: ticker,
+          existing_rows: existing.length,
+          fetched_points: fetched.points.length,
+          inserted_rows: 0,
+          scale_ratio: fetched.scaleRatio,
+          status: "write_error",
+          error: batchRes.error,
+        });
+        continue;
+      }
+      writtenForTicker = batchRes.writtenRows;
+      rowsWritten += writtenForTicker;
+    }
+
+    const combinedPoints = [
+      ...existing,
+      ...toInsert.map((pt) => ({ snapshot_date: pt.snapshot_date, price: pt.price })),
+    ];
+    const clampedRange = compute52WeekRange(Number(row.price) || null, combinedPoints, referenceDateIso);
+    if (clampedRange.yearHigh != null && clampedRange.yearLow != null) {
+      await supabase
+        .from("stocks")
+        .update({ year_high: clampedRange.yearHigh, year_low: clampedRange.yearLow })
+        .eq("id", row.id);
+    }
+
+    stocksWritten++;
+    report.push({
+      symbol: row.symbol,
+      exchange: ex,
+      exchange_ticker: ticker,
+      existing_rows: existing.length,
+      fetched_points: fetched.points.length,
+      inserted_rows: writtenForTicker,
+      scale_ratio: fetched.scaleRatio,
+      status: "ok",
+    });
+  }
+
+  return new Response(
+    JSON.stringify({
+      success: !tierBlocked && !rateLimited,
+      action: "backfill_history",
+      dry_run: dryRun,
+      exchanges: effectiveExchanges,
+      range,
+      min_existing_rows: minExistingRows,
+      max_tickers: maxTickers,
+      total_regional_stocks: regionalRows.length,
+      candidates_needing_backfill: candidatesAll.length,
+      candidates_processed: report.length,
+      stocks_written: stocksWritten,
+      rows_written: rowsWritten,
+      tier_blocked: tierBlocked,
+      rate_limited: rateLimited,
+      aborted_reason: abortedReason,
+      report,
+    }),
+    {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    },
+  );
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
@@ -676,6 +967,18 @@ Deno.serve(async (req) => {
   try {
     body = await req.json();
   } catch { /* no body is fine */ }
+
+  if ((body as Record<string, unknown>)?.action === "backfill_history") {
+    try {
+      return await handleBackfillHistory(supabase, body, corsHeaders);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return new Response(
+        JSON.stringify({ success: false, action: "backfill_history", error: msg }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+  }
 
   const fetchType = (body as Record<string, unknown>)?.fetch_type as string | undefined;
   const results: string[] = [];

@@ -496,12 +496,135 @@ export function shouldSkipMansaExchangeRefresh(
 
 export const MANSA_BASE_URL = "https://mansaapi.com/api/v1/markets/exchanges";
 
-export async function fetchMansaExchangeStocks(
+export const VALID_MANSA_HISTORY_RANGES = [
+  "1M",
+  "3M",
+  "6M",
+  "1Y",
+  "2Y",
+  "5Y",
+  "10Y",
+  "ALL",
+] as const;
+export type MansaHistoryRange = (typeof VALID_MANSA_HISTORY_RANGES)[number];
+
+export interface MansaHistoryPoint {
+  date: string;
+  price: number;
+}
+
+export interface ParsedMansaHistoryResult {
+  points: MansaHistoryPoint[];
+  blockedReason: "SCALE_MISMATCH" | "NO_VALID_POINTS" | null;
+  scaleRatio: number | null;
+  rawCount: number;
+  priceUnit: string | null;
+}
+
+export interface MansaHistoryFetchResult {
+  ok: boolean;
+  status: number;
+  tierBlocked: boolean;
+  rateLimited: boolean;
+  notFound: boolean;
+  error: string | null;
+  points: MansaHistoryPoint[];
+  blockedReason: "SCALE_MISMATCH" | "NO_VALID_POINTS" | null;
+  scaleRatio: number | null;
+  rawCount: number;
+  priceUnit: string | null;
+}
+
+export function parseMansaHistoryResponse(
+  payload: unknown,
+  referencePrice?: number | null,
+): ParsedMansaHistoryResult {
+  const root = record(payload);
+  const dataObj = record(root?.data);
+  const priceUnitRaw =
+    typeof dataObj?.price_unit === "string"
+      ? dataObj.price_unit.trim().toLowerCase()
+      : typeof root?.price_unit === "string"
+      ? root.price_unit.trim().toLowerCase()
+      : null;
+  const divisor = priceUnitRaw === "cents" ? 100 : 1;
+
+  const rawPoints = Array.isArray(dataObj?.points)
+    ? dataObj.points
+    : Array.isArray(root?.points)
+    ? root.points
+    : Array.isArray(root?.data)
+    ? root.data
+    : Array.isArray(payload)
+    ? payload
+    : [];
+
+  const byDate = new Map<string, number>();
+  for (const item of rawPoints) {
+    const obj = record(item);
+    if (!obj) continue;
+    const date = parseIsoDateOnly(obj.date ?? obj.snapshot_date ?? obj.timestamp ?? obj.trade_date);
+    if (!date) continue;
+    const rawClose = numeric(obj.close ?? obj.adj_close ?? obj.price ?? obj.last_price);
+    if (rawClose === null || rawClose <= 0) continue;
+    const scaledPrice = Number((rawClose / divisor).toFixed(4));
+    if (!Number.isFinite(scaledPrice) || scaledPrice <= 0) continue;
+    byDate.set(date, scaledPrice);
+  }
+
+  const points = Array.from(byDate.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, price]) => ({ date, price }));
+
+  if (points.length === 0) {
+    return {
+      points: [],
+      blockedReason: "NO_VALID_POINTS",
+      scaleRatio: null,
+      rawCount: rawPoints.length,
+      priceUnit: priceUnitRaw,
+    };
+  }
+
+  let scaleRatio: number | null = null;
+  let blockedReason: "SCALE_MISMATCH" | null = null;
+  if (typeof referencePrice === "number" && Number.isFinite(referencePrice) && referencePrice > 0) {
+    const latestPrice = points[points.length - 1].price;
+    const ratio = latestPrice / referencePrice;
+    scaleRatio = Number(ratio.toFixed(4));
+    if (ratio < 0.5 || ratio > 2.0) {
+      blockedReason = "SCALE_MISMATCH";
+    }
+  }
+
+  return {
+    points,
+    blockedReason,
+    scaleRatio,
+    rawCount: rawPoints.length,
+    priceUnit: priceUnitRaw,
+  };
+}
+
+export async function fetchMansaStockHistory(
   mansaApiKey: string,
   exchange: EastAfricanExchange,
-  request: typeof fetch = fetch,
-) {
-  const url = `${MANSA_BASE_URL}/${encodeURIComponent(exchange)}/stocks?limit=200`;
+  exchangeTicker: string,
+  options: {
+    range?: MansaHistoryRange;
+    referencePrice?: number | null;
+    request?: typeof fetch;
+  } = {},
+): Promise<MansaHistoryFetchResult> {
+  const range = options.range ?? "1Y";
+  const request = options.request ?? fetch;
+  const url = `${MANSA_BASE_URL}/${encodeURIComponent(exchange)}/stocks/${encodeURIComponent(exchangeTicker)}/history?range=${encodeURIComponent(range)}&order=asc`;
+
+  const signal =
+    typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
+      ? AbortSignal.timeout(15_000)
+      : undefined;
+
   const response = await request(url, {
     method: "GET",
     headers: {
@@ -509,7 +632,63 @@ export async function fetchMansaExchangeStocks(
       "Accept": "application/json",
       "User-Agent": "KenyaFundFinder-MarketSync/1.0",
     },
-    signal: AbortSignal.timeout(15_000),
+    ...(signal ? { signal } : {}),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => "");
+    const status = response.status;
+    return {
+      ok: false,
+      status,
+      tierBlocked: status === 401 || status === 402 || status === 403,
+      rateLimited: status === 429,
+      notFound: status === 404,
+      error: `Mansa ${exchange}/${exchangeTicker} history HTTP ${status}${errText ? `: ${errText.slice(0, 180)}` : ""}`,
+      points: [],
+      blockedReason: null,
+      scaleRatio: null,
+      rawCount: 0,
+      priceUnit: null,
+    };
+  }
+
+  const payload = await response.json();
+  const parsed = parseMansaHistoryResponse(payload, options.referencePrice);
+  return {
+    ok: parsed.blockedReason === null && parsed.points.length > 0,
+    status: response.status,
+    tierBlocked: false,
+    rateLimited: false,
+    notFound: false,
+    error: parsed.blockedReason === "SCALE_MISMATCH"
+      ? `Scale mismatch (ratio=${parsed.scaleRatio})`
+      : parsed.blockedReason === "NO_VALID_POINTS"
+      ? "No valid historical points returned"
+      : null,
+    ...parsed,
+  };
+}
+
+export async function fetchMansaExchangeStocks(
+  mansaApiKey: string,
+  exchange: EastAfricanExchange,
+  request: typeof fetch = fetch,
+) {
+  const url = `${MANSA_BASE_URL}/${encodeURIComponent(exchange)}/stocks?limit=200`;
+  const signal =
+    typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
+      ? AbortSignal.timeout(15_000)
+      : undefined;
+
+  const response = await request(url, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${mansaApiKey}`,
+      "Accept": "application/json",
+      "User-Agent": "KenyaFundFinder-MarketSync/1.0",
+    },
+    ...(signal ? { signal } : {}),
   });
 
   if (!response.ok) {

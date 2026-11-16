@@ -71,6 +71,69 @@ export async function persistStockQuote(
   return outcome;
 }
 
+export interface BackfillHistoryRow {
+  stock_id: string;
+  price: number;
+  snapshot_date: string;
+}
+
+export function compute52WeekRange(
+  livePrice: number | null | undefined,
+  points: Array<{ snapshot_date?: string; date?: string; price: number }>,
+  referenceDateIso = new Date().toISOString().slice(0, 10),
+): { yearHigh: number | null; yearLow: number | null } {
+  const refMs = Date.parse(`${referenceDateIso}T00:00:00Z`);
+  const cutoffIso = Number.isFinite(refMs)
+    ? new Date(refMs - 365 * 86_400_000).toISOString().slice(0, 10)
+    : referenceDateIso;
+
+  const candidates: number[] = [];
+  if (typeof livePrice === "number" && Number.isFinite(livePrice) && livePrice > 0) {
+    candidates.push(livePrice);
+  }
+  for (const pt of points) {
+    const dt = pt.snapshot_date || pt.date || "";
+    if (!dt || dt < cutoffIso || dt > referenceDateIso) continue;
+    if (typeof pt.price === "number" && Number.isFinite(pt.price) && pt.price > 0) {
+      candidates.push(pt.price);
+    }
+  }
+
+  if (candidates.length === 0) {
+    return { yearHigh: null, yearLow: null };
+  }
+
+  return {
+    yearHigh: Math.max(...candidates),
+    yearLow: Math.min(...candidates),
+  };
+}
+
+export async function insertBackfillHistoryBatch(
+  rows: BackfillHistoryRow[],
+  upsertChunk: (
+    chunk: BackfillHistoryRow[],
+  ) => PromiseLike<{ error: { message?: string; code?: string } | null }>,
+  chunkSize = 500,
+): Promise<{ insertedBatches: number; writtenRows: number; error: string | null }> {
+  let insertedBatches = 0;
+  let writtenRows = 0;
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+    const { error } = await upsertChunk(chunk);
+    if (error) {
+      return {
+        insertedBatches,
+        writtenRows,
+        error: error.message || error.code || "HISTORY_BATCH_UPSERT_FAILED",
+      };
+    }
+    insertedBatches++;
+    writtenRows += chunk.length;
+  }
+  return { insertedBatches, writtenRows, error: null };
+}
+
 export async function insertNewMansaStock(
   quote: MansaStockQuote,
   sortOrder: number,

@@ -1,12 +1,15 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  fetchMansaStockHistory,
   formatCanonicalStockSymbol,
   inferStockSector,
   isFixedIncomeInstrument,
   parseMansaExchangeStocksResponse,
+  parseMansaHistoryResponse,
   shouldSkipMansaExchangeRefresh,
   VALID_STOCK_SYMBOL_RE,
 } from "../../supabase/functions/fetch-market-data/mansa-stocks";
+import { compute52WeekRange } from "../../supabase/functions/fetch-market-data/stock-writes";
 import { getStockCurrencySymbol, normalizeStock, stockCache } from "./stockCache";
 
 describe("Mansa API East African stocks parser & safeguards", () => {
@@ -180,5 +183,79 @@ describe("Mansa API East African stocks parser & safeguards", () => {
     expect(getStockCurrencySymbol("TZS")).toBe("TSh");
     expect(getStockCurrencySymbol("RWF")).toBe("FRw");
     expect(getStockCurrencySymbol("KES")).toBe("KSh");
+  });
+
+  it("parses Mansa history points cleanly and enforces 0.5x-2.0x scale-mismatch guard", () => {
+    const validPayload = {
+      success: true,
+      data: {
+        exchange: "RSE",
+        ticker: "BOK",
+        points: [
+          { date: "2026-11-10", close: 300 },
+          { date: "2026-11-12T00:00:00Z", close: 305 },
+          { date: "2026-11-11", close: 0 }, // skipped invalid non-positive
+        ],
+      },
+    };
+    const okResult = parseMansaHistoryResponse(validPayload, 308);
+    expect(okResult.blockedReason).toBeNull();
+    expect(okResult.points).toEqual([
+      { date: "2026-11-10", price: 300 },
+      { date: "2026-11-12", price: 305 },
+    ]);
+    expect(okResult.scaleRatio).toBeCloseTo(305 / 308, 3);
+
+    // >2.0x divergence (e.g. unadjusted 2:1 or 3:1 split) must block via SCALE_MISMATCH
+    const mismatchResult = parseMansaHistoryResponse(validPayload, 100);
+    expect(mismatchResult.blockedReason).toBe("SCALE_MISMATCH");
+    expect(mismatchResult.scaleRatio).toBe(3.05);
+
+    // Sub-0.5x divergence must also block via SCALE_MISMATCH
+    const lowRatioResult = parseMansaHistoryResponse(validPayload, 800);
+    expect(lowRatioResult.blockedReason).toBe("SCALE_MISMATCH");
+
+    // price_unit: "cents" normalizes by /100 before scale comparison
+    const centsPayload = {
+      data: {
+        price_unit: "cents",
+        points: [{ date: "2026-11-12", close: 30500 }],
+      },
+    };
+    const centsResult = parseMansaHistoryResponse(centsPayload, 305);
+    expect(centsResult.blockedReason).toBeNull();
+    expect(centsResult.points[0].price).toBe(305);
+  });
+
+  it("halts gracefully on HTTP 403 tier block and HTTP 429 rate limit", async () => {
+    const fetch403 = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: "Pro tier required" }), { status: 403 }),
+    );
+    const tierRes = await fetchMansaStockHistory("key", "RSE", "BOK", { range: "1Y", request: fetch403 });
+    expect(tierRes.ok).toBe(false);
+    expect(tierRes.tierBlocked).toBe(true);
+    expect(tierRes.rateLimited).toBe(false);
+
+    const fetch429 = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: "Rate limit exceeded" }), { status: 429 }),
+    );
+    const rateRes = await fetchMansaStockHistory("key", "USE", "MTNU", { range: "1Y", request: fetch429 });
+    expect(rateRes.ok).toBe(false);
+    expect(rateRes.rateLimited).toBe(true);
+    expect(rateRes.tierBlocked).toBe(false);
+  });
+
+  it("clamps 52-week year_high and year_low to trailing 365 days plus live price", () => {
+    const clamped = compute52WeekRange(
+      310,
+      [
+        { snapshot_date: "2024-01-01", price: 999 }, // older than 365d -> excluded
+        { snapshot_date: "2026-03-01", price: 280 },
+        { snapshot_date: "2026-08-01", price: 305 },
+      ],
+      "2026-11-16",
+    );
+    expect(clamped.yearHigh).toBe(310); // includes live price
+    expect(clamped.yearLow).toBe(280);
   });
 });
