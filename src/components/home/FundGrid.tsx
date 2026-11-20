@@ -31,13 +31,15 @@ const categoryLabels: Record<string, string> = {
 const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
 
 const fmtYield = (fund: FundFromDB) => {
+  const val = Number(fund?.annual_yield ?? 0);
+  const formatted = Number.isFinite(val) ? val.toFixed(2) : "0.00";
   if (isUnitPriceFund(fund)) {
-    return `KES ${fund.annual_yield.toFixed(2)} NAV`;
+    return `KES ${formatted} NAV`;
   }
-  if (fund.yield_unit === "USD") {
-    return `${fund.annual_yield.toFixed(2)}% USD`;
+  if (fund?.yield_unit === "USD") {
+    return `${formatted}% USD`;
   }
-  return `${fund.annual_yield.toFixed(2)}%`;
+  return `${formatted}%`;
 };
 
 const sortFundsByYield = (a: FundFromDB, b: FundFromDB, dir: "asc" | "desc") => {
@@ -722,7 +724,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
                     <FundLogo name={fund.name} logoUrl={getFundManagerLogoUrl(fund.manager, fund.logo_url)} size={32} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-semibold text-foreground">{fund.name}</p>
-                      <p className="mt-0.5 text-[11px] font-medium text-emerald-500">{fmtYield(fund.annual_yield, fund.yield_unit)} annual</p>
+                      <p className="mt-0.5 text-[11px] font-medium text-emerald-500">{fmtYield(fund)} annual</p>
                     </div>
                     <button
                       type="button"

@@ -33,14 +33,16 @@ vi.mock("@/hooks/useSoftWallTrigger", () => ({
   isBotOrPrerender: () => mockIsBotOrPrerender(),
 }));
 
+const mockSelectedFunds = vi.hoisted(() => ({ current: [] as FundFromDB[] }));
+
 vi.mock("@/hooks/useCompare", () => ({
   useCompare: () => ({
-    selected: [],
+    selected: mockSelectedFunds.current,
     add: vi.fn(),
     remove: vi.fn(),
     clear: vi.fn(),
-    isSelected: vi.fn().mockReturnValue(false),
-    isFull: false,
+    isSelected: (id: string) => mockSelectedFunds.current.some((f) => f.id === id),
+    isFull: mockSelectedFunds.current.length >= 4,
     isOpen: false,
     setIsOpen: vi.fn(),
   }),
@@ -184,6 +186,7 @@ const mockFunds: FundFromDB[] = [
 describe("FundGrid Rule of 3 Gating Live Preview Test", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSelectedFunds.current = [];
   });
 
   it("gates anonymous human visitors to 3 items and displays InlineDataGate + teaser rows", () => {
@@ -269,5 +272,19 @@ describe("FundGrid Rule of 3 Gating Live Preview Test", () => {
     expect(screen.queryByText(/Unlock All/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/More Available/i)).not.toBeInTheDocument();
     expect(screen.getByText(/showing 2 of 2 money market funds/i)).toBeInTheDocument();
+  });
+
+  it("renders the desktop Compare funds sidebar cleanly when funds are selected", () => {
+    mockUseAuth.mockReturnValue({ user: { id: "user-123", email: "user@example.com" }, loading: false });
+    mockIsBotOrPrerender.mockReturnValue(false);
+    mockSelectedFunds.current = [mockFunds[0], mockFunds[1]];
+
+    renderWithProviders(<FundGrid funds={mockFunds} snapshots={{}} loading={false} />);
+
+    expect(screen.getByText("16.50% annual")).toBeInTheDocument();
+    expect(screen.getByText("15.50% annual")).toBeInTheDocument();
+    expect(screen.getByText("Highest annual yield")).toBeInTheDocument();
+    expect(screen.getByText("Lowest fee")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Compare selected \(2\)/i })).toBeEnabled();
   });
 });

@@ -9,9 +9,11 @@ interface YieldChangeProps {
 }
 
 /** Format a yield value with its unit: "12.5%" or "KES 12.50" */
-export const formatYield = (value: number, unit: string = "%") => {
-  if (unit === "%") return `${value}%`;
-  return `${unit} ${value.toFixed(2)}`;
+export const formatYield = (value: number | null | undefined, unit: string = "%") => {
+  if (value == null || !Number.isFinite(Number(value))) return "—";
+  const num = Number(value);
+  if (unit === "%") return `${num}%`;
+  return `${unit} ${num.toFixed(2)}`;
 };
 
 /** Return just the suffix for labels: "%" or " (KES)" */
